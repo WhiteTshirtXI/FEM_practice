@@ -69,7 +69,9 @@ void TetraMesh::precomputation()
                                     t->v[ arange[i][2] ]->id
                                     );
 
-            S face = S( {halfFace[0], halfFace[1], halfFace[2]} );
+            int triangle[] = {halfFace[0], halfFace[1], halfFace[2]}; 
+            S face = S( triangle , triangle + 3);
+            
             /* if the face already exists, add upl; else create and record */
             if (existingFaces.find(face) != existingFaces.end())
             {

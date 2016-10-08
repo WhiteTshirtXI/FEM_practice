@@ -61,7 +61,7 @@ namespace BallonFEM{
     class TetraMesh
     {
         public:
-            TetraMesh();
+            TetraMesh(){};
 
             int read( const std::string& filename );
             int write( const std::string& filename );

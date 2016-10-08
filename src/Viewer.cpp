@@ -12,6 +12,9 @@ using namespace Control;
 
 #include "shaderLoader.h"
 
+#include "Types.h"
+using namespace BallonFEM;
+
 namespace View{
 /* window parameter */
 int win_width = 600;
@@ -50,7 +53,7 @@ Viewer::Viewer(Mesh* mesh)
 
     /* buffer data */
     buffModel();
-};
+}
 
 void Viewer::show()
 {
@@ -72,7 +75,7 @@ void Viewer::show()
         glfwPollEvents();
 
     }
-};
+}
 
 void Viewer::init_openGL()
 {
@@ -108,7 +111,7 @@ void Viewer::init_openGL()
     glfwSetCursorPosCallback(mainWindow, mouseMove);
     glfwSetWindowSizeCallback(mainWindow, reshape);
 
-};
+}
 
 void Viewer::setupGLstate()
 {
@@ -116,7 +119,7 @@ void Viewer::setupGLstate()
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.35, 0.53, 0.70, 0);
-};
+}
 
 
 void Viewer::prepareProgram()
@@ -126,7 +129,7 @@ void Viewer::prepareProgram()
     MatrixID = glGetUniformLocation(ProgramID, "MVP");
     ModelID = glGetUniformLocation(ProgramID, "M");
     CameraID = glGetUniformLocation(ProgramID, "CameraPosition_worldspace");
-};
+}
 
 void Viewer::buffModel()
 { 
@@ -172,7 +175,7 @@ void Viewer::buffModel()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[faceVBO]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, faceID.size()*sizeof(unsigned int), &faceID[0], GL_STATIC_DRAW);
-};
+}
 
 /*! draw mesh */
 void Viewer::draw_mesh()
@@ -201,7 +204,7 @@ void Viewer::draw_mesh()
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-};
+}
 
 void Viewer::draw_axis()
 {
@@ -228,6 +231,6 @@ void Viewer::draw_axis()
 	glEnd();
 
 	glLineWidth(1.0);
-};
+}
 
 }

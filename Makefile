@@ -11,9 +11,9 @@
 
 # Linux
 DDG_INCLUDE_PATH      =
-DDG_LIBRARY_PATH      =
-DDG_BLAS_LIBS         = -llapack -lblas -lgfortran -lumfpack
-DDG_SUITESPARSE_LIBS  = -lspqr -lcholmod -lmetis -lcolamd -lccolamd -lcamd -lamd -lm
+DDG_LIBRARY_PATH      = -lGLEW -lglfw
+DDG_BLAS_LIBS         = -llapack -lblas -lgfortran 
+DDG_SUITESPARSE_LIBS  = -lmetis -lm
 DDG_OPENGL_LIBS       = -lglut -lGL -lGLU -lX11
 
 # # Windows / Cygwin
@@ -25,7 +25,7 @@ DDG_OPENGL_LIBS       = -lglut -lGL -lGLU -lX11
 
 ########################################################################################
 
-TARGET = ddg
+TARGET = tetra 
 CC = g++
 LD = g++
 CFLAGS = -O3 -Wall -Werror -ansi -pedantic  $(DDG_INCLUDE_PATH) -I./include -I./src -DGL_GLEXT_PROTOTYPES 

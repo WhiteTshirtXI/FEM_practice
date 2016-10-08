@@ -6,8 +6,6 @@
 
 using namespace std;
 
-/* global mesh */
-BallonFEM::TetraMesh tetra;
 
 /*! main function for viewer
 */
@@ -23,6 +21,9 @@ int main(int argc, char * argv[])
 
 	std::string mesh_name(argv[1]);
 		
+    /* global mesh */
+    BallonFEM::TetraMesh tetra;
+
     tetra.read(mesh_name.c_str());
 
     View::Viewer viewer(&tetra);

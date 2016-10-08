@@ -96,6 +96,8 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
 
         tetra.tetrahedrons.push_back( t );
     }
+
+    return 0;
 }
 
 void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
