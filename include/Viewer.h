@@ -7,7 +7,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Tetra.h"
+#include "TetraMesh.h"
 
 namespace View{
 
@@ -16,7 +16,7 @@ class Viewer
     public:
 
         /* Mesh type */
-        typedef Tetra::Surface Mesh;
+        typedef BallonFEM::TetraMesh Mesh;
 
         Viewer(Mesh* mesh);
 
@@ -34,7 +34,7 @@ class Viewer
         void prepareProgram();
 
         /* buffer data into VBOs*/
-        void buff_model();
+        void buffModel();
 
         /* draw meshes */
         void draw_mesh();

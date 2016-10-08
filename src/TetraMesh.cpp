@@ -1,0 +1,144 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <map>
+
+#include "Types.h"
+#include "TetraMesh.h"
+#include "TetraMeshIO.h"
+
+using namespace std;
+
+namespace BallonFEM
+{
+    
+void Face::precomputation()
+{
+    Vec3 a = this->v[0]->m_pos - this->v[2]->m_pos;
+    Vec3 b = this->v[1]->m_pos - this->v[2]->m_pos;
+
+    this->m_normal = a.cross(b);
+    this->m_normal.normalize();
+}
+
+void Tetra::precomputation()
+{
+    Mat3 Dm;  /* coordinate vectors */
+    Dm << v[0]->m_cord, v[1]->m_cord, v[2]->m_cord;
+    Dm.colwise() -= v[3]->m_cord;
+
+    Bm = Dm.inverse();
+
+    W = Dm.determinant();
+}
+
+void TetraMesh::precomputation()
+{
+    /* make each tetrahedron correct direction and compute tetra propetry */
+    for(TIter t = tetrahedrons.begin(); t != tetrahedrons.end(); t++)
+    {
+        t->precomputation();
+
+        /* if t->W is negtive, then the arange of t-v is not correct */
+        if ( t->W < 0 )
+        {
+            swap(t->v[0], t->v[1]);
+            t->precomputation();
+        }
+    }
+
+    /* construct surface */
+    /* each face has two half faces and by counting we can get these faces */
+    typedef set<int> S;
+    set< S > existingFaces;
+    map< S, int > faceCount;
+    map< S, iVec3 > corespondFace;
+    
+    /* 4 faces of tetrahedron towards outside */
+    iVec3 arange[] = { iVec3(0,1,2), iVec3(0,2,3), 
+                       iVec3(0,3,1), iVec3(3,2,1),
+                     };
+
+    for(TIter t = tetrahedrons.begin(); t != tetrahedrons.end(); t++)
+    {
+        /* construct 4 faces of tetrahedron */
+        for(int i = 0; i < 4; i++)
+        {
+            iVec3 halfFace = iVec3( t->v[ arange[i][0] ]->id, 
+                                    t->v[ arange[i][1] ]->id, 
+                                    t->v[ arange[i][2] ]->id
+                                    );
+
+            S face = S( {halfFace[0], halfFace[1], halfFace[2]} );
+            /* if the face already exists, add upl; else create and record */
+            if (existingFaces.find(face) != existingFaces.end())
+            {
+                existingFaces.insert(face);
+                faceCount[face] = 1;
+                corespondFace[face] = halfFace;
+            }
+            else{
+                faceCount[face] += 1;
+            }
+        }
+    }
+
+    this->surface.clear();
+    /* find single halffaces and add to tetrahedron's surface */
+    for(map< S, int>::iterator m = faceCount.begin(); m != faceCount.end(); m++)
+    {
+        if (m->second == 1)
+        {
+            iVec3 &halfFace = corespondFace[m->first];
+            Face nf;
+
+            nf.v[0] = &( vertices[ halfFace[0] ] );
+            nf.v[1] = &( vertices[ halfFace[1] ] );
+            nf.v[2] = &( vertices[ halfFace[2] ] );
+
+            this->surface.push_back( nf );
+        }
+    }
+
+    for(FIter f = surface.begin(); f != surface.end(); f++)
+    {
+       f->precomputation(); 
+    }
+
+}
+
+int TetraMesh::read( const string& filename )
+{
+    string inputFilename = filename;
+    ifstream in( filename.c_str() );
+
+    if( !in.is_open() )
+    {
+        cerr << "Error reading from mesh file " << filename << endl;
+        return 1;
+    }
+
+    int rval;
+    if( !( rval = TetraMeshIO::read( in, *this )))
+    {
+        this->precomputation();
+    }
+    return rval;
+}
+
+int TetraMesh::write( const string& filename )
+{
+    ofstream out( filename.c_str() );
+
+    if( !out.is_open() )
+    {
+        cerr << "Error writing to mesh file " << filename << endl;
+        return 1;
+    }
+
+    TetraMeshIO::write( out, *this );
+
+    return 0;
+}
+
+}

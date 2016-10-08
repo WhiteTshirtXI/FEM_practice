@@ -12,9 +12,6 @@ using namespace Control;
 
 #include "shaderLoader.h"
 
-#include "MyMesh.h"
-using namespace MeshLib;
-
 namespace View{
 /* window parameter */
 int win_width = 600;
@@ -35,24 +32,6 @@ GLuint MatrixID, CameraID, ModelID, EyeID;
 /* render parameter */
 glm::vec4 lightColor(0.8, 0.8, 0.8, 1.0);
 glm::vec4 globalAmb(0.1, 0.1, 0.1, 1.0);
-glm::vec4 eye(1, 0, 0, 0);
-
-/* update eye */
-void update_eye()
-{
-    eye.w += 0.001;
-    eye.x = cos(eye.w);
-    eye.y = sin(eye.w);
-}
-
-/* draw eye */
-void draw_eye()
-{
-    glPointSize(10.0);
-    glBegin(GL_POINTS);
-    glVertex3d(eye.x, eye.y, eye.z);
-    glEnd();
-}
 
 
 Viewer::Viewer(Mesh* mesh)
@@ -70,7 +49,7 @@ Viewer::Viewer(Mesh* mesh)
     prepareProgram();
 
     /* buffer data */
-    buff_model();
+    buffModel();
 };
 
 void Viewer::show()
@@ -85,9 +64,6 @@ void Viewer::show()
 
         draw_mesh();
         draw_axis();
-        draw_eye();
-        
-        update_eye();
 
         /* Swap front and back buffers*/
         glfwSwapBuffers(mainWindow);
@@ -146,14 +122,13 @@ void Viewer::setupGLstate()
 void Viewer::prepareProgram()
 {
     /* prepare Program */
-    ProgramID = shaderLoader("src/vertexShader.glsl", "src/fragmentShader.glsl");
+    ProgramID = shaderLoader("shader/vertexShader.glsl", "shader/fragmentShader.glsl");
     MatrixID = glGetUniformLocation(ProgramID, "MVP");
     ModelID = glGetUniformLocation(ProgramID, "M");
     CameraID = glGetUniformLocation(ProgramID, "CameraPosition_worldspace");
-    EyeID = glGetUniformLocation(ProgramID, "EyePosition_modelspace");
 };
 
-void Viewer::buff_model()
+void Viewer::buffModel()
 { 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -161,19 +136,20 @@ void Viewer::buff_model()
     glGenBuffers(num_VBO, VBO);
 
     /* prepare vertex & normal data */
-    unsigned int N = mesh->numVertices();
-    vertex.assign(N, glm::vec3(0,0,0));
-    norm.assign(N, glm::vec3(0,0,0));
+    unsigned int N = mesh->surface.size();
+    vertex.assign(3*N, glm::vec3(0,0,0));
+    norm.assign(3*N, glm::vec3(0,0,0));
     unsigned int count = 0;
-    for (CMyMesh::_MeshVertexIterator viter(mesh); !viter.end(); ++viter)
+    for (FIter f = mesh->surface.begin() ; f != mesh->surface.end(); f++)
     {
-        CMyVertex* pV = *viter;
-        pV->draw_id() = count;
-        CPoint pos = pV->point();
-        CPoint nor = pV->normal();
-        vertex[count] = glm::vec3(pos[0], pos[1], pos[2]); 
-        norm[count] = glm::vec3(nor[0], nor[1], nor[2]);
-        count ++;
+        for (int i = 0; i < 3; i++)
+        {
+            Vec3 &pos = f->v[i]->m_pos;
+            Vec3 &nor = f->m_normal;
+            vertex[count] = glm::vec3(pos[0], pos[1], pos[2]); 
+            norm[count] = glm::vec3(nor[0], nor[1], nor[2]);
+            count ++;
+        }
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[verVBO]);
@@ -183,16 +159,14 @@ void Viewer::buff_model()
     glBufferData(GL_ARRAY_BUFFER, norm.size()*sizeof(glm::vec3), &norm[0], GL_STATIC_DRAW);
 
     /* prepare faceID data */
-    size_t M = mesh->numFaces();
+    size_t M = N;
     faceID.assign(M*3, 0);
     count = 0;
-    for (CMyMesh::_MeshFaceIterator fiter(mesh); !fiter.end(); ++fiter)
+    for (size_t i = 0; i < M; i++)
     {
-        CMyFace* pF = *fiter;
-        CMyHalfEdge* pH = (CMyHalfEdge*)pF->halfedge();
-        faceID[3*count] = ((CMyVertex*)pH->source())->draw_id();
-        faceID[3*count + 1] = ((CMyVertex*)pH->target())->draw_id();
-        faceID[3*count + 2] = ((CMyVertex*)pH->he_next()->target())->draw_id();
+        faceID[3*count] = 3 * count; 
+        faceID[3*count + 1] = 3 * count + 1; 
+        faceID[3*count + 2] = 3 * count + 2;
         count ++;
     }
 
@@ -213,7 +187,6 @@ void Viewer::draw_mesh()
     glUniformMatrix4fv(ModelID, 1, GL_FALSE, &M[0][0]);
     glm::vec3 camera = getCamera();
     glUniform3f(CameraID, camera.x, camera.y, camera.z);
-    glUniform3f(EyeID, eye.x, eye.y, eye.z);
     
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[verVBO]);
