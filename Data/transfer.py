@@ -10,24 +10,34 @@ import argparse
 def read_vertex(fh):
     vertex = []
 
-    fh.readline()
+    # get size
+    v_size = fh.readline()
+    v_size = list(filter(lambda x: x, v_size.split(' ')))
+    v_size = int(v_size[0])
+
     for l in fh:
-        l = fh.readline()
+
+        print(l)
 
         if l.startswith("#"):
             continue
 
         v = l.split(' ')
         v = list(filter(lambda x: x, v))
+        print(v)
         v = v[1:4]
         vertex.append(v)
 
-    return vertex
+    return v_size, vertex
 
 def read_tetra(fh):
     tetra = []
 
-    fh.readline()
+    # get size
+    t_size = fh.readline()
+    t_size = list(filter(lambda x: x, t_size.split(' ')))
+    t_size = int(t_size[0])
+
     for l in fh:
         if l.startswith("#"):
             continue
@@ -37,7 +47,7 @@ def read_tetra(fh):
         t = t[1:5]
         tetra.append(t)
 
-    return tetra
+    return t_size, tetra
 
 
 
@@ -47,8 +57,11 @@ if __name__=='__main__':
     parser.add_argument("file", help="the prefix of .node file and .ele file")
     args = parser.parse_args()
 
-    vertex = read_vertex( open(args.file + '.node', 'r') )
-    tetra = read_tetra( open(args.file + '.ele', 'r') )
+    v_size, vertex = read_vertex( open(args.file + '.node', 'r') )
+    t_size, tetra = read_tetra( open(args.file + '.ele', 'r') )
+
+    print("vertex number: %d" % len(vertex))
+    print("tetra number: %d" % len(tetra))
 
     fh = open(args.file + '.obj', 'w')
 

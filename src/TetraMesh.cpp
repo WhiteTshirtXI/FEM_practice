@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -35,6 +36,7 @@ void Tetra::precomputation()
 void TetraMesh::precomputation()
 {
     /* make each tetrahedron correct direction and compute tetra propetry */
+    printf("Precomputing properties of tetras.\n");
     for(TIter t = tetrahedrons.begin(); t != tetrahedrons.end(); t++)
     {
         t->precomputation();
@@ -48,6 +50,8 @@ void TetraMesh::precomputation()
     }
 
     /* construct surface */
+
+    printf("Constructing surfaces.\n");
     /* each face has two half faces and by counting we can get these faces */
     typedef set<int> S;
     set< S > existingFaces;
@@ -71,8 +75,8 @@ void TetraMesh::precomputation()
 
             int triangle[] = {halfFace[0], halfFace[1], halfFace[2]}; 
             S face = S( triangle , triangle + 3);
-            
-            /* if the face already exists, add upl; else create and record */
+
+            /* if the face already exists, add up 1; else create and record */
             if (existingFaces.find(face) != existingFaces.end())
             {
                 existingFaces.insert(face);
@@ -100,8 +104,16 @@ void TetraMesh::precomputation()
 
             this->surface.push_back( nf );
         }
+        else if (m->second > 2)
+        {
+            iVec3 &halfFace = corespondFace[m->first];
+            printf("face conflict on (%d, %d, %d)\n", halfFace[0], halfFace[1], halfFace[2] );
+        }
     }
 
+    printf("Total surface triangle %d \n", (int)surface.size());
+
+    printf("Precomputing properties of surfaces.\n");
     for(FIter f = surface.begin(); f != surface.end(); f++)
     {
        f->precomputation(); 

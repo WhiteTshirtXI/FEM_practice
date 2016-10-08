@@ -12,11 +12,13 @@ int TetraMeshIO::read( istream& in, TetraMesh& tetra )
 {
     TetraMeshData data;
 
+    cout << "Reading from .obj file.\n";
     if ( readTetraData( in, data ))
     {
         return 1;
     }
 
+    cout << "Building tetra mesh.\n";
     if ( buildTetra( data, tetra ))
     {
         return 1;
@@ -85,12 +87,16 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
         tetra.vertices.push_back( nv );
     }
 
+    int v_size = tetra.vertices.size();
     for(size_t i = 0; i < data.tetrahedrons.size(); i++)
     {
         Tetra t;
-        iVec4 indeces = data.tetrahedrons[i];
+        iVec4 &indeces = data.tetrahedrons[i];
         for(size_t j = 0; j < 4; j++)
         {
+            /* stack overflow */
+            if (indeces[j] - indexBias > v_size) return 1;
+            
             t.v[j] = &tetra.vertices[ indeces[j] - indexBias ];
         }
 
