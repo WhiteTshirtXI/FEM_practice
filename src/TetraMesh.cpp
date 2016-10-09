@@ -49,7 +49,11 @@ void TetraMesh::precomputation()
             swap(t->v[0], t->v[1]);
             t->precomputation();
         }
+        
+        /* record vertex id in tetra */
+        t->v_id = iVec4(t->v[0]->id, t->v[1]->id, t->v[2]->id, t->v[3]->id );
     }
+
 
     /* construct surface */
 

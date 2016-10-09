@@ -24,7 +24,11 @@ namespace BallonFEM{
             /* position in world space */
             Vec3 m_pos;
 
+            /* index in tetramesh vertex vector */
             int id;
+
+            /* if is fixed */
+            bool m_fixed;
     };
 
     class Face
@@ -52,10 +56,11 @@ namespace BallonFEM{
 
             /* geometry property */
             Mat3 Bm;    /* reverse matrix of [r1-r4; r2-r4; r3-r4] */
-            double W;   /* volume of tetrahedron */
+            float W;   /* volume of tetrahedron */
 
             /* topology property */
             pVertex v[4];
+            iVec4 v_id;
     };
 
     class TetraMesh
