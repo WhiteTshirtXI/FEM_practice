@@ -46,6 +46,7 @@ flags = [
 # My onw settings
 '-I~/usr/include/',
 '-I./include/',
+'-IC:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/include/',
 # You 100% do NOT need -DUSE_CLANG_COMPLETER in your flags; only the YCM
 # source code needs it.
 # '-DUSE_CLANG_COMPLETER',

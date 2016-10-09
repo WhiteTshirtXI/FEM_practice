@@ -31,7 +31,8 @@ void Tetra::precomputation()
 
     Bm = glm::inverse(Dm);
 
-    W = glm::determinant(Dm);
+	/* volume of the tetrahedron */
+    W = glm::determinant(Dm) / 6;
 }
 
 void TetraMesh::precomputation()
