@@ -10,16 +10,16 @@ namespace BallonFEM{
 
 int TetraMeshIO::read( istream& in, TetraMesh& tetra )
 {
-    TetraMeshData data;
-
+    TetraMeshData *data;
+	data = new TetraMeshData();
     cout << "Reading from .obj file.\n";
-    if ( readTetraData( in, data ))
+    if ( readTetraData( in, *data ))
     {
         return 1;
     }
 
     cout << "Building tetra mesh.\n";
-    if ( buildTetra( data, tetra ))
+    if ( buildTetra( *data, tetra ))
     {
         return 1;
     }
@@ -31,6 +31,9 @@ int TetraMeshIO::readTetraData(istream& in, TetraMeshData& data)
 {
     string line;
    
+	data.vertices.clear();
+	data.tetrahedrons.clear();
+
     while( getline( in, line ))
     {
         stringstream ss( line );
@@ -67,7 +70,7 @@ void TetraMeshIO::readTetra( stringstream& ss, TetraMeshData& data)
 {
     int x, y, z, w;
     ss >> x >> y >> z >> w;
-    data.tetrahedrons.push_back(iVec4(x, y, z, w));
+	data.tetrahedrons.push_back(iVec4(x, y, z, w));
 }
 
 int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
@@ -111,7 +114,8 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
     int indexBias = 1;
     for(VCIter v = tetra.vertices.begin(); v != tetra.vertices.end(); v++)
     {
-       out << "v " << v->m_pos << endl; 
+		Vec3 pos = v->m_pos;
+		out << "v " << pos[0] << " " << pos[1] << " " << pos[2] << endl; 
     }
 
     for(TCIter t = tetra.tetrahedrons.begin(); t !=tetra.tetrahedrons.end(); t++)

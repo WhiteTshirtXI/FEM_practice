@@ -32,11 +32,6 @@ std::vector<unsigned int> faceID;
 GLuint ProgramID;
 GLuint MatrixID, CameraID, ModelID, EyeID;
 
-/* render parameter */
-glm::vec4 lightColor(0.8, 0.8, 0.8, 1.0);
-glm::vec4 globalAmb(0.1, 0.1, 0.1, 1.0);
-
-
 Viewer::Viewer(Mesh* mesh)
 {
     /* record mesh */
@@ -125,7 +120,8 @@ void Viewer::setupGLstate()
 void Viewer::prepareProgram()
 {
     /* prepare Program */
-    ProgramID = shaderLoader("shader/vertexShader.glsl", "shader/fragmentShader.glsl");
+    ProgramID = shaderLoader("shader/vertexShader.glsl", 
+                             "shader/fragmentShader.glsl");
     MatrixID = glGetUniformLocation(ProgramID, "MVP");
     ModelID = glGetUniformLocation(ProgramID, "M");
     CameraID = glGetUniformLocation(ProgramID, "CameraPosition_worldspace");

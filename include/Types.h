@@ -2,7 +2,7 @@
 #define _TYPE_H_
 
 #include <vector>
-#include <Eigen/Dense>
+#include <glm/glm.hpp>
 
 namespace BallonFEM
 {
@@ -14,14 +14,12 @@ namespace BallonFEM
     /* organized object */
     class TetraMesh;
 
-	typedef Eigen::Vector3d Vec3;
-	typedef Eigen::Matrix3d Mat3;
-    typedef Eigen::Vector3i iVec3;
-    typedef Eigen::Vector4i iVec4;
+	/* some definition */
+	typedef glm::vec3	Vec3;
+	typedef glm::mat3	Mat3;
+    typedef glm::ivec3	iVec3;
+    typedef glm::ivec4	iVec4;
 
-	/* some definitions */
-    typedef Eigen::Vector3d Vec3;
-    typedef Eigen::Matrix3d Mat3;
 
     typedef std::vector<Vertex>::iterator   VIter;
     typedef std::vector<Face>::iterator     FIter;

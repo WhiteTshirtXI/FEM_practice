@@ -28,7 +28,8 @@ def read_vertex(fh):
         v = v[1:4]
         vertex.append(v)
 
-    return v_size, vertex
+    assert(v_size == len(vertex))
+    return vertex
 
 def read_tetra(fh):
     tetra = []
@@ -47,7 +48,8 @@ def read_tetra(fh):
         t = t[1:5]
         tetra.append(t)
 
-    return t_size, tetra
+    assert( t_size==len(tetra) )
+    return tetra
 
 
 
@@ -57,8 +59,8 @@ if __name__=='__main__':
     parser.add_argument("file", help="the prefix of .node file and .ele file")
     args = parser.parse_args()
 
-    v_size, vertex = read_vertex( open(args.file + '.node', 'r') )
-    t_size, tetra = read_tetra( open(args.file + '.ele', 'r') )
+    vertex = read_vertex( open(args.file + '.node', 'r') )
+    tetra = read_tetra( open(args.file + '.ele', 'r') )
 
     print("vertex number: %d" % len(vertex))
     print("tetra number: %d" % len(tetra))

@@ -30,3 +30,17 @@
 
 # python
 *.pyc
+
+# build
+build/
+
+# VS project file
+*.opensdf
+*.sdf
+*.sln
+*.suo
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+Debug/
+Release/

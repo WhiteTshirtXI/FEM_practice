@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+#include <glm/glm.hpp>
+
 #include "Types.h"
 #include "TetraMesh.h"
 #include "TetraMeshIO.h"
@@ -18,19 +20,18 @@ void Face::precomputation()
     Vec3 a = this->v[0]->m_pos - this->v[2]->m_pos;
     Vec3 b = this->v[1]->m_pos - this->v[2]->m_pos;
 
-    this->m_normal = a.cross(b);
-    this->m_normal.normalize();
+    this->m_normal = glm::normalize(glm::cross(a, b));
 }
 
 void Tetra::precomputation()
 {
     Mat3 Dm;  /* coordinate vectors */
-    Dm << v[0]->m_cord, v[1]->m_cord, v[2]->m_cord;
-    Dm.colwise() -= v[3]->m_cord;
+    Dm = Mat3(v[0]->m_cord, v[1]->m_cord, v[2]->m_cord);
+	Dm -= Mat3(v[3]->m_cord, v[3]->m_cord, v[3]->m_cord);
 
-    Bm = Dm.inverse();
+    Bm = glm::inverse(Dm);
 
-    W = Dm.determinant();
+    W = glm::determinant(Dm);
 }
 
 void TetraMesh::precomputation()
@@ -79,12 +80,12 @@ void TetraMesh::precomputation()
             /* if the face already exists, add up 1; else create and record */
             if (existingFaces.find(face) != existingFaces.end())
             {
-                existingFaces.insert(face);
-                faceCount[face] = 1;
-                corespondFace[face] = halfFace;
+				faceCount[face] += 1;
             }
             else{
-                faceCount[face] += 1;
+				existingFaces.insert(face);
+				faceCount[face] = 1;
+				corespondFace[face] = halfFace;
             }
         }
     }
