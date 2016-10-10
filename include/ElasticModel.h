@@ -14,11 +14,17 @@ namespace BallonFEM
     class ElasticModel
     {
         public:
+
             ElasticModel(){};
+
             ElasticModel(float mu, float lambda): 
                 m_mu( mu ), m_lambda( lambda ) {};
 
+            ElasticModel(const ElasticModel& other):
+                m_mu( other.m_mu ), m_lambda( other.m_lambda ) {};
+
             void setMu(float mu){ m_mu = mu; };
+
             void setLambda(float lambda){ m_lambda = lambda; };
 
             /* Piola P = \frac{ \partial{Energy} }{ \partial{F} }*/
@@ -37,6 +43,7 @@ namespace BallonFEM
             float m_lambda;
     };
 
+
     /* class with linear elasticity model 
      * Piola P(F) = mu * ( F + transpose(F) - 2I ) + lambda * tr(F-I) * I
      * Stress Diff dP(F; dF) = mu * ( dF + transpose(dF) ) + lambda * tr(dF) * I
@@ -44,13 +51,20 @@ namespace BallonFEM
     class Elastic_linear : public ElasticModel
     {
         public:
+
             Elastic_linear(){};
+
             Elastic_linear(float mu, float lambda):
                 ElasticModel(mu, lambda){};
 
+            Elastic_linear(const Elastic_linear& other):
+                ElasticModel(other){};
+
             Mat3 Piola(Mat3 F);
+
             Mat3 StressDiff(Mat3 F, Mat3 dF);
     };
+
 
     /* class with St. Venant-Kirchhoff elasticity model 
      * Green Strain E = [transpose(F) * F - I] / 2
@@ -60,11 +74,17 @@ namespace BallonFEM
     class Elastic_StVK : public ElasticModel
     {
         public:
+
             Elastic_StVK(){};
+
             Elastic_StVK(float mu, float lambda):
                 ElasticModel(mu, lambda){};
 
+            Elastic_StVK(const Elastic_StVK& other):
+                ElasticModel(other){};
+
             Mat3 Piola(Mat3 F);
+
             Mat3 StressDiff(Mat3 F, Mat3 dF);
     };
 
@@ -83,13 +103,19 @@ namespace BallonFEM
     class Elastic_neohookean : public ElasticModel
      {
         public:
+
             Elastic_neohookean(){};
+
             Elastic_neohookean(float mu, float lambda):
                 ElasticModel(mu, lambda){};
 
+            Elastic_neohookean(const Elastic_neohookean& other):
+                ElasticModel(other){};
+
             Mat3 Piola(Mat3 F);
+
             Mat3 StressDiff(Mat3 F, Mat3 dF);
-    };
+     };
 
 }
 #endif //!_ELASTICMODEL_H_

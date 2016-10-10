@@ -15,14 +15,21 @@ namespace BallonFEM{
     {
         public:
             Vertex();
-            Vertex( Vec3 cord ): m_cord( cord ), m_pos( cord ) {};
-            Vertex( Vec3 cord, Vec3 pos ): m_cord( cord ), m_pos( pos ){};
+
+            Vertex( Vec3 cord ): 
+                m_cord( cord ), m_pos( cord ), m_velocity( Vec3(0) ) {};
+
+            Vertex( Vec3 cord, Vec3 pos ): 
+                m_cord( cord ), m_pos( pos ), m_velocity( Vec3(0) ){};
 
             /* position in material coordinate */
             Vec3 m_cord;
             
             /* position in world space */
             Vec3 m_pos;
+
+            /* velocity in world space */
+            Vec3 m_velocity;
 
             /* index in tetramesh vertex vector */
             int id;

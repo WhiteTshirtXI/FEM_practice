@@ -1,21 +1,59 @@
 #include <vector>
 
+#include <glm/glm.hpp>
 #include "Dynamic.h"
 
 namespace BallonFEM
 {
-    void Engine::computeElasticForces()
+    Engine::Engine(TetraMesh* tetra, ElasticModel model)
     {
-        f_elas.assign( m_tetra->vertices.size(), Vec3(0.0));
+        m_tetra = tetra;
+        m_size = tetra->vertices.size();
+        m_model = model;
+
+        /* initialize */
+        f_elas.assign       ( m_size, Vec3(0));
+        df_elas.assign      ( m_size, Vec3(0));
+        v_pos.assign        ( m_size, Vec3(0));
+        v_velocity.assign   ( m_size, Vec3(0));
+        v_pos_next.assign   ( m_size, Vec3(0));
+        v_velo_next.assign  ( m_size, Vec3(0));
+        dv_pos_next.assign  ( m_size, Vec3(0));
+
+        /* load data */
+        for (size_t i = 0; i < m_size; i++)
+        {
+            Vec3 &pos = tetra->vertices[i].m_pos;
+            v_pos[i] = pos;
+            v_pos_next[i] = pos;
+
+            Vec3 &velocity = tetra->vertices[i].m_velocity;
+            v_velocity[i] = velocity;
+            v_velo_next[i] = velocity;
+        }
+    }
+
+    void Engine::outputData()
+    {
+        for (size_t i = 0; i < m_size; i++)
+        {
+            m_tetra->vertices[i].m_pos = v_pos[i];
+            m_tetra->vertices[i].m_velocity = v_velocity[i];
+        }
+    }
+
+    void Engine::computeElasticForces(Vvec3 &pos)
+    {
+        f_elas.assign( m_size, Vec3(0.0));
 
         for(TIter t = m_tetra->tetrahedrons.begin();
                 t != m_tetra->tetrahedrons.end(); t++)
         {
             iVec4 &id = t->v_id;
-            Vec3 &v0 = v_pos[id[0]];
-            Vec3 &v1 = v_pos[id[1]];
-            Vec3 &v2 = v_pos[id[2]];
-            Vec3 &v3 = v_pos[id[3]];
+            Vec3 &v0 = pos[id[0]];
+            Vec3 &v1 = pos[id[1]];
+            Vec3 &v2 = pos[id[2]];
+            Vec3 &v3 = pos[id[3]];
             
             /* calculate deformation in world space */
             Mat3 Ds = Mat3(v0 - v3, v1 - v3, v2 - v3);
@@ -36,19 +74,19 @@ namespace BallonFEM
         }
     }
 
-    void Engine::computeForceDifferentials()
+    void Engine::computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos)
     {
-        df_elas.assign( m_tetra->vertices.size(), Vec3(0.0));
+        df_elas.assign( m_size, Vec3(0.0));
 
         for(TIter t = m_tetra->tetrahedrons.begin();
                 t != m_tetra->tetrahedrons.end(); t++)
         {
             /* assgin world space position */
             iVec4 &id = t->v_id;
-            Vec3 &v0 = v_pos[id[0]];
-            Vec3 &v1 = v_pos[id[1]];
-            Vec3 &v2 = v_pos[id[2]];
-            Vec3 &v3 = v_pos[id[3]];
+            Vec3 &v0 = pos[id[0]];
+            Vec3 &v1 = pos[id[1]];
+            Vec3 &v2 = pos[id[2]];
+            Vec3 &v3 = pos[id[3]];
             
             /* calculate deformation in world space */
             Mat3 Ds = Mat3(v0 - v3, v1 - v3, v2 - v3);
@@ -57,10 +95,10 @@ namespace BallonFEM
             Mat3 F = Ds * t->Bm;
             
             /* assign world space delta position */
-            Vec3 &dv0 = dv_pos[id[0]];
-            Vec3 &dv1 = dv_pos[id[1]];
-            Vec3 &dv2 = dv_pos[id[2]];
-            Vec3 &dv3 = dv_pos[id[3]];
+            Vec3 &dv0 = dpos[id[0]];
+            Vec3 &dv1 = dpos[id[1]];
+            Vec3 &dv2 = dpos[id[2]];
+            Vec3 &dv3 = dpos[id[3]];
             
             /* calculate delta deformation in world space */
             Mat3 dDs = Mat3(dv0 - dv3, dv1 - dv3, dv2 - dv3);
@@ -80,5 +118,28 @@ namespace BallonFEM
             df_elas[id[3]] -= dH[0] + dH[1] + dH[2];     
         }
     }
-   
+
+    void Engine::solveNextTimestep(float timestep)
+    {
+    }
+
+    void Engine::forceTest()
+    {
+        /* manually deformation along x axis */
+        for (size_t i = 0; i < m_size; i++)
+        {
+            v_pos[i].x += v_pos[i].z * 0.01f;
+        }
+
+        /* compute nodal force for each vertex */
+        computeElasticForces(v_pos);
+
+        /* coutput data */
+        for (size_t i = 0; i < m_size; i++)
+        {
+            m_tetra->vertices[i].m_pos = v_pos[i];
+            m_tetra->vertices[i].m_velocity = glm::normalize(f_elas[i]);
+        }
+    }
+
 }
