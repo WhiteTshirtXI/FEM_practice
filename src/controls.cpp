@@ -9,11 +9,22 @@
 
 #include "controls.h"
 #include "arcball.h"
+#include "Dynamic.h"
+
+extern int shadFlag;
 
 namespace Control{
 
 /* arcball object */
 ArcBall arcball;
+
+/* elastic engien */
+BallonFEM::Engine* engine;
+void mProcess()
+{
+    engine->forceTest();
+    shadFlag = 1;
+}
 
 /* rotation quaternion and translation vector for the object */
 glm::dquat  ObjRot(0, 0, 1, 0);
@@ -31,9 +42,10 @@ glm::mat4 View;
 glm::mat4 Projection;
 
 /* controler initialize */
-void control_init(GLFWwindow* window)
+void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
+    engine = new BallonFEM::Engine(tetra, new BallonFEM::Elastic_linear(0.4, 0.4));
 }
 
 /* update at each main loop */
@@ -168,6 +180,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		//Wireframe mode
 		glPolygonMode(GL_FRONT, GL_LINE);
 		break;
+    case GLFW_KEY_SPACE:
+        // do some action
+        mProcess();
 	case GLFW_KEY_H:
 	case GLFW_KEY_UNKNOWN:
 		help();

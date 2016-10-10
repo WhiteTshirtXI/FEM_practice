@@ -42,7 +42,7 @@ class Viewer
         /* draw axis */
         void draw_axis();
 
-        Mesh* mesh;
+        Mesh* m_mesh;
 
         GLFWwindow* mainWindow;
 

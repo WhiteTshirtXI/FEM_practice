@@ -12,8 +12,10 @@ using namespace Control;
 
 #include "shaderLoader.h"
 
-#include "Types.h"
+#include "TetraMesh.h"
 using namespace BallonFEM;
+
+int shadFlag;
 
 namespace View{
 /* window parameter */
@@ -21,11 +23,12 @@ int win_width = 600;
 int win_height = 400;
 
 /* GL render */
-enum {verVBO, norVBO, faceVBO, cordVBO, num_VBO};
+enum {verVBO, norVBO, faceVBO, colorVBO, num_VBO};
 GLuint VAO;
 GLuint VBO[num_VBO];
 std::vector<glm::vec3> vertex;
 std::vector<glm::vec3> norm;
+std::vector<glm::vec3> color;
 std::vector<unsigned int> faceID;
 
 /* shader data */
@@ -35,7 +38,7 @@ GLuint MatrixID, CameraID, ModelID, EyeID;
 Viewer::Viewer(Mesh* mesh)
 {
     /* record mesh */
-    this->mesh = mesh;
+    m_mesh = mesh;
 
     /* initialize Window and OpenGL */
     init_openGL();
@@ -100,7 +103,7 @@ void Viewer::init_openGL()
     }
 
     /* set interactive callback */
-    control_init(mainWindow);
+    control_init(mainWindow, m_mesh);
     glfwSetKeyCallback(mainWindow, keyBoard);
     glfwSetMouseButtonCallback(mainWindow, mouseClick);
     glfwSetCursorPosCallback(mainWindow, mouseMove);
@@ -135,18 +138,18 @@ void Viewer::buffModel()
     glGenBuffers(num_VBO, VBO);
 
     /* prepare vertex & normal data */
-    unsigned int N = mesh->surface.size();
+    unsigned int N = m_mesh->surface.size();
     vertex.assign(3*N, glm::vec3(0,0,0));
     norm.assign(3*N, glm::vec3(0,0,0));
+    color.assign(3*N, glm::vec3(0,0,0));
     unsigned int count = 0;
-    for (FIter f = mesh->surface.begin() ; f != mesh->surface.end(); f++)
+    for (FIter f = m_mesh->surface.begin() ; f != m_mesh->surface.end(); f++)
     {
         for (int i = 0; i < 3; i++)
         {
-            Vec3 &pos = f->v[i]->m_pos;
-            Vec3 &nor = f->m_normal;
-            vertex[count] = glm::vec3(pos[0], pos[1], pos[2]); 
-            norm[count] = glm::vec3(nor[0], nor[1], nor[2]);
+            vertex[count] = f->v[i]->m_pos;
+            norm[count] = f->m_normal; 
+            color[count] = f->v[i]->m_velocity; 
             count ++;
         }
     }
@@ -156,6 +159,9 @@ void Viewer::buffModel()
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[norVBO]);
     glBufferData(GL_ARRAY_BUFFER, norm.size()*sizeof(glm::vec3), &norm[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[colorVBO]);
+    glBufferData(GL_ARRAY_BUFFER, color.size()*sizeof(glm::vec3), &color[0], GL_STATIC_DRAW);
 
     /* prepare faceID data */
     size_t M = N;
@@ -176,6 +182,12 @@ void Viewer::buffModel()
 /*! draw mesh */
 void Viewer::draw_mesh()
 {
+    if (shadFlag != 0)
+    {
+        buffModel();
+        shadFlag = 0;
+    }
+
     glUseProgram(ProgramID);
     glBindVertexArray(VAO);
 
@@ -195,11 +207,16 @@ void Viewer::draw_mesh()
     glBindBuffer(GL_ARRAY_BUFFER, VBO[norVBO]);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[colorVBO]);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[faceVBO]);
     glDrawElements(GL_TRIANGLES, faceID.size(), GL_UNSIGNED_INT, (void*)0);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 }
 
 void Viewer::draw_axis()
