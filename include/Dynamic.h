@@ -13,9 +13,9 @@ namespace BallonFEM
     {
         public:
             Engine(){};
-            Engine(TetraMesh* tetra, ElasticModel model);
+            Engine(TetraMesh* tetra, ElasticModel* model);
 
-            void setModel(ElasticModel model){ m_model = model; };
+            void setModel(ElasticModel* model){ m_model = model; };
 
             /* output v_pos and v_velocity data to tetra mesh */
             void outputData();
@@ -30,7 +30,7 @@ namespace BallonFEM
 
         private:
             TetraMesh* m_tetra;
-            ElasticModel m_model;
+            ElasticModel* m_model;
 
             /* number of tetramesh's vertices */
             size_t  m_size;

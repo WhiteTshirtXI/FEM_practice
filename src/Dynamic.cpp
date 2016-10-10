@@ -5,7 +5,7 @@
 
 namespace BallonFEM
 {
-    Engine::Engine(TetraMesh* tetra, ElasticModel model)
+    Engine::Engine(TetraMesh* tetra, ElasticModel* model)
     {
         m_tetra = tetra;
         m_size = tetra->vertices.size();
@@ -62,7 +62,7 @@ namespace BallonFEM
             Mat3 F = Ds * t->Bm;
 
             /* calculate Piola for this tetra */
-            Mat3 P = m_model.Piola(F);
+            Mat3 P = m_model->Piola(F);
 
             /* calculate forces contributed from this tetra */
             Mat3 H = - t->W * P * transpose(t->Bm);
@@ -107,7 +107,7 @@ namespace BallonFEM
             Mat3 dF = dDs * t->Bm;
 
             /* calculate delta Piola */
-            Mat3 dP = m_model.StressDiff(F, dF);
+            Mat3 dP = m_model->StressDiff(F, dF);
  
             /* calculate forces contributed from this tetra */
             Mat3 dH = - t->W * dP * transpose(t->Bm);
@@ -138,7 +138,7 @@ namespace BallonFEM
         for (size_t i = 0; i < m_size; i++)
         {
             m_tetra->vertices[i].m_pos = v_pos[i];
-            m_tetra->vertices[i].m_velocity = glm::normalize(f_elas[i]);
+            m_tetra->vertices[i].m_velocity = f_elas[i];
         }
     }
 
