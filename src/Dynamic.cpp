@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#include "ElasticModel.h"
 #include "Dynamic.h"
 
 namespace BallonFEM
@@ -140,6 +141,8 @@ namespace BallonFEM
             m_tetra->vertices[i].m_pos = v_pos[i];
             m_tetra->vertices[i].m_velocity = f_elas[i];
         }
+
+        m_tetra->recomputeSurfaceNorm();
     }
 
 }

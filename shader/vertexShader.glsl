@@ -22,5 +22,7 @@ void main(){
 
     /* worldspace vec3 from vertex to camera */
     CameraDirection_worldspace = CameraPosition_worldspace - Position_worldspace;
+
+    Force = vForce;
 }
 

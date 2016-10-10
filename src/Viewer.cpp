@@ -12,7 +12,7 @@ using namespace Control;
 
 #include "shaderLoader.h"
 
-#include "TetraMesh.h"
+#include "Types.h"
 using namespace BallonFEM;
 
 int shadFlag;
@@ -23,7 +23,7 @@ int win_width = 600;
 int win_height = 400;
 
 /* GL render */
-enum {verVBO, norVBO, faceVBO, colorVBO, num_VBO};
+enum {verVBO, norVBO, colorVBO, faceVBO, num_VBO};
 GLuint VAO;
 GLuint VBO[num_VBO];
 std::vector<glm::vec3> vertex;

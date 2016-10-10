@@ -9,6 +9,7 @@
 
 #include "controls.h"
 #include "arcball.h"
+#include "ElasticModel.h"
 #include "Dynamic.h"
 
 extern int shadFlag;
@@ -20,6 +21,7 @@ ArcBall arcball;
 
 /* elastic engien */
 BallonFEM::Engine* engine;
+
 void mProcess()
 {
     engine->forceTest();

@@ -81,6 +81,9 @@ namespace BallonFEM{
             /* perform after read to compute surface and tetra properties */
             void precomputation();
 
+            /* recompute normals of surfaces when vertex position changes */
+            void recomputeSurfaceNorm();
+
             /* vectors of vertices */
             std::vector<Vertex> vertices;
 

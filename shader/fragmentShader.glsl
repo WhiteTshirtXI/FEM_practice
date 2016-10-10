@@ -22,9 +22,10 @@ void main()
 
     float cosAlpha = clamp(dot(n, l), 0, 1);
 
+    vec3 surf = vec3(c, 0, 0);
     vec3 amb = vec3(0.1);
-    vec3 light = vec3(0.4);
+    vec3 light = vec3(0.9);
 
-    vec3 sight = Color + amb + light * cosAlpha;
+    vec3 sight = (amb +  light * cosAlpha) ;
     color = vec4(sight, 0.4);
 }

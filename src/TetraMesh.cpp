@@ -127,6 +127,15 @@ void TetraMesh::precomputation()
 
 }
 
+void TetraMesh::recomputeSurfaceNorm()
+{
+    printf("Recompute normals of surfaces.\n");
+    for(FIter f = surface.begin(); f != surface.end(); f++)
+    {
+       f->precomputation(); 
+    }
+}
+
 int TetraMesh::read( const string& filename )
 {
     string inputFilename = filename;
