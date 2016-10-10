@@ -119,12 +119,16 @@ void TetraMesh::precomputation()
 
     printf("Total surface triangle %d \n", (int)surface.size());
 
-    printf("Precomputing properties of surfaces.\n");
-    for(FIter f = surface.begin(); f != surface.end(); f++)
-    {
-       f->precomputation(); 
-    }
+	recomputeSurfaceNorm();
+}
 
+void TetraMesh::recomputeSurfaceNorm()
+{
+	printf("Recompute properties of surfaces.\n");
+	for (FIter f = surface.begin(); f != surface.end(); f++)
+	{
+		f->precomputation();
+	}
 }
 
 int TetraMesh::read( const string& filename )

@@ -28,10 +28,10 @@ namespace BallonFEM
             void setLambda(float lambda){ m_lambda = lambda; };
 
             /* Piola P = \frac{ \partial{Energy} }{ \partial{F} }*/
-            virtual Mat3 Piola(Mat3 F);
+			virtual Mat3 Piola(Mat3 F){ return Mat3(0);  };
 
             /* Stress difference describe how Piola differs on F+dF */
-            virtual Mat3 StressDiff(Mat3 F, Mat3 dF);
+			virtual Mat3 StressDiff(Mat3 F, Mat3 dF){ return Mat3(0);  };
 
         protected:
             /* elastic parameters called Lame coefficients
