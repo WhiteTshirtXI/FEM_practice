@@ -15,7 +15,7 @@ using namespace Control;
 #include "Types.h"
 using namespace BallonFEM;
 
-int shadFlag;
+int shadFlag = 0;
 
 namespace View{
 /* window parameter */
@@ -209,7 +209,7 @@ void Viewer::draw_mesh()
 
     glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[colorVBO]);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[faceVBO]);
     glDrawElements(GL_TRIANGLES, faceID.size(), GL_UNSIGNED_INT, (void*)0);

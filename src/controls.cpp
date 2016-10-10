@@ -185,6 +185,7 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
     case GLFW_KEY_SPACE:
         // do some action
         mProcess();
+		break;
 	case GLFW_KEY_H:
 	case GLFW_KEY_UNKNOWN:
 		help();
