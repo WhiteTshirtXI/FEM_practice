@@ -165,8 +165,8 @@ namespace BallonFEM
         computeElasticForces(v_pos_next, f_elas); 
         for(size_t i = 0; i < m_size; i++)
             f_elas[i] += f_ext[i];
-        purifyFixedId(f_elas);
-        
+		purifyFixedId(f_elas);
+
         Vvec3 dv_pos( m_size, Vec3(0) );
 
         /*  conjugate gradient begin
@@ -177,31 +177,39 @@ namespace BallonFEM
         Vvec3 Ad( m_size, Vec3(0) );
         Vvec3 &x = dv_pos;
         Vvec3 &b = f_elas;
-
+		
+		float err_felas = vvec3Dot(f_elas, f_elas);
+		int count_iter = 0;		/* K dx = f iter count */
         /* while not converge f == 0, iterate */
-        while ( vvec3Dot(f_elas, f_elas) > 1e-5 )
+        while (  err_felas > 1e-5 )
         {
             /* debug use */
-            printf("Another K dv = f \n");
+            printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_felas);
 
             /* conjugate gradient method 
-             * solves K dv_pos = f_elas */
+             * solves K dv_pos = f_elas 
+			 * since here A == -K, the
+			 * eq becomes A dx = - f_elas
+			 */
 
             /* d0 = r0 = b - Ax0 */
             computeForceDifferentials(v_pos_next, dv_pos, r);
+			purifyFixedId(r);
             for(size_t i = 0; i < m_size; i++)
             {
-                r[i] = b[i] - r[i];
+                r[i] = - b[i] - r[i];
                 d[i] = r[i];
             }
 
+			int count_iter_cg = 0;		   /* conjugate gradient iter count */
             float riTri = vvec3Dot(r, r);  /* compute dot( r_i, r_i )*/
             while (riTri > 1e-5)
             {
                 /* debug use */
-                printf("Another iteration of CG , riTri = %f \n", riTri);
+                printf("%d iter: %d iteration of CG , riTri = %f \n", count_iter, count_iter_cg, riTri);
 
                 computeForceDifferentials(v_pos_next, d, Ad); /* compute A * d_i */
+				purifyFixedId(Ad);
                 float alpha = riTri / vvec3Dot(d, Ad);
 
                 for(size_t i = 0; i < m_size; i++)
@@ -220,7 +228,6 @@ namespace BallonFEM
             /* conjugate gradient end */
 
             /* update v_pos_next and f_elas */
-            purifyFixedId(dv_pos);
             for(size_t i = 0; i < m_size; i++)
                 v_pos_next[i] += dv_pos[i];
 
@@ -230,10 +237,10 @@ namespace BallonFEM
                 f_elas[i] += f_ext[i];
 			purifyFixedId(f_elas);
 
-			/* debug use */
-			printf("f_ext norm %f \n", vvec3Dot(f_elas, f_elas));
+			err_felas = vvec3Dot(f_elas, f_elas);
         }
 		/* debug use */
+		printf("f_ext norm %f \n", err_felas);
 		printf("finish solving \n");
     }
 
