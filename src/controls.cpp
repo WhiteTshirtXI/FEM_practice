@@ -38,11 +38,11 @@ void mProcess()
     /* specify fixed vertices */
     for (size_t i = 0; i < m_tetra->vertices.size(); i++)
     {
-        if (abs(m_tetra->vertices[i].m_pos.z)<0.5)
+        if (abs(m_tetra->vertices[i].m_cord.z)<0.5)
             m_tetra->vertices[i].m_fixed = true;
     }
     engine.labelFixedId();
-
+	
     /* compute deformation */
     engine.solveStaticPos();
     engine.stepToNext();
@@ -71,7 +71,7 @@ void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
-    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_linear(0.4, 0.4));
+    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_neohookean(0.4, 0.4));
 }
 
 /* update at each main loop */

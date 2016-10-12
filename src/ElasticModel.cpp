@@ -65,7 +65,7 @@ namespace BallonFEM
         Mat3 cF = transpose(inverse(F));
 
         Mat3 P = m_mu * F 
-                + ( m_lambda * log(determinant(F) - m_mu)) * cF;
+                + ( m_lambda * log(determinant(F)) - m_mu) * cF;
 
         return P;
     }
