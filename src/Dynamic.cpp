@@ -1,6 +1,8 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+
+#include "Types.h"
 #include "Dynamic.h"
 
 namespace BallonFEM
@@ -12,35 +14,65 @@ namespace BallonFEM
         m_model = model;
 
         /* initialize */
-        f_elas.assign       ( m_size, Vec3(0));
-        df_elas.assign      ( m_size, Vec3(0));
         v_pos.assign        ( m_size, Vec3(0));
         v_velocity.assign   ( m_size, Vec3(0));
+        f_ext.assign        ( m_size, Vec3(0));
         v_pos_next.assign   ( m_size, Vec3(0));
         v_velo_next.assign  ( m_size, Vec3(0));
 
         /* load data */
         for (size_t i = 0; i < m_size; i++)
         {
-            Vec3 &pos = tetra->vertices[i].m_pos;
-            v_pos[i] = pos;
-            v_pos_next[i] = pos;
+            Vertex &v = tetra->vertices[i];
 
-            Vec3 &velocity = tetra->vertices[i].m_velocity;
-            v_velocity[i] = velocity;
-            v_velo_next[i] = velocity;
+            v_pos[i] = v.m_pos;
+
+            v_velocity[i] = v.m_velocity;
+
+            f_ext[i] = v.m_f_ext; 
         }
     }
+
+    void Engine::labelFixedId()
+    {
+        fixed_id.clear();
+        for (size_t i = 0; i < m_size; i++)
+        {
+            if (m_tetra->vertices[i].m_fixed)
+                fixed_id.push_back(i);
+        }
+    }
+
+	void Engine::inputData()
+	{
+		for (size_t i = 0; i < m_size; i++)
+		{
+			Vertex &v = m_tetra->vertices[i];
+			v_pos[i] = v.m_pos;
+			v_velocity[i] = v.m_velocity;
+			f_ext[i] = v.m_f_ext;
+		}
+	}
 
     void Engine::outputData()
     {
         for (size_t i = 0; i < m_size; i++)
         {
-            m_tetra->vertices[i].m_pos = v_pos[i];
-            m_tetra->vertices[i].m_velocity = v_velocity[i];
+			Vertex &v = m_tetra->vertices[i];
+            v.m_pos = v_pos[i];
+            v.m_velocity = v_velocity[i];
         }
     }
 
+    void Engine::stepToNext()
+    {
+        for (size_t i = 0; i < m_size; i++)
+        {
+            v_pos[i] = v_pos_next[i];
+            v_velocity[i] = v_velo_next[i];
+        }
+    }
+    
     void Engine::computeElasticForces(Vvec3 &pos, Vvec3 &f_elas)
     {
         f_elas.assign( m_size, Vec3(0.0));
@@ -122,7 +154,7 @@ namespace BallonFEM
     {
     }
 
-    void solveStaticPos()
+    void Engine::solveStaticPos()
     {
         /* initialize v_pos_next */
         for(size_t i = 0; i < m_size; i++)
@@ -133,6 +165,7 @@ namespace BallonFEM
         computeElasticForces(v_pos_next, f_elas); 
         for(size_t i = 0; i < m_size; i++)
             f_elas[i] += f_ext[i];
+        purifyFixedId(f_elas);
         
         Vvec3 dv_pos( m_size, Vec3(0) );
 
@@ -148,10 +181,13 @@ namespace BallonFEM
         /* while not converge f == 0, iterate */
         while ( vvec3Dot(f_elas, f_elas) > 1e-5 )
         {
+            /* debug use */
+            printf("Another K dv = f \n");
+
             /* conjugate gradient method 
              * solves K dv_pos = f_elas */
 
-            /* d0 = r0 = b - Ax0*/
+            /* d0 = r0 = b - Ax0 */
             computeForceDifferentials(v_pos_next, dv_pos, r);
             for(size_t i = 0; i < m_size; i++)
             {
@@ -162,6 +198,9 @@ namespace BallonFEM
             float riTri = vvec3Dot(r, r);  /* compute dot( r_i, r_i )*/
             while (riTri > 1e-5)
             {
+                /* debug use */
+                printf("Another iteration of CG , riTri = %f \n", riTri);
+
                 computeForceDifferentials(v_pos_next, d, Ad); /* compute A * d_i */
                 float alpha = riTri / vvec3Dot(d, Ad);
 
@@ -181,6 +220,7 @@ namespace BallonFEM
             /* conjugate gradient end */
 
             /* update v_pos_next and f_elas */
+            purifyFixedId(dv_pos);
             for(size_t i = 0; i < m_size; i++)
                 v_pos_next[i] += dv_pos[i];
 
@@ -188,8 +228,13 @@ namespace BallonFEM
             computeElasticForces(v_pos_next, f_elas); 
             for(size_t i = 0; i < m_size; i++)
                 f_elas[i] += f_ext[i];
-        }
+			purifyFixedId(f_elas);
 
+			/* debug use */
+			printf("f_ext norm %f \n", vvec3Dot(f_elas, f_elas));
+        }
+		/* debug use */
+		printf("finish solving \n");
     }
 
     void Engine::forceTest()
@@ -200,7 +245,7 @@ namespace BallonFEM
         /* compute nodal force for each vertex */
         computeElasticForces(v_pos, f_elas);
 
-        /* coutput data */
+        /* output data */
         for (size_t i = 0; i < m_size; i++)
         {
             m_tetra->vertices[i].m_pos = v_pos[i];

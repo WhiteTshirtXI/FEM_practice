@@ -4,10 +4,12 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "Types.h"
+
 namespace Control{
 
 /* controler initialize */
-void control_init(GLFWwindow* window);
+void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra);
 
 /* runtime update */
 void computeMatrixFromInputs();

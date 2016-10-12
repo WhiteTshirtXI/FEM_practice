@@ -17,10 +17,10 @@ namespace BallonFEM{
             Vertex();
 
             Vertex( Vec3 cord ): 
-                m_cord( cord ), m_pos( cord ), m_velocity( Vec3(0) ) {};
+                m_cord( cord ), m_pos( cord ) {};
 
             Vertex( Vec3 cord, Vec3 pos ): 
-                m_cord( cord ), m_pos( pos ), m_velocity( Vec3(0) ){};
+                m_cord( cord ), m_pos( pos ) {};
 
             /* position in material coordinate */
             Vec3 m_cord;
@@ -29,13 +29,16 @@ namespace BallonFEM{
             Vec3 m_pos;
 
             /* velocity in world space */
-            Vec3 m_velocity;
+            Vec3 m_velocity = Vec3(0);
+
+            /* exterio force */
+            Vec3 m_f_ext = Vec3(0);
 
             /* index in tetramesh vertex vector */
             int id;
 
             /* if is fixed */
-            bool m_fixed;
+            bool m_fixed = false;
     };
 
     class Face

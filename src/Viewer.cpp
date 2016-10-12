@@ -15,6 +15,8 @@ using namespace Control;
 #include "Types.h"
 using namespace BallonFEM;
 
+int shadFlag = 0;
+
 namespace View{
 /* window parameter */
 int win_width = 600;
@@ -100,7 +102,7 @@ void Viewer::init_openGL()
     }
 
     /* set interactive callback */
-    control_init(mainWindow);
+    control_init(mainWindow, mesh);
     glfwSetKeyCallback(mainWindow, keyBoard);
     glfwSetMouseButtonCallback(mainWindow, mouseClick);
     glfwSetCursorPosCallback(mainWindow, mouseMove);
@@ -176,6 +178,13 @@ void Viewer::buffModel()
 /*! draw mesh */
 void Viewer::draw_mesh()
 {
+    /* if any changes happen to tetra */
+    if (shadFlag != 0)
+    {
+        buffModel();
+        shadFlag = 0;
+    }
+
     glUseProgram(ProgramID);
     glBindVertexArray(VAO);
 

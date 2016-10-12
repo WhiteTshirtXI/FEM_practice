@@ -17,12 +17,20 @@ namespace BallonFEM
 
             void setModel(ElasticModel* model){ m_model = model; };
 
+            /* re-exame vertices label to check if they are fixed */
+            void labelFixedId();
+
+			/* input data v_pos, v_velocity and f_ext */
+			void inputData();
+
             /* output v_pos and v_velocity data to tetra mesh */
             void outputData();
 
+            /* copy v_pos_next, to v_pos*/
+            void stepToNext();
+
             /* solve v_pos and v_velocity for next timestep */
             void solveNextTimestep(float timestep);
-
 
             /* solve v_pos for quasistatic simulation or static 
              * output static position to v_pos_next 
@@ -47,6 +55,9 @@ namespace BallonFEM
             Vvec3 v_pos;
             Vvec3 v_velocity;
             Vvec3 f_ext;
+
+            /* constrains */
+            std::vector<size_t> fixed_id;
             
             /* position and velocity for next time step, need to be solved
              * by backward Euler method
@@ -59,6 +70,13 @@ namespace BallonFEM
 
             /* compute delta elastic force when given position pos and disturbe dpos */
             void computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos, Vvec3 &df_elas);
+
+            /* make data of fixed id zero */
+            void purifyFixedId(Vvec3& a)
+            {
+                for (size_t i = 0; i < fixed_id.size(); i++)
+                    a[fixed_id[i]] = Vec3(0);
+            }
 
             /* compute dot */
             float vvec3Dot(const Vvec3& a, const Vvec3& b)

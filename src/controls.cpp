@@ -10,10 +10,46 @@
 #include "controls.h"
 #include "arcball.h"
 
+#include "Types.h"
+#include "Dynamic.h"
+
+extern int shadFlag;
+
 namespace Control{
 
 /* arcball object */
 ArcBall arcball;
+
+/* Engine */
+BallonFEM::Engine engine;
+BallonFEM::TetraMesh* m_tetra;
+
+/* Do something to tetra mesh */
+void mProcess()
+{
+    /* add force to tetra mesh */
+    for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+    {
+        BallonFEM::Vertex &v = m_tetra->vertices[i];
+		v.m_f_ext = 0.1f * BallonFEM::Vec3(v.m_cord.z, 0, 0);
+    }
+	engine.inputData();
+
+    /* specify fixed vertices */
+    for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+    {
+        if (abs(m_tetra->vertices[i].m_pos.z)<0.5)
+            m_tetra->vertices[i].m_fixed = true;
+    }
+    engine.labelFixedId();
+
+    /* compute deformation */
+    engine.solveStaticPos();
+    engine.stepToNext();
+    engine.outputData();
+
+    shadFlag = 1;
+}
 
 /* rotation quaternion and translation vector for the object */
 glm::dquat  ObjRot(0, 0, 1, 0);
@@ -31,9 +67,11 @@ glm::mat4 View;
 glm::mat4 Projection;
 
 /* controler initialize */
-void control_init(GLFWwindow* window)
+void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
+    m_tetra = tetra;
+    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_linear(0.4, 0.4));
 }
 
 /* update at each main loop */
@@ -168,6 +206,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		//Wireframe mode
 		glPolygonMode(GL_FRONT, GL_LINE);
 		break;
+    case GLFW_KEY_SPACE:
+        mProcess();
+        break;
 	case GLFW_KEY_H:
 	case GLFW_KEY_UNKNOWN:
 		help();
