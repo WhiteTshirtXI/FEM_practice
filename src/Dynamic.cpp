@@ -18,7 +18,6 @@ namespace BallonFEM
         v_velocity.assign   ( m_size, Vec3(0));
         v_pos_next.assign   ( m_size, Vec3(0));
         v_velo_next.assign  ( m_size, Vec3(0));
-        dv_pos_next.assign  ( m_size, Vec3(0));
 
         /* load data */
         for (size_t i = 0; i < m_size; i++)
@@ -42,7 +41,7 @@ namespace BallonFEM
         }
     }
 
-    void Engine::computeElasticForces(Vvec3 &pos)
+    void Engine::computeElasticForces(Vvec3 &pos, Vvec3 &f_elas)
     {
         f_elas.assign( m_size, Vec3(0.0));
 
@@ -74,7 +73,7 @@ namespace BallonFEM
         }
     }
 
-    void Engine::computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos)
+    void Engine::computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos, Vvec3 &df_elas)
     {
         df_elas.assign( m_size, Vec3(0.0));
 
@@ -123,16 +122,83 @@ namespace BallonFEM
     {
     }
 
-    void Engine::forceTest()
+    void solveStaticPos()
     {
-        /* manually deformation along x axis */
-        for (size_t i = 0; i < m_size; i++)
+        /* initialize v_pos_next */
+        for(size_t i = 0; i < m_size; i++)
+            v_pos_next[i] = v_pos[i];
+
+        /* initialize temp variable for iterative implicit solving */
+        Vvec3 f_elas;
+        computeElasticForces(v_pos_next, f_elas); 
+        for(size_t i = 0; i < m_size; i++)
+            f_elas[i] += f_ext[i];
+        
+        Vvec3 dv_pos( m_size, Vec3(0) );
+
+        /*  conjugate gradient begin
+         *  initialize temp variable
+         */
+        Vvec3 d( m_size, Vec3(0) );
+        Vvec3 r( m_size, Vec3(0) );
+        Vvec3 Ad( m_size, Vec3(0) );
+        Vvec3 &x = dv_pos;
+        Vvec3 &b = f_elas;
+
+        /* while not converge f == 0, iterate */
+        while ( vvec3Dot(f_elas, f_elas) > 1e-5 )
         {
-            v_pos[i].x += v_pos[i].z * 0.01f;
+            /* conjugate gradient method 
+             * solves K dv_pos = f_elas */
+
+            /* d0 = r0 = b - Ax0*/
+            computeForceDifferentials(v_pos_next, dv_pos, r);
+            for(size_t i = 0; i < m_size; i++)
+            {
+                r[i] = b[i] - r[i];
+                d[i] = r[i];
+            }
+
+            float riTri = vvec3Dot(r, r);  /* compute dot( r_i, r_i )*/
+            while (riTri > 1e-5)
+            {
+                computeForceDifferentials(v_pos_next, d, Ad); /* compute A * d_i */
+                float alpha = riTri / vvec3Dot(d, Ad);
+
+                for(size_t i = 0; i < m_size; i++)
+                {
+                    x[i] += alpha * d[i];       /* update x */
+                    r[i] -= alpha * Ad[i];      /* update r */
+                }
+
+                float riTri_next = vvec3Dot(r, r);  /* compute dot( r_i+1, r_i+1 )*/
+                float beta = riTri_next / riTri; /* compute beta */
+                riTri = riTri_next;             /* update riTri */
+
+                for(size_t i = 0; i < m_size; i++)
+                    d[i] += r[i] + beta * d[i]; /* update d */
+            }
+            /* conjugate gradient end */
+
+            /* update v_pos_next and f_elas */
+            for(size_t i = 0; i < m_size; i++)
+                v_pos_next[i] += dv_pos[i];
+
+            /* update f_elas */
+            computeElasticForces(v_pos_next, f_elas); 
+            for(size_t i = 0; i < m_size; i++)
+                f_elas[i] += f_ext[i];
         }
 
+    }
+
+    void Engine::forceTest()
+    {
+        Vvec3 f_elas;
+        f_elas.assign( m_size, Vec3(0) );
+
         /* compute nodal force for each vertex */
-        computeElasticForces(v_pos);
+        computeElasticForces(v_pos, f_elas);
 
         /* coutput data */
         for (size_t i = 0; i < m_size; i++)

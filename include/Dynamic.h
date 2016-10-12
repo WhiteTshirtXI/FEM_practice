@@ -23,6 +23,12 @@ namespace BallonFEM
             /* solve v_pos and v_velocity for next timestep */
             void solveNextTimestep(float timestep);
 
+
+            /* solve v_pos for quasistatic simulation or static 
+             * output static position to v_pos_next 
+             */
+            void solveStaticPos();
+
             /* test the comuteElasticForces, deforme v_pos and output f_ela 
              * to v_velocity
              * */
@@ -37,19 +43,10 @@ namespace BallonFEM
 
             typedef std::vector<Vec3> Vvec3;
             
-            /* elastic force on pos, 
-             * output of computeElasticForces(Vvec3 &pos) 
-             * */
-            Vvec3 f_elas;
-
-            /* delta elastic force on pos when disturbed by dpos,
-             * output of computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos)
-             * */
-            Vvec3 df_elas;
-
             /* current position and current velocity */
             Vvec3 v_pos;
             Vvec3 v_velocity;
+            Vvec3 f_ext;
             
             /* position and velocity for next time step, need to be solved
              * by backward Euler method
@@ -57,16 +54,20 @@ namespace BallonFEM
             Vvec3 v_pos_next;
             Vvec3 v_velo_next;
 
-            /* delta pos_next when iterating to solve position for next time step
-             * v_pos_next(k+1) = v_pos_next(k) + dv_pos_next 
-             * */
-            Vvec3 dv_pos_next;
+            /* compute elastic force when given positions pos*/
+            void computeElasticForces(Vvec3 &pos, Vvec3 &f_elas);
 
-            /* compute force when given positions pos*/
-            void computeElasticForces(Vvec3 &pos);
+            /* compute delta elastic force when given position pos and disturbe dpos */
+            void computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos, Vvec3 &df_elas);
 
-            /* compute delta force when given position pos and disturbe dpos */
-            void computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos);
+            /* compute dot */
+            float vvec3Dot(const Vvec3& a, const Vvec3& b)
+            {
+                float count = 0;
+                for (size_t i = 0; i < m_size; i++)
+                    count += glm::dot( a[i], b[i] );
+                return count;
+            }
     };
 
 }
