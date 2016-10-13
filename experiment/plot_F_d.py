@@ -6,7 +6,7 @@ def sepLine(line):
     return list(map(lambda x: float(x), l))
 
 if __name__=='__main__':
-    data = open('cylinder.txt').readlines()
+    data = open('cylinder_refine.txt').readlines()
 
     d_list = []
     f_list = []
@@ -22,9 +22,11 @@ if __name__=='__main__':
     A = np.vstack([d_list, np.ones(len(d_list))]).T
     m, c = np.linalg.lstsq(A, f_list)[0]
 
-    print("Young's modulus: %f", m*4.0/np.pi)
+    print("Young's modulus: %f\n" % (m*4.0/np.pi) )
 
     plt.plot(d_list, f_list, 'o')
+
+    plt.title("Resistance Force when Cylinder Stretched Along Z+ (L = 4.0m, R = 1.0m)")
     plt.xlabel("displacement / m")
     plt.ylabel("Force / N")
     plt.show()

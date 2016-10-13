@@ -155,7 +155,7 @@ namespace BallonFEM
     }
 
 
-	#define CONVERGE_ERROR_RATE 0.01
+	#define CONVERGE_ERROR_RATE 1e-4
     void Engine::solveStaticPos()
     {
         /* initialize v_pos_next */
@@ -184,7 +184,7 @@ namespace BallonFEM
 		double err_begin = err_felas;
 		int count_iter = 0;		/* K dx = f iter count */
         /* while not converge f == 0, iterate */
-		while ((err_felas > CONVERGE_ERROR_RATE * err_begin) && (err_felas > 1e-5))
+		while ((err_felas > CONVERGE_ERROR_RATE * err_begin) && (err_felas > 1e-10))
         {
             /* debug use */
 			count_iter++;

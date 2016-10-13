@@ -25,6 +25,13 @@ BallonFEM::Engine engine;
 BallonFEM::TetraMesh* m_tetra;
 
 static double force = 0.01;
+static int modified = 0;
+void mAddParameter()
+{
+	force += 0.01;
+	modified = 0;
+}
+
 /* Do something to tetra mesh */
 void mProcess()
 {
@@ -53,7 +60,6 @@ void mProcess()
     shadFlag = 1;
 }
 
-static int modified = 0;
 void mMeasure()
 {
 	BallonFEM::Vec3 dir(0, 0, force);
@@ -98,8 +104,6 @@ void mMeasure()
 	printf("Young's modulus = %f \n", 4 * f.z / (3.1415926 * dir.z));
 
 	/* re draw */
-	modified = 0;
-	force += 0.01;
 	shadFlag = 1;
 }
 
@@ -270,6 +274,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
         break;
 	case GLFW_KEY_M:
 		mMeasure();
+		break;
+	case GLFW_KEY_A:
+		mAddParameter();
 		break;
 	case GLFW_KEY_R:
 		mReset();
