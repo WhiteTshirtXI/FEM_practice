@@ -106,6 +106,7 @@ void Viewer::init_openGL()
     glfwSetKeyCallback(mainWindow, keyBoard);
     glfwSetMouseButtonCallback(mainWindow, mouseClick);
     glfwSetCursorPosCallback(mainWindow, mouseMove);
+	glfwSetScrollCallback(mainWindow, mouseScroll);
     glfwSetWindowSizeCallback(mainWindow, reshape);
 
 }

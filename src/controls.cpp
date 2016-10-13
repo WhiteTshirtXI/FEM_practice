@@ -124,12 +124,6 @@ void  mouseClick(GLFWwindow* window, int button, int action, int mods) {
 		arcball.reset(win_width, win_height, xpos - win_width / 2, win_height - ypos - win_height / 2);
 	}
 
-	if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS) {
-		startx = xpos;
-		starty = ypos;
-		gButton = GLFW_MOUSE_BUTTON_MIDDLE;
-	}
-
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 		startx = xpos;
 		starty = ypos;
@@ -157,24 +151,28 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos)
 	}
 
 	/*xy translation */
-	if (gButton == GLFW_MOUSE_BUTTON_MIDDLE)
+	if (gButton == GLFW_MOUSE_BUTTON_RIGHT)
 	{
-		double scale = 10. / win_height;
+		double scale = 2. / win_height;
 		trans = glm::vec3(scale*(xpos - startx), scale*(starty - ypos), 0);
 		startx = xpos;
 		starty = ypos;
-		camera = camera + trans;
+		camera = camera - trans;
 	}
 
 	/* zoom in and out */
 	if (gButton == GLFW_MOUSE_BUTTON_RIGHT) {
-		double scale = 10. / win_height;
-		trans = glm::vec3(0, 0, scale*(starty - ypos));
-		startx = xpos;
-		starty = ypos;
-		camera = camera + trans;
+
 	}
 
+}
+
+/* mouse middle scroll call back */
+void mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+	double scale = 30. / win_height;
+	glm::vec3  trans = glm::vec3(0, 0, - scale * yoffset);
+	camera = camera + trans;
 }
 
 /*! helper function to remind the user about commands, hot keys */
