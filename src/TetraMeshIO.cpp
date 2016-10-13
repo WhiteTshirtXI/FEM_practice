@@ -98,7 +98,11 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
         for(size_t j = 0; j < 4; j++)
         {
             /* stack overflow */
-            if (indeces[j] - indexBias > v_size) return 1;
+			if (indeces[j] - indexBias > v_size)
+			{
+				printf(" tetra index out of vertices range.\n");
+				return 1;
+			}
             
             t.v[j] = &tetra.vertices[ indeces[j] - indexBias ];
         }

@@ -184,7 +184,7 @@ namespace BallonFEM
 		double err_begin = err_felas;
 		int count_iter = 0;		/* K dx = f iter count */
         /* while not converge f == 0, iterate */
-        while (  err_felas > CONVERGE_ERROR_RATE * err_begin )
+		while ((err_felas > CONVERGE_ERROR_RATE * err_begin) && (err_felas > 1e-5))
         {
             /* debug use */
 			count_iter++;

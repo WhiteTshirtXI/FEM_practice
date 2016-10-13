@@ -32,14 +32,14 @@ void mProcess()
     for (size_t i = 0; i < m_tetra->vertices.size(); i++)
     {
         BallonFEM::Vertex &v = m_tetra->vertices[i];
-		v.m_f_ext = - force * BallonFEM::Vec3(0, 0, v.m_cord.z);
+		v.m_pos += force * BallonFEM::Vec3(0, 0, v.m_cord.z);
     }
 	engine.inputData();
 
     /* specify fixed vertices */
     for (size_t i = 0; i < m_tetra->vertices.size(); i++)
     {
-        if ( m_tetra->vertices[i].m_cord.z < - 0.5)
+        if ( abs(abs(m_tetra->vertices[i].m_cord.z)-2) < 1e-2)
             m_tetra->vertices[i].m_fixed = true;
     }
     engine.labelFixedId();
@@ -53,6 +53,56 @@ void mProcess()
     shadFlag = 1;
 }
 
+static int modified = 0;
+void mMeasure()
+{
+	BallonFEM::Vec3 dir(0, 0, force);
+	/* add displacement to tetra mesh */
+	if (modified == 0){
+		for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+		{
+			BallonFEM::Vertex &v = m_tetra->vertices[i];
+			if (abs(v.m_cord.z - 2) < 1e-2)
+				v.m_pos = v.m_cord + dir;
+		}
+		engine.inputData();
+		/* specify fixed vertices */
+		for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+		{
+			/* top and bottom faces */
+			if (abs(abs(m_tetra->vertices[i].m_cord.z) - 2) < 1e-2)
+				m_tetra->vertices[i].m_fixed = true;
+		}
+		engine.labelFixedId();
+
+		modified = 1;
+	}
+
+	/* compute deformation and forces */
+	engine.solveStaticPos();
+	engine.stepToNext();
+	engine.outputData();
+	engine.forceTest();
+
+	/* calculate total force */
+	/* watch the force on bottom plane is equally*/
+	BallonFEM::Vec3 f(0.0);
+	for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+	{
+		BallonFEM::Vertex &v = m_tetra->vertices[i];
+		if (abs(v.m_pos.z + 2) < 1e-2)
+			f += v.m_velocity;
+	}
+	printf("Displacement of Z = 2 plane: %f %f %f\n", dir.x, dir.y, dir.z);
+	printf("Total Force f = %f, %f, %f \n", f.x, f.y, f.z);
+	printf("Young's modulus = %f \n", 4 * f.z / (3.1415926 * dir.z));
+
+	/* re draw */
+	modified = 0;
+	force += 0.01;
+	shadFlag = 1;
+}
+
 /* Reset the tetra mesh to original state */
 void mReset()
 {
@@ -63,6 +113,7 @@ void mReset()
 		v.m_f_ext = BallonFEM::Vec3(0);
 	}
 	force = 0;
+	modified = 0;
 	shadFlag = 1;
 }
 
@@ -131,16 +182,16 @@ void  mouseClick(GLFWwindow* window, int button, int action, int mods) {
 
     gState = action;
     
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		gButton = GLFW_MOUSE_BUTTON_RIGHT;
+		gButton = GLFW_MOUSE_BUTTON_LEFT;
 		arcball.reset(win_width, win_height, xpos - win_width / 2, win_height - ypos - win_height / 2);
 	}
 
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 		startx = xpos;
 		starty = ypos;
-		gButton = GLFW_MOUSE_BUTTON_LEFT;
+		gButton = GLFW_MOUSE_BUTTON_RIGHT;
 	}
 	return;
 }
@@ -157,16 +208,16 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos)
     }
 
 	/* rotation, call arcball */
-	if (gButton == GLFW_MOUSE_BUTTON_RIGHT)
+	if (gButton == GLFW_MOUSE_BUTTON_LEFT)
 	{
 		rot = arcball.update(xpos - win_width / 2, win_height - ypos - win_height / 2);
 		ObjRot = rot * ObjRot;
 	}
 
 	/*xy translation */
-	if (gButton == GLFW_MOUSE_BUTTON_LEFT)
+	if (gButton == GLFW_MOUSE_BUTTON_RIGHT)
 	{
-		double scale = 2. / win_height;
+		double scale = abs( camera.z / win_height );
 		trans = glm::vec3(scale*(xpos - startx), scale*(starty - ypos), 0);
 		startx = xpos;
 		starty = ypos;
@@ -178,7 +229,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos)
 /* mouse middle scroll call back */
 void mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
 {
-	double scale = 40. / win_height;
+	double scale = abs(40. * camera.z / win_height);
 	glm::vec3  trans = glm::vec3(0, 0, - scale * yoffset);
 	camera = camera + trans;
 }
@@ -217,6 +268,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
     case GLFW_KEY_SPACE:
         mProcess();
         break;
+	case GLFW_KEY_M:
+		mMeasure();
+		break;
 	case GLFW_KEY_R:
 		mReset();
 		break;
