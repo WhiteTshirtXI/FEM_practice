@@ -5,6 +5,7 @@
 # v for vertex
 # t for tetrahedron
 
+import re
 import argparse
 
 def read_vertex(fh):
@@ -17,14 +18,11 @@ def read_vertex(fh):
 
     for l in fh:
 
-        print(l)
-
         if l.startswith("#"):
             continue
 
         v = l.split(' ')
         v = list(filter(lambda x: x, v))
-        print(v)
         v = v[1:4]
         vertex.append(v)
 
@@ -65,7 +63,8 @@ if __name__=='__main__':
     print("vertex number: %d" % len(vertex))
     print("tetra number: %d" % len(tetra))
 
-    fh = open(args.file + '.obj', 'w')
+    objname = re.split("\W", args.file)[-1]
+    fh = open(objname + '.obj', 'w')
 
     for v in vertex:
         fh.write('v %s %s %s\n' % (v[0], v[1], v[2]))
