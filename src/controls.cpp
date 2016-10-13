@@ -32,7 +32,7 @@ void mProcess()
     for (size_t i = 0; i < m_tetra->vertices.size(); i++)
     {
         BallonFEM::Vertex &v = m_tetra->vertices[i];
-		v.m_f_ext = force * BallonFEM::Vec3(0, 0, v.m_cord.z);
+		v.m_f_ext = - force * BallonFEM::Vec3(0, 0, v.m_cord.z);
     }
 	engine.inputData();
 
@@ -53,9 +53,22 @@ void mProcess()
     shadFlag = 1;
 }
 
+/* Reset the tetra mesh to original state */
+void mReset()
+{
+	for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+	{
+		BallonFEM::Vertex &v = m_tetra->vertices[i];
+		v.m_pos = v.m_cord;
+		v.m_f_ext = BallonFEM::Vec3(0);
+	}
+	force = 0;
+	shadFlag = 1;
+}
+
 /* rotation quaternion and translation vector for the object */
 glm::dquat  ObjRot(1, 0, 0, 0);
-glm::vec3   camera(0, 0, 1);
+glm::vec3   camera(0, 0, 2);
 
 /* inner variables */
 int win_width, win_height;
@@ -73,7 +86,7 @@ void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
-    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_linear(0.4, 0.4));
+    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_StVK(0.4, 0.4));
 }
 
 /* update at each main loop */
@@ -118,16 +131,16 @@ void  mouseClick(GLFWwindow* window, int button, int action, int mods) {
 
     gState = action;
     
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
 	{
-		gButton = GLFW_MOUSE_BUTTON_LEFT;
+		gButton = GLFW_MOUSE_BUTTON_RIGHT;
 		arcball.reset(win_width, win_height, xpos - win_width / 2, win_height - ypos - win_height / 2);
 	}
 
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		startx = xpos;
 		starty = ypos;
-		gButton = GLFW_MOUSE_BUTTON_RIGHT;
+		gButton = GLFW_MOUSE_BUTTON_LEFT;
 	}
 	return;
 }
@@ -144,14 +157,14 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos)
     }
 
 	/* rotation, call arcball */
-	if (gButton == GLFW_MOUSE_BUTTON_LEFT)
+	if (gButton == GLFW_MOUSE_BUTTON_RIGHT)
 	{
 		rot = arcball.update(xpos - win_width / 2, win_height - ypos - win_height / 2);
 		ObjRot = rot * ObjRot;
 	}
 
 	/*xy translation */
-	if (gButton == GLFW_MOUSE_BUTTON_RIGHT)
+	if (gButton == GLFW_MOUSE_BUTTON_LEFT)
 	{
 		double scale = 2. / win_height;
 		trans = glm::vec3(scale*(xpos - startx), scale*(starty - ypos), 0);
@@ -160,17 +173,12 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos)
 		camera = camera - trans;
 	}
 
-	/* zoom in and out */
-	if (gButton == GLFW_MOUSE_BUTTON_RIGHT) {
-
-	}
-
 }
 
 /* mouse middle scroll call back */
 void mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
 {
-	double scale = 30. / win_height;
+	double scale = 40. / win_height;
 	glm::vec3  trans = glm::vec3(0, 0, - scale * yoffset);
 	camera = camera + trans;
 }
@@ -209,6 +217,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
     case GLFW_KEY_SPACE:
         mProcess();
         break;
+	case GLFW_KEY_R:
+		mReset();
+		break;
 	case GLFW_KEY_H:
 	case GLFW_KEY_UNKNOWN:
 		help();
