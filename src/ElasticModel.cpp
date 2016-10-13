@@ -17,7 +17,7 @@ namespace BallonFEM
 	{
 		Mat3 I = Mat3(1.0);
 
-        Mat3 P = m_mu * ( F + transpose(F) -  2.0f * I ) 
+        Mat3 P = m_mu * ( F + transpose(F) -  2.0 * I ) 
                  + m_lambda * trace(F - I) * I;
 
         return P;
@@ -38,7 +38,7 @@ namespace BallonFEM
 	Mat3 Elastic_StVK::Piola(Mat3 F)
 	{
 		Mat3 I = Mat3(1.0);
-		Mat3 E = 0.5f * (transpose(F) * F - I);
+		Mat3 E = 0.5 * (transpose(F) * F - I);
 
 	    Mat3 P = F * ( 2 * m_mu * E + m_lambda * trace(E) * I);
 
@@ -48,8 +48,8 @@ namespace BallonFEM
     Mat3 Elastic_StVK::StressDiff(Mat3 F, Mat3 dF)
     {
         Mat3 I = Mat3(1.0);
-		Mat3 E = 0.5f * (transpose(F) * F - I);
-        Mat3 dE = 0.5f * (transpose(dF) * F + transpose(F) * dF);
+		Mat3 E = 0.5 * (transpose(F) * F - I);
+        Mat3 dE = 0.5 * (transpose(dF) * F + transpose(F) * dF);
 
         Mat3 dP = dF * ( 2 * m_mu * E + m_lambda * trace(E) * I )
                 + F * ( 2 * m_mu * dE + m_lambda * trace(dE) * I );

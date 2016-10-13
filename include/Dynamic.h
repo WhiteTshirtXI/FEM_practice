@@ -30,7 +30,7 @@ namespace BallonFEM
             void stepToNext();
 
             /* solve v_pos and v_velocity for next timestep */
-            void solveNextTimestep(float timestep);
+            void solveNextTimestep(double timestep);
 
             /* solve v_pos for quasistatic simulation or static 
              * output static position to v_pos_next 

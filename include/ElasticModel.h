@@ -17,15 +17,15 @@ namespace BallonFEM
 
             ElasticModel(){};
 
-            ElasticModel(float mu, float lambda): 
+            ElasticModel(double mu, double lambda): 
                 m_mu( mu ), m_lambda( lambda ) {};
 
             ElasticModel(const ElasticModel& other):
                 m_mu( other.m_mu ), m_lambda( other.m_lambda ) {};
 
-            void setMu(float mu){ m_mu = mu; };
+            void setMu(double mu){ m_mu = mu; };
 
-            void setLambda(float lambda){ m_lambda = lambda; };
+            void setLambda(double lambda){ m_lambda = lambda; };
 
             /* Piola P = \frac{ \partial{Energy} }{ \partial{F} }*/
 			virtual Mat3 Piola(Mat3 F){ return Mat3(0);  };
@@ -39,8 +39,8 @@ namespace BallonFEM
              * lambda = k * v / [(1+v)*(1-2*v)]
              * k is young's modulus and v is Poisson's ratio
              * */
-            float m_mu;
-            float m_lambda;
+            double m_mu;
+            double m_lambda;
     };
 
 
@@ -54,7 +54,7 @@ namespace BallonFEM
 
             Elastic_linear(){};
 
-            Elastic_linear(float mu, float lambda):
+            Elastic_linear(double mu, double lambda):
                 ElasticModel(mu, lambda){};
 
             Elastic_linear(const Elastic_linear& other):
@@ -77,7 +77,7 @@ namespace BallonFEM
 
             Elastic_StVK(){};
 
-            Elastic_StVK(float mu, float lambda):
+            Elastic_StVK(double mu, double lambda):
                 ElasticModel(mu, lambda){};
 
             Elastic_StVK(const Elastic_StVK& other):
@@ -106,7 +106,7 @@ namespace BallonFEM
 
             Elastic_neohookean(){};
 
-            Elastic_neohookean(float mu, float lambda):
+            Elastic_neohookean(double mu, double lambda):
                 ElasticModel(mu, lambda){};
 
             Elastic_neohookean(const Elastic_neohookean& other):

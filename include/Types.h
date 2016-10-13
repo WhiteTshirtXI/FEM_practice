@@ -15,8 +15,8 @@ namespace BallonFEM
     class TetraMesh;
 
 	/* some definition */
-	typedef glm::vec3	Vec3;
-	typedef glm::mat3	Mat3;
+	typedef glm::dvec3	Vec3;
+	typedef glm::dmat3	Mat3;
     typedef glm::ivec3	iVec3;
     typedef glm::ivec4	iVec4;
 

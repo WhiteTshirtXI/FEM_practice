@@ -66,7 +66,7 @@ namespace BallonFEM{
 
             /* geometry property */
             Mat3 Bm;    /* reverse matrix of [r1-r4; r2-r4; r3-r4] */
-            float W;   /* volume of tetrahedron */
+            double W;   /* volume of tetrahedron */
 
             /* topology property */
             pVertex v[4];

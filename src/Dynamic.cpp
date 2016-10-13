@@ -150,10 +150,12 @@ namespace BallonFEM
         }
     }
 
-    void Engine::solveNextTimestep(float timestep)
+    void Engine::solveNextTimestep(double timestep)
     {
     }
 
+
+	#define CONVERGE_ERROR_RATE 0.01
     void Engine::solveStaticPos()
     {
         /* initialize v_pos_next */
@@ -178,12 +180,14 @@ namespace BallonFEM
         Vvec3 &x = dv_pos;
         Vvec3 &b = f_elas;
 		
-		float err_felas = vvec3Dot(f_elas, f_elas);
+		double err_felas = vvec3Dot(f_elas, f_elas);
+		double err_begin = err_felas;
 		int count_iter = 0;		/* K dx = f iter count */
         /* while not converge f == 0, iterate */
-        while (  err_felas > 1e-5 )
+        while (  err_felas > CONVERGE_ERROR_RATE * err_begin )
         {
             /* debug use */
+			count_iter++;
             printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_felas);
 
             /* conjugate gradient method 
@@ -193,37 +197,50 @@ namespace BallonFEM
 			 */
 
             /* d0 = r0 = b - Ax0 */
-            computeForceDifferentials(v_pos_next, dv_pos, r);
-			purifyFixedId(r);
+            computeForceDifferentials(v_pos_next, dv_pos, Ad);
             for(size_t i = 0; i < m_size; i++)
-            {
-                r[i] = - b[i] - r[i];
+                r[i] = - b[i] - Ad[i];
+			purifyFixedId(r);
+
+			for (size_t i = 0; i < m_size; i++)
                 d[i] = r[i];
-            }
 
 			int count_iter_cg = 0;		   /* conjugate gradient iter count */
-            float riTri = vvec3Dot(r, r);  /* compute dot( r_i, r_i )*/
-            while (riTri > 1e-5)
+            double riTri = vvec3Dot(r, r);  /* compute dot( r_i, r_i )*/
+			double riTri_begin = riTri;
+			while ( (riTri > CONVERGE_ERROR_RATE * riTri_begin ) && ( count_iter_cg < 100 ) )
             {
                 /* debug use */
+				count_iter_cg++;
                 printf("%d iter: %d iteration of CG , riTri = %f \n", count_iter, count_iter_cg, riTri);
 
                 computeForceDifferentials(v_pos_next, d, Ad); /* compute A * d_i */
 				purifyFixedId(Ad);
-                float alpha = riTri / vvec3Dot(d, Ad);
+                double alpha = riTri / vvec3Dot(d, Ad);
 
+				/* update x */
                 for(size_t i = 0; i < m_size; i++)
-                {
-                    x[i] += alpha * d[i];       /* update x */
-                    r[i] -= alpha * Ad[i];      /* update r */
-                }
+                    x[i] += alpha * d[i];       
 
-                float riTri_next = vvec3Dot(r, r);  /* compute dot( r_i+1, r_i+1 )*/
-                float beta = riTri_next / riTri; /* compute beta */
+				/* update r */
+				if (count_iter_cg % 50 == 0){
+					/* re-calculate r */
+					computeForceDifferentials(v_pos_next, dv_pos, Ad);
+					for (size_t i = 0; i < m_size; i++)
+						r[i] = - b[i] - Ad[i];
+					purifyFixedId(r);
+				}
+				else{
+					for (size_t i = 0; i < m_size; i++)
+						r[i] -= alpha * Ad[i];      
+				}
+
+                double riTri_next = vvec3Dot(r, r);  /* compute dot( r_i+1, r_i+1 )*/
+                double beta = riTri_next / riTri; /* compute beta */
                 riTri = riTri_next;             /* update riTri */
 
                 for(size_t i = 0; i < m_size; i++)
-                    d[i] += r[i] + beta * d[i]; /* update d */
+                    d[i] = r[i] + beta * d[i];  /* update d */
             }
             /* conjugate gradient end */
 
@@ -240,7 +257,7 @@ namespace BallonFEM
 			err_felas = vvec3Dot(f_elas, f_elas);
         }
 		/* debug use */
-		printf("f_ext norm %f \n", err_felas);
+		printf("f_sum error %f \n", err_felas);
 		printf("finish solving \n");
     }
 
