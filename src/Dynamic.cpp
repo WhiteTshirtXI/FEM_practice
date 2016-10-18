@@ -13,21 +13,21 @@ namespace BallonFEM
         m_size = tetra->vertices.size();
         m_model = model;
 
-        /* initialize */
-        cur_state.input(tetra);
 		f_ext.assign(m_size, Vec3(0));
 
-        /* load data */
-        for (size_t i = 0; i < m_size; i++)
-        {
-            Vertex &v = tetra->vertices[i];
-            f_ext[i] = v.m_f_ext; 
-        }
+		this->inputData();
     }
 
 	void Engine::inputData()
 	{
         cur_state.input(m_tetra);
+
+		/* load data */
+		for (size_t i = 0; i < m_size; i++)
+		{
+			Vertex &v = m_tetra->vertices[i];
+			f_ext[i] = v.m_f_ext;
+		}
 	}
 
     void Engine::outputData()
@@ -49,7 +49,6 @@ namespace BallonFEM
     void Engine::computeElasticForces(ObjState &state, Vvec3 &f_elas)
     {
         f_elas.assign( m_size, Vec3(0.0));
-		state.project();
 
         Vvec3 &pos = state.world_space_pos;
 
@@ -178,7 +177,7 @@ namespace BallonFEM
 			 */
 
             /* d0 = r0 = b - Ax0 */
-            computeForceDifferentials(next_state, dstate, Ad.world_space_pos);
+            computeForceDifferentials(next_state, x, Ad.world_space_pos);
             Ad.conterProject();
             r.assign(-1, b);
             r.addup(-1, Ad);
@@ -194,6 +193,11 @@ namespace BallonFEM
 				count_iter_cg++;
                 printf("%d iter: %d iteration of CG , riTri = %f \n", count_iter, count_iter_cg, riTri);
 
+				x.project();
+				for (size_t i = 0; i < x.world_space_pos.size(); i++)
+					printf("v%d %.4f %.4f %.4f, ", i, x.world_space_pos[i].x, x.world_space_pos[i].y, x.world_space_pos[i].z);
+				printf("\n");
+
                 computeForceDifferentials(next_state, d, Ad.world_space_pos); /* compute A * d_i */
                 Ad.conterProject();
                 double alpha = riTri / d.dot(Ad);
@@ -204,7 +208,7 @@ namespace BallonFEM
 				/* update r */
 				if (count_iter_cg % 50 == 0){
 					/* re-calculate r */
-                    computeForceDifferentials(next_state, dstate, Ad.world_space_pos);
+                    computeForceDifferentials(next_state, x, Ad.world_space_pos);
                     Ad.conterProject();
                     r.assign(-1, b);
                     r.addup(-1, Ad);
@@ -224,6 +228,7 @@ namespace BallonFEM
 
             /* update v_pos_next and f_elas */
             next_state.update(dstate);
+			next_state.project();
 
             /* update f_elas */
             computeElasticForces(next_state, f_elas.world_space_pos); 
@@ -234,7 +239,6 @@ namespace BallonFEM
 			err_felas = f_elas.dot(f_elas);
         }
 
-		next_state.project();
 		/* debug use */
 		printf("f_sum error %f \n", err_felas);
 		printf("finish solving \n");

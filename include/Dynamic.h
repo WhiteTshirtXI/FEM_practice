@@ -6,95 +6,11 @@
 #include "Types.h"
 #include "TetraMesh.h"
 #include "ElasticModel.h"
+#include "ObjState.h"
 
 namespace BallonFEM
 {
-    /* ObjState fully represent the state of obj, and can be updated by 
-     * DeltaState */
-    class ObjState;
-    
-    /* DeltaState is the infinitesimal displacement of ObjState, and can be
-     * defined to perform linear algorithm
-     * */
-    class DeltaState;
-    
-    /* take tetramesh and build ObjState and then solve them */
-    class Engine;
-
-    class ObjState
-    {
-        public: 
-            ObjState(){};
-            ObjState(TetraMesh* tetra);
-            ObjState(const ObjState& other);
-
-            ObjState& operator=(const ObjState& other);
-
-            void input(TetraMesh* tetra);
-            void output();
-
-            typedef std::vector<Vec3> Vvec3;
-            Vvec3 world_space_pos;
-
-            /* project to real world space and record in world_space_pos */
-            void project();
-
-            /* update from DeltaState */
-            void update(DeltaState& dpos);
-
-            friend class DeltaState;
-
-        private:
-            TetraMesh* m_tetra;
-
-            size_t m_size;
-
-            typedef std::vector<Quat> Vquat;
-
-            Vvec3 m_pos;
-	};
-
-    class DeltaState
-    {
-        public:
-            DeltaState(){};
-            DeltaState(const ObjState& other);
-
-            typedef std::vector<Vec3> Vvec3;
-            Vvec3 world_space_pos;
-
-            /* linear algebra algorithms */
-            /* assign this DeltaState alpha * other */
-            void assign(const double alpha, const DeltaState& other);
-            /* add alpha * other to this DeltaState */
-            void addup( const double alpha, const DeltaState& other);
-			/* self-multiply alpha */
-            void multiply(const double alpha);
-
-            /* convert between obj state and real world spaces */
-            /* project to real world space and record in world_space_pos */
-            void project();
-            /* project real world space data to constrained freedom state */
-            void conterProject();
-
-			/* dot function */
-			double dot(const DeltaState& other);
-
-            friend class ObjState;
-
-        private:
-            TetraMesh* m_tetra;
-
-            size_t m_size;
-
-            typedef std::vector<Quat> Vquat;
-
-            Vvec3 m_pos;
-
-	};
-
-	double deltaStateDot(const DeltaState& a, const DeltaState& b);
-
+	/* take tetramesh and build ObjState and then solve them */
     class Engine
     {
         public:

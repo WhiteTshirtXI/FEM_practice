@@ -143,7 +143,7 @@ void TetraMesh::labelFixedId()
     }
 }
 
-int TetraMesh::addRigidBody( std::vector<size_t> vertex_ids)
+int TetraMesh::addRigidBody( const std::vector<size_t>& vertex_ids)
 {
     Rigid r = Rigid(vertex_ids);
 

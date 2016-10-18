@@ -30,33 +30,38 @@ void mAddParameter()
 {
 	force += 0.01;
 	modified = 0;
+	printf("force = %.2f\n", force);
 }
 
 /* Do something to tetra mesh */
 void mProcess()
 {
-    /* add force to tetra mesh */
-    for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-    {
-        BallonFEM::Vertex &v = m_tetra->vertices[i];
-		v.m_pos += force * BallonFEM::Vec3(0, 0, v.m_cord.z);
-    }
-	engine.inputData();
+	if (modified == 0){
+		/* add force to tetra mesh */
+		m_tetra->vertices[3].m_f_ext = BallonFEM::Vec3(0.1, 0.1, 0);
 
-    /* specify fixed vertices */
-    for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-    {
-        if ( abs(m_tetra->vertices[i].m_cord.z) < 1e-2)
-            m_tetra->vertices[i].m_fixed = true;
-    }
-    m_tetra->labelFixedId();
-	
+		/* specify fixed vertices */
+		/*for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+		{
+			if (abs(m_tetra->vertices[i].m_cord.z) < 1e-2)
+				m_tetra->vertices[i].m_fixed = true;
+		}*/
+		m_tetra->vertices[0].m_fixed = true;
+		m_tetra->labelFixedId();
+
+		/* specify rigid bodies */
+		std::vector<size_t> rig = {1, 2, 3};
+		m_tetra->addRigidBody(rig);
+
+		engine.inputData();
+		modified = 1;
+	}
+
     /* compute deformation */
     engine.solveStaticPos();
     engine.stepToNext();
     engine.outputData();
 
-	force += 0.01;
     shadFlag = 1;
 }
 
@@ -141,7 +146,7 @@ void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
-    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_StVK(0.4, 0.4));
+    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_neohookean(0.4, 0.4));
 }
 
 /* update at each main loop */

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace BallonFEM
 {

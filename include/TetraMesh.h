@@ -91,7 +91,7 @@ namespace BallonFEM{
         /* geometry property */
         Vec3 m_cord;
         Vec3 m_pos;
-        //Quat m_rot = Quat(1, 0, 0, 0);
+        Quat m_rot = Quat(1, 0, 0, 0);
         Vec3 m_omega = Vec3(0); 
 	};
 
@@ -113,7 +113,7 @@ namespace BallonFEM{
 			void labelFixedId();
 
             /* add rigid body constrains */
-            int addRigidBody( std::vector<size_t> vertex_ids );
+            int addRigidBody( const std::vector<size_t>& vertex_ids );
 
             /* vectors of vertices */
             std::vector<Vertex> vertices;
