@@ -131,6 +131,33 @@ void TetraMesh::recomputeSurfaceNorm()
 	}
 }
 
+int TetraMesh::addRigidBody( std::vector<size_t> vertex_ids)
+{
+    Rigid r = Rigid(vertex_ids);
+
+    Vec3 cord = Vec3(0);
+    for(size_t i = 0; i < vertex_ids.size(); i++)
+    {
+        Vertex &v = vertices[vertex_ids[i]];
+        if (v.rigid == NULL)
+        {
+            v.rigid = &r;
+            cord += v.m_cord;
+        }
+        else{
+            printf("Conflict with ");
+            return 1;
+        }
+    }
+
+    r.m_cord = cord / vertex_ids.size();
+    r.m_pos = r.m_cord;
+
+    rigid_bodies.push_back(r);
+
+    return 0;
+}
+
 int TetraMesh::read( const string& filename )
 {
     string inputFilename = filename;

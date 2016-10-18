@@ -39,6 +39,9 @@ namespace BallonFEM{
 
             /* if is fixed */
             bool m_fixed = false;
+
+            /* if is connected to a Rigid Body */
+            Rigid* rigid = NULL;
     };
 
     class Face
@@ -73,6 +76,25 @@ namespace BallonFEM{
             iVec4 v_id;
     };
 
+	class Rigid
+	{
+        public:
+        Rigid(){};
+        Rigid(std::vector<size_t> vertex_ids)
+        {
+            elements = vertex_ids;
+        };
+
+        /* topology property */
+        std::vector<size_t> elements; 
+        
+        /* geometry property */
+        Vec3 m_cord;
+        Vec3 m_pos;
+        Quat m_rot = Quat(1, 0, 0, 0);
+        Vec3 m_omega = Vec3(0); 
+	};
+
     class TetraMesh
     {
         public:
@@ -87,6 +109,9 @@ namespace BallonFEM{
 			/* recompute surface normal when position changed */
 			void recomputeSurfaceNorm();
 
+            /* add rigid body constrains */
+            int addRigidBody( std::vector<size_t> vertex_ids );
+
             /* vectors of vertices */
             std::vector<Vertex> vertices;
 
@@ -96,6 +121,8 @@ namespace BallonFEM{
             /* tetra mesh */
             std::vector<Tetra> tetrahedrons;
 
+            /* rigid parts */
+            std::vector<Rigid> rigid_bodies;
     };
 
 }

@@ -12,6 +12,7 @@ namespace BallonFEM
     class Tetra;
 
     /* organized object */
+	class Rigid;
     class TetraMesh;
 
 	/* some definition */
@@ -19,6 +20,7 @@ namespace BallonFEM
 	typedef glm::dmat3	Mat3;
     typedef glm::ivec3	iVec3;
     typedef glm::ivec4	iVec4;
+    typedef glm::dquat  Quat;
 
 
     typedef std::vector<Vertex>::iterator   VIter;
