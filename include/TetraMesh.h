@@ -35,7 +35,7 @@ namespace BallonFEM{
             Vec3 m_f_ext = Vec3(0);
 
             /* index in tetramesh vertex vector */
-            int id;
+            size_t id;
 
             /* if is fixed */
             bool m_fixed = false;
@@ -91,7 +91,7 @@ namespace BallonFEM{
         /* geometry property */
         Vec3 m_cord;
         Vec3 m_pos;
-        Quat m_rot = Quat(1, 0, 0, 0);
+        //Quat m_rot = Quat(1, 0, 0, 0);
         Vec3 m_omega = Vec3(0); 
 	};
 
@@ -109,6 +109,9 @@ namespace BallonFEM{
 			/* recompute surface normal when position changed */
 			void recomputeSurfaceNorm();
 
+			/* re-exame vertices label to check if they are fixed */
+			void labelFixedId();
+
             /* add rigid body constrains */
             int addRigidBody( std::vector<size_t> vertex_ids );
 
@@ -120,6 +123,9 @@ namespace BallonFEM{
 
             /* tetra mesh */
             std::vector<Tetra> tetrahedrons;
+
+			/* fixed ids */
+			std::vector<size_t> fixed_ids;
 
             /* rigid parts */
             std::vector<Rigid> rigid_bodies;

@@ -14,68 +14,44 @@ namespace BallonFEM
         m_model = model;
 
         /* initialize */
-        v_pos.assign        ( m_size, Vec3(0));
-        v_velocity.assign   ( m_size, Vec3(0));
-        f_ext.assign        ( m_size, Vec3(0));
-        v_pos_next.assign   ( m_size, Vec3(0));
-        v_velo_next.assign  ( m_size, Vec3(0));
+        cur_state.input(tetra);
+		f_ext.assign(m_size, Vec3(0));
 
         /* load data */
         for (size_t i = 0; i < m_size; i++)
         {
             Vertex &v = tetra->vertices[i];
-
-            v_pos[i] = v.m_pos;
-
-            v_velocity[i] = v.m_velocity;
-
             f_ext[i] = v.m_f_ext; 
-        }
-    }
-
-    void Engine::labelFixedId()
-    {
-        fixed_id.clear();
-        for (size_t i = 0; i < m_size; i++)
-        {
-            if (m_tetra->vertices[i].m_fixed)
-                fixed_id.push_back(i);
         }
     }
 
 	void Engine::inputData()
 	{
-		for (size_t i = 0; i < m_size; i++)
-		{
-			Vertex &v = m_tetra->vertices[i];
-			v_pos[i] = v.m_pos;
-			v_velocity[i] = v.m_velocity;
-			f_ext[i] = v.m_f_ext;
-		}
+        cur_state.input(m_tetra);
 	}
 
     void Engine::outputData()
     {
+        cur_state.project();
+        cur_state.output();
         for (size_t i = 0; i < m_size; i++)
         {
 			Vertex &v = m_tetra->vertices[i];
-            v.m_pos = v_pos[i];
-            v.m_velocity = v_velocity[i];
+            v.m_pos = cur_state.world_space_pos[i];
         }
     }
 
     void Engine::stepToNext()
     {
-        for (size_t i = 0; i < m_size; i++)
-        {
-            v_pos[i] = v_pos_next[i];
-            v_velocity[i] = v_velo_next[i];
-        }
+        std::swap(cur_state, next_state);
     }
     
-    void Engine::computeElasticForces(Vvec3 &pos, Vvec3 &f_elas)
+    void Engine::computeElasticForces(ObjState &state, Vvec3 &f_elas)
     {
         f_elas.assign( m_size, Vec3(0.0));
+		state.project();
+
+        Vvec3 &pos = state.world_space_pos;
 
         for(TIter t = m_tetra->tetrahedrons.begin();
                 t != m_tetra->tetrahedrons.end(); t++)
@@ -105,9 +81,15 @@ namespace BallonFEM
         }
     }
 
-    void Engine::computeForceDifferentials(Vvec3 &pos, Vvec3 &dpos, Vvec3 &df_elas)
+    void Engine::computeForceDifferentials(ObjState &state, DeltaState &dstate, Vvec3 &df_elas)
     {
         df_elas.assign( m_size, Vec3(0.0));
+        
+        /* project from constrained freedom state to world space */
+        Vvec3 &pos = state.world_space_pos;
+
+        dstate.project();
+        Vvec3 &dpos = dstate.world_space_pos;
 
         for(TIter t = m_tetra->tetrahedrons.begin();
                 t != m_tetra->tetrahedrons.end(); t++)
@@ -158,29 +140,28 @@ namespace BallonFEM
 	#define CONVERGE_ERROR_RATE 1e-4
     void Engine::solveStaticPos()
     {
-        /* initialize v_pos_next */
-        for(size_t i = 0; i < m_size; i++)
-            v_pos_next[i] = v_pos[i];
+        /* initialize next_state */
+        next_state = cur_state;
 
         /* initialize temp variable for iterative implicit solving */
-        Vvec3 f_elas;
-        computeElasticForces(v_pos_next, f_elas); 
+        DeltaState f_elas(next_state);
+        computeElasticForces(next_state, f_elas.world_space_pos); 
         for(size_t i = 0; i < m_size; i++)
-            f_elas[i] += f_ext[i];
-		purifyFixedId(f_elas);
+            f_elas.world_space_pos[i] += f_ext[i];
+        f_elas.conterProject();
 
-        Vvec3 dv_pos( m_size, Vec3(0) );
+        DeltaState dstate(next_state);
 
         /*  conjugate gradient begin
          *  initialize temp variable
          */
-        Vvec3 d( m_size, Vec3(0) );
-        Vvec3 r( m_size, Vec3(0) );
-        Vvec3 Ad( m_size, Vec3(0) );
-        Vvec3 &x = dv_pos;
-        Vvec3 &b = f_elas;
+        DeltaState d( next_state );
+        DeltaState r( next_state );
+        DeltaState Ad(next_state );
+        DeltaState &x = dstate;
+        DeltaState &b = f_elas;
 		
-		double err_felas = vvec3Dot(f_elas, f_elas);
+		double err_felas = f_elas.dot(f_elas);
 		double err_begin = err_felas;
 		int count_iter = 0;		/* K dx = f iter count */
         /* while not converge f == 0, iterate */
@@ -197,16 +178,15 @@ namespace BallonFEM
 			 */
 
             /* d0 = r0 = b - Ax0 */
-            computeForceDifferentials(v_pos_next, dv_pos, Ad);
-            for(size_t i = 0; i < m_size; i++)
-                r[i] = - b[i] - Ad[i];
-			purifyFixedId(r);
+            computeForceDifferentials(next_state, dstate, Ad.world_space_pos);
+            Ad.conterProject();
+            r.assign(-1, b);
+            r.addup(-1, Ad);
 
-			for (size_t i = 0; i < m_size; i++)
-                d[i] = r[i];
+            d.assign(1, r);
 
 			int count_iter_cg = 0;		   /* conjugate gradient iter count */
-            double riTri = vvec3Dot(r, r);  /* compute dot( r_i, r_i )*/
+            double riTri = r.dot(r);  /* compute dot( r_i, r_i )*/
 			double riTri_begin = riTri;
 			while ( (riTri > CONVERGE_ERROR_RATE * riTri_begin ) && ( count_iter_cg < 100 ) )
             {
@@ -214,48 +194,47 @@ namespace BallonFEM
 				count_iter_cg++;
                 printf("%d iter: %d iteration of CG , riTri = %f \n", count_iter, count_iter_cg, riTri);
 
-                computeForceDifferentials(v_pos_next, d, Ad); /* compute A * d_i */
-				purifyFixedId(Ad);
-                double alpha = riTri / vvec3Dot(d, Ad);
+                computeForceDifferentials(next_state, d, Ad.world_space_pos); /* compute A * d_i */
+                Ad.conterProject();
+                double alpha = riTri / d.dot(Ad);
 
 				/* update x */
-                for(size_t i = 0; i < m_size; i++)
-                    x[i] += alpha * d[i];       
+                    x.addup(alpha, d);       
 
 				/* update r */
 				if (count_iter_cg % 50 == 0){
 					/* re-calculate r */
-					computeForceDifferentials(v_pos_next, dv_pos, Ad);
-					for (size_t i = 0; i < m_size; i++)
-						r[i] = - b[i] - Ad[i];
-					purifyFixedId(r);
+                    computeForceDifferentials(next_state, dstate, Ad.world_space_pos);
+                    Ad.conterProject();
+                    r.assign(-1, b);
+                    r.addup(-1, Ad);
 				}
 				else{
-					for (size_t i = 0; i < m_size; i++)
-						r[i] -= alpha * Ad[i];      
+						r.addup(-alpha, Ad);      
 				}
 
-                double riTri_next = vvec3Dot(r, r);  /* compute dot( r_i+1, r_i+1 )*/
+                double riTri_next = r.dot(r);  /* compute dot( r_i+1, r_i+1 )*/
                 double beta = riTri_next / riTri; /* compute beta */
                 riTri = riTri_next;             /* update riTri */
 
-                for(size_t i = 0; i < m_size; i++)
-                    d[i] = r[i] + beta * d[i];  /* update d */
+                d.multiply(beta);
+                d.addup(1, r);  /* update d */
             }
             /* conjugate gradient end */
 
             /* update v_pos_next and f_elas */
-            for(size_t i = 0; i < m_size; i++)
-                v_pos_next[i] += dv_pos[i];
+            next_state.update(dstate);
 
             /* update f_elas */
-            computeElasticForces(v_pos_next, f_elas); 
+            computeElasticForces(next_state, f_elas.world_space_pos); 
             for(size_t i = 0; i < m_size; i++)
-                f_elas[i] += f_ext[i];
-			purifyFixedId(f_elas);
+                f_elas.world_space_pos[i] += f_ext[i];
+            f_elas.conterProject();
 
-			err_felas = vvec3Dot(f_elas, f_elas);
+			err_felas = f_elas.dot(f_elas);
         }
+
+		next_state.project();
 		/* debug use */
 		printf("f_sum error %f \n", err_felas);
 		printf("finish solving \n");
@@ -267,12 +246,12 @@ namespace BallonFEM
         f_elas.assign( m_size, Vec3(0) );
 
         /* compute nodal force for each vertex */
-        computeElasticForces(v_pos, f_elas);
+        computeElasticForces(cur_state, f_elas);
 
         /* output data */
         for (size_t i = 0; i < m_size; i++)
         {
-            m_tetra->vertices[i].m_pos = v_pos[i];
+            m_tetra->vertices[i].m_pos = cur_state.world_space_pos[i];
             m_tetra->vertices[i].m_velocity = f_elas[i];
         }
     }

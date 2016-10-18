@@ -46,10 +46,10 @@ void mProcess()
     /* specify fixed vertices */
     for (size_t i = 0; i < m_tetra->vertices.size(); i++)
     {
-        if ( abs(abs(m_tetra->vertices[i].m_cord.z)-2) < 1e-2)
+        if ( abs(m_tetra->vertices[i].m_cord.z) < 1e-2)
             m_tetra->vertices[i].m_fixed = true;
     }
-    engine.labelFixedId();
+    m_tetra->labelFixedId();
 	
     /* compute deformation */
     engine.solveStaticPos();
@@ -79,7 +79,7 @@ void mMeasure()
 			if (abs(abs(m_tetra->vertices[i].m_cord.z) - 2) < 1e-2)
 				m_tetra->vertices[i].m_fixed = true;
 		}
-		engine.labelFixedId();
+		m_tetra->labelFixedId();
 
 		modified = 1;
 	}

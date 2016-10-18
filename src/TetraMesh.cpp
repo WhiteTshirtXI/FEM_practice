@@ -131,6 +131,18 @@ void TetraMesh::recomputeSurfaceNorm()
 	}
 }
 
+void TetraMesh::labelFixedId()
+{
+    fixed_ids.clear();
+    for (VIter v = vertices.begin(); v != vertices.end(); v++)
+    {
+        if (v->m_fixed)
+        {
+            fixed_ids.push_back(v->id);
+        }
+    }
+}
+
 int TetraMesh::addRigidBody( std::vector<size_t> vertex_ids)
 {
     Rigid r = Rigid(vertex_ids);
@@ -150,7 +162,7 @@ int TetraMesh::addRigidBody( std::vector<size_t> vertex_ids)
         }
     }
 
-    r.m_cord = cord / vertex_ids.size();
+	r.m_cord = cord / (double)vertex_ids.size();
     r.m_pos = r.m_cord;
 
     rigid_bodies.push_back(r);
