@@ -194,11 +194,6 @@ namespace BallonFEM
 				count_iter_cg++;
                 printf("%d iter: %d iteration of CG , riTri = %f \n", count_iter, count_iter_cg, riTri);
 
-				x.project();
-				for (size_t i = 0; i < x.world_space_pos.size(); i++)
-					printf("v%d %.4f %.4f %.4f, ", i, x.world_space_pos[i].x, x.world_space_pos[i].y, x.world_space_pos[i].z);
-				printf("\n");
-
                 computeForceDifferentials(next_state, d, Ad.world_space_pos); /* compute A * d_i */
                 Ad.conterProject();
 				double gamma = d.dot(Ad);

@@ -111,9 +111,9 @@ namespace BallonFEM
 
     Quat ObjState::omegaToQuat(Vec3 delta_phi)
     {
-        double half_angle = delta_phi.length() / 2.0;
-        double cos = std::cos(half_angle);
-        double sin = 2*std::sin(half_angle)/half_angle;
+        double angle = length(delta_phi) ;
+        double cos = std::cos(angle / 2.0);
+        double sin = std::sin(angle / 2.0 ) / angle;
 
         return Quat(cos, sin * delta_phi);
     }

@@ -24,7 +24,7 @@ ArcBall arcball;
 BallonFEM::Engine engine;
 BallonFEM::TetraMesh* m_tetra;
 
-static double force = 0.01;
+static double force = 0.1;
 static int modified = 0;
 void mAddParameter()
 {
@@ -38,7 +38,7 @@ void mProcess()
 {
 	if (modified == 0){
 		/* add force to tetra mesh */
-		m_tetra->vertices[3].m_f_ext = BallonFEM::Vec3(0.1, 0.1, 0);
+		m_tetra->vertices[4].m_f_ext = BallonFEM::Vec3(0, 0, force);
 
 		/* specify fixed vertices */
 		/*for (size_t i = 0; i < m_tetra->vertices.size(); i++)
@@ -47,10 +47,13 @@ void mProcess()
 				m_tetra->vertices[i].m_fixed = true;
 		}*/
 		m_tetra->vertices[0].m_fixed = true;
+		m_tetra->vertices[1].m_fixed = true;
+		m_tetra->vertices[2].m_fixed = true;
+		m_tetra->vertices[3].m_fixed = true;
 		m_tetra->labelFixedId();
 
 		/* specify rigid bodies */
-		std::vector<size_t> rig = {1, 2, 3};
+		std::vector<size_t> rig = {4, 5, 6, 7};
 		m_tetra->addRigidBody(rig);
 
 		engine.inputData();
