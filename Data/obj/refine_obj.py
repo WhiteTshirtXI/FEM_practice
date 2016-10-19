@@ -35,6 +35,7 @@ def to_tetra(t_line):
 # exame if the order of vertices in tetra is correct, then
 # return the correct ordered tetra
 def exame_and_switch(v_pos, tetra):
+    # notice that the location in list = v_id - 1
     r = list( map(lambda x: v_pos[x - 1], tetra))
 
     if np.dot(np.cross(r[0] - r[3], r[1] -r[3]), r[2] - r[3]) < 0:
@@ -53,14 +54,14 @@ def refine_tetra(in_file, out_file):
         tetra = list( filter(lambda x: x.startswith("t"), s ) )
 
         # transfer vertex line to vertex data
-        print("transfer vertex")
+        print("transfer vertex...")
         v_pos = list( map(to_vertex, vertex) )
 
         # transfer tetra line to tetra data and arange the 4 vertices in order
-        print("transfer tetra")
+        print("transfer tetra...")
         t_aranged = list( map(lambda x: exame_and_switch(v_pos, to_tetra(x)), tetra) )
 
-        print("writing")
+        print("writing...")
         wh = open(out_file, "w")
 
         for v_line in vertex:
