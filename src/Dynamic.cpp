@@ -141,6 +141,7 @@ namespace BallonFEM
     {
         /* initialize next_state */
         next_state = cur_state;
+		next_state.project();
 
         /* initialize temp variable for iterative implicit solving */
         DeltaState f_elas(next_state);
@@ -200,7 +201,8 @@ namespace BallonFEM
 
                 computeForceDifferentials(next_state, d, Ad.world_space_pos); /* compute A * d_i */
                 Ad.conterProject();
-                double alpha = riTri / d.dot(Ad);
+				double gamma = d.dot(Ad);
+                double alpha = riTri / gamma;
 
 				/* update x */
                     x.addup(alpha, d);       

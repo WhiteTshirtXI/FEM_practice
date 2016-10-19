@@ -111,13 +111,11 @@ namespace BallonFEM
 
     Quat ObjState::omegaToQuat(Vec3 delta_phi)
     {
-        double half_angle = delta_phi.length() / 2.;
+        double half_angle = delta_phi.length() / 2.0;
         double cos = std::cos(half_angle);
-        double sin = std::sin(half_angle);
-        Vec3 w = delta_phi;
-        glm::normalize(w);
+        double sin = 2*std::sin(half_angle)/half_angle;
 
-        return Quat(cos, sin * w);
+        return Quat(cos, sin * delta_phi);
     }
         
     void ObjState::update(DeltaState& dpos)
@@ -195,7 +193,7 @@ namespace BallonFEM
         for (size_t i = 0; i < m_r_size; i++)
         {
             /* rotation matrix of current rigid body i */
-            Vec3 dR = dm_r_rot[i];
+            Vec3 drot = dm_r_rot[i];
 
             /* current mass center position of rigid body */
             Vec3 drc = dm_r_pos[i];
@@ -209,7 +207,7 @@ namespace BallonFEM
                 size_t v_id = r.elements[j];
                 /* dr = drc + dR x (r - rc) */
                 world_space_pos[v_id] = drc + 
-                    glm::cross(dR, m_state->m_pos[v_id] - rc);
+                    glm::cross(drot, m_state->world_space_pos[v_id] - rc);
             }
         }
 		
@@ -261,7 +259,7 @@ namespace BallonFEM
                 drc += world_space_pos[v_id];
 
                 /* drot = sum(r x dr) */
-                drot += glm::cross(m_state->m_pos[v_id] - rc, 
+                drot += glm::cross(m_state->world_space_pos[v_id] - rc, 
                                    world_space_pos[v_id]);
             }
         } 

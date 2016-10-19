@@ -157,7 +157,7 @@ int TetraMesh::addRigidBody( const std::vector<size_t>& vertex_ids)
             cord += v.m_cord;
         }
         else{
-            printf("Conflict with ");
+            printf("Conflict with vertex %d.\n", v.id);
             return 1;
         }
     }
