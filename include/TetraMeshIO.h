@@ -43,6 +43,13 @@ namespace BallonFEM{
 
             /* when begin with t, read tetra info */
             static void readTetra   ( std::stringstream& ss, TetraMeshData& data );
+
+            /* when begin with x, read fixed vertices */
+            static void readFixed   ( std::stringstream& ss, TetraMeshData& data );
+
+            /* when begin with r, read rigid body by vertices */
+            static void readRigid   ( std::stringstream& ss, TetraMeshData& data );
+
     };
 }
 

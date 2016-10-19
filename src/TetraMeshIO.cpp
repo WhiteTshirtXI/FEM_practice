@@ -73,6 +73,16 @@ void TetraMeshIO::readTetra( stringstream& ss, TetraMeshData& data)
 	data.tetrahedrons.push_back(iVec4(x, y, z, w));
 }
 
+void TetraMeshIO::readFixed( stringstream& ss, TetraMeshData& data)
+{
+    size_t f_id;
+    
+}
+
+void TetraMeshIO::readRigid( stringstream& ss, TetraMeshData& data)
+{
+}
+
 int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
 {
     int indexBias = 1;
