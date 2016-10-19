@@ -95,6 +95,18 @@ namespace BallonFEM{
         Vec3 m_omega = Vec3(0); 
 	};
 
+    class Hole
+    {
+        public:
+            Hole(){};
+            
+            /* related vertices */
+            std::vector<size_t> vertices;
+
+            /* related surfaces */
+            std::vector<iVec3> surface;
+    };
+
     class TetraMesh
     {
         public:
@@ -129,6 +141,9 @@ namespace BallonFEM{
 
             /* rigid parts */
             std::vector<Rigid> rigid_bodies;
+
+            /* holes */
+            std::vector<Hole> holes;
     };
 
 }

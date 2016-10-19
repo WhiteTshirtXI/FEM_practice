@@ -42,7 +42,9 @@ int TetraMeshIO::readTetraData(istream& in, TetraMeshData& data)
         ss >> token;
    
         if( token == "v"  ) { readPosition( ss, data ); continue; } // vertex
-        if( token == "t"  ) { readTetra( ss, data ); continue; } // face
+        if( token == "t"  ) { readTetra( ss, data );    continue; } // face
+		if( token == "x"  ) { readFixed( ss, data );    continue; } // fixed vertices
+        if( token == "r"  ) { readRigid( ss, data );    continue; } // rigid body
         if( token[0] == '#' ) continue; // comment
         if( token == "o" ) continue; // object name
         if( token == "g" ) continue; // group name
@@ -76,11 +78,22 @@ void TetraMeshIO::readTetra( stringstream& ss, TetraMeshData& data)
 void TetraMeshIO::readFixed( stringstream& ss, TetraMeshData& data)
 {
     size_t f_id;
-    
+    while (ss >> f_id)
+    {
+        data.fixed.push_back(f_id);    
+    }
 }
 
 void TetraMeshIO::readRigid( stringstream& ss, TetraMeshData& data)
 {
+    std::vector<size_t> rig;
+    size_t f_id;
+    while (ss >> f_id)
+    {
+        rig.push_back(f_id);    
+    }
+
+    data.rigid.push_back(rig);
 }
 
 int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
@@ -139,6 +152,27 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
         out << t->v[1]->id + indexBias << " ";
         out << t->v[2]->id + indexBias << " ";
         out << t->v[3]->id + indexBias << endl;
+    }
+
+    out << "x";
+    for(size_t i = 0; i < tetra.fixed_ids.size(); i++)
+        out << " " << tetra.fixed_ids[i] + indexBias;
+    out << endl;
+    
+    for(RCIter r = tetra.rigid_bodies.begin(); r != tetra.rigid_bodies.end(); r++)
+    {
+        out << "r";
+        for(size_t i = 0; i < r->elements.size(); i++)
+            out << r->elements[i] + indexBias;
+        out << endl;
+    }
+    
+     for(HCIter h = tetra.holes.begin(); h != tetra.holes.end(); h++)
+    {
+        out << "h";
+        for(size_t i = 0; i < h->vertices.size(); i++)
+            out << h->vertices[i] + indexBias;
+        out << endl;
     }
 }
 

@@ -21,6 +21,10 @@ namespace BallonFEM{
             TetraMeshData(){};
             std::vector<Vec3> vertices;
             std::vector<iVec4> tetrahedrons;
+            std::vector<size_t> fixed;
+            std::vector<std::vector<size_t>> rigid;
+            std::vector<std::vector<size_t>> holes;
+
     };
 
     class TetraMeshIO

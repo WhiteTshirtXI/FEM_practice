@@ -14,6 +14,7 @@ namespace BallonFEM
 
     /* organized object */
 	class Rigid;
+    class Hole;
     class TetraMesh;
 
 	/* some definition */
@@ -27,10 +28,14 @@ namespace BallonFEM
     typedef std::vector<Vertex>::iterator   VIter;
     typedef std::vector<Face>::iterator     FIter;
     typedef std::vector<Tetra>::iterator    TIter;
+    typedef std::vector<Rigid>::iterator    RIter;
+    typedef std::vector<Hole>::iterator     HIter;
 
     typedef std::vector<Vertex>::const_iterator   VCIter;
     typedef std::vector<Face>::const_iterator     FCIter;
     typedef std::vector<Tetra>::const_iterator    TCIter;
+    typedef std::vector<Rigid>::const_iterator    RCIter;
+    typedef std::vector<Hole>::const_iterator     HCIter;
 }
 
 #endif // !_TYPE_H_
