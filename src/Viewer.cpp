@@ -137,12 +137,17 @@ void Viewer::buffModel()
 
     glGenBuffers(num_VBO, VBO);
 
+	/* specify surface to be showed */
+
+	std::vector<Face> &surface = mesh->surface;
+	mesh->recomputeSurfaceNorm();
+
     /* prepare vertex & normal data */
-    unsigned int N = mesh->surface.size();
+    unsigned int N = surface.size();
     vertex.assign(3*N, glm::vec3(0,0,0));
     norm.assign(3*N, glm::vec3(0,0,0));
     unsigned int count = 0;
-    for (FIter f = mesh->surface.begin() ; f != mesh->surface.end(); f++)
+    for (FIter f = surface.begin() ; f != surface.end(); f++)
     {
         for (int i = 0; i < 3; i++)
         {

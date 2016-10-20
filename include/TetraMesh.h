@@ -41,7 +41,10 @@ namespace BallonFEM{
             bool m_fixed = false;
 
             /* if is connected to a Rigid Body */
-            Rigid* rigid = NULL;
+            int rigid = -1;
+
+            /* if is connected to a hole */
+            int hole = -1;
     };
 
     class Face
@@ -57,6 +60,7 @@ namespace BallonFEM{
 
             /* topology property */
             pVertex v[3];
+            iVec3 v_id;
     };
 
     class Tetra
@@ -80,7 +84,7 @@ namespace BallonFEM{
 	{
         public:
         Rigid(){};
-        Rigid(std::vector<size_t> vertex_ids)
+        Rigid(const std::vector<size_t> &vertex_ids)
         {
             elements = vertex_ids;
         };
@@ -104,7 +108,7 @@ namespace BallonFEM{
             std::vector<size_t> vertices;
 
             /* related surfaces */
-            std::vector<iVec3> surface;
+            std::vector<Face> holeface;
     };
 
     class TetraMesh
@@ -124,8 +128,11 @@ namespace BallonFEM{
 			/* re-exame vertices label to check if they are fixed */
 			void labelFixedId();
 
-            /* add rigid body constrains */
+            /* add rigid body constrains, by input v_ids contained in vector */
             int addRigidBody( const std::vector<size_t>& vertex_ids );
+
+            /* add hole information, by input iVec3 vector */
+            int addHole( const std::vector<iVec3>& vertex_ids );
 
             /* vectors of vertices */
             std::vector<Vertex> vertices;

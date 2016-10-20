@@ -1,3 +1,4 @@
+import re
 import argparse
 import numpy as np
 
@@ -11,9 +12,9 @@ def to_vertex(v_line):
 # return surface pair (set(face_v), face_v)
 def to_face(f_line):
     face = f_line.split(" ")
-    face = list( map(lambda x: int(x), vertex[1:]))
-    assert( len(vertex) == 3 )
-    return surf
+    face = list( map(lambda x: int(x), face[1:]))
+    assert( len(face) == 3 )
+    return face
 
 # return tetra arange
 def to_tetra(t_line):
@@ -68,7 +69,26 @@ def write_hole(h, h_id, fh):
 
 if __name__=="__main__":
 
-    filename = "output"
+    filename = "penbox.vtf"
+
+    # exame file
+    with open(filename, 'r') as fh:
+        s = fh.readlines();
+        x = list( filter( lambda x: x.startswith("x"), s) )
+        r = list( filter( lambda x: x.startswith("r"), s) )
+        h = list( filter( lambda x: x.startswith("h"), s) )
+
+        if x:
+            print("There already exists fixed vertices in %s" % filename)
+            return 0
+        if r:
+            print("There already exists rigid bodies in %s" % filename)
+            return 0
+        if h:
+            print("There already exists hole information in %s" % filename)
+            return 0
+
+    # read in vertices, surface and tetra data
     v, f, t = read_file(filename)
 
     # some operations
@@ -85,8 +105,26 @@ if __name__=="__main__":
             rigid.append(i+1)
 
     hole = []
+    # detect inner wall surface vertices
 
-    with open(filename) as wh:
+    def inbox(pos, x_lim, y_lim, z_lim):
+        if (pos[0] < x_lim[0]) or (pos[0] > x_lim[1]):
+            return False
+        if (pos[1] < y_lim[0]) or (pos[1] > y_lim[1]):
+            return False
+        if (pos[2] < z_lim[0]) or (pos[2] > z_lim[1]):
+            return False
+        return True
+
+    inner = list( map( lambda x: inbox(x, [-0.9, 0.9], [-1.0, 0.9], [-0.9, 0.9]), v) )
+
+    # detect hole face when given vertices inner
+    def inset(x, v_set):
+        return ( v_set[x[0] - 1] and  v_set[x[1] - 1] and  v_set[x[2] - 1] )
+
+    hole = list( filter( lambda x: inset(x, inner), f) )
+
+    with open(filename, 'a') as wh:
         write_fixed(fixed_ids, wh)
         write_rigid(rigid, wh)
-        write_hole(h, 1, wh)
+        write_hole(hole, 1, wh)

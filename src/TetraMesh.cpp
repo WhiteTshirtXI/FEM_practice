@@ -46,79 +46,16 @@ void TetraMesh::precomputation()
         /* if t->W is negtive, then the arange of t-v is not correct */
         if ( t->W < 0 )
         {
+            printf("Invalid tetra vertices order! (%d %d %d %d)",
+                    t->v_id.x, t->v_id.y, t->v_id.z, t->v_id.w);
             swap(t->v[0], t->v[1]);
             t->precomputation();
-        }
-        
-        /* record vertex id in tetra */
-        t->v_id = iVec4(t->v[0]->id, t->v[1]->id, t->v[2]->id, t->v[3]->id );
-    }
-
-
-    /* construct surface */
-
-    printf("Constructing surfaces.\n");
-    /* each face has two half faces and by counting we can get these faces */
-    typedef set<int> S;
-    set< S > existingFaces;
-    map< S, int > faceCount;
-    map< S, iVec3 > corespondFace;
-    
-    /* 4 faces of tetrahedron towards outside */
-    iVec3 arange[] = { iVec3(0,1,2), iVec3(0,2,3), 
-                       iVec3(0,3,1), iVec3(3,2,1),
-                     };
-
-    for(TIter t = tetrahedrons.begin(); t != tetrahedrons.end(); t++)
-    {
-        /* construct 4 faces of tetrahedron */
-        for(int i = 0; i < 4; i++)
-        {
-            iVec3 halfFace = iVec3( t->v[ arange[i][0] ]->id, 
-                                    t->v[ arange[i][1] ]->id, 
-                                    t->v[ arange[i][2] ]->id
-                                    );
-
-            int triangle[] = {halfFace[0], halfFace[1], halfFace[2]}; 
-            S face = S( triangle , triangle + 3);
-
-            /* if the face already exists, add up 1; else create and record */
-            if (existingFaces.find(face) != existingFaces.end())
-            {
-				faceCount[face] += 1;
-            }
-            else{
-				existingFaces.insert(face);
-				faceCount[face] = 1;
-				corespondFace[face] = halfFace;
-            }
-        }
-    }
-
-    this->surface.clear();
-    /* find single halffaces and add to tetrahedron's surface */
-    for(map< S, int>::iterator m = faceCount.begin(); m != faceCount.end(); m++)
-    {
-        if (m->second == 1)
-        {
-            iVec3 &halfFace = corespondFace[m->first];
-            Face nf;
-
-            nf.v[0] = &( vertices[ halfFace[0] ] );
-            nf.v[1] = &( vertices[ halfFace[1] ] );
-            nf.v[2] = &( vertices[ halfFace[2] ] );
-
-            this->surface.push_back( nf );
-        }
-        else if (m->second > 2)
-        {
-            iVec3 &halfFace = corespondFace[m->first];
-            printf("face conflict on (%d, %d, %d)\n", halfFace[0], halfFace[1], halfFace[2] );
+            /* record vertex id in tetra */
+            t->v_id = iVec4(t->v[0]->id, t->v[1]->id, t->v[2]->id, t->v[3]->id );
         }
     }
 
     printf("Total surface triangle %d \n", (int)surface.size());
-
 	recomputeSurfaceNorm();
 }
 
@@ -129,6 +66,15 @@ void TetraMesh::recomputeSurfaceNorm()
 	{
 		f->precomputation();
 	}
+
+	for (HIter h = holes.begin(); h != holes.end(); h++)
+	{
+		for (FIter f = h->holeface.begin(); f != h->holeface.end(); f++)
+		{
+			f->precomputation();
+		}
+	}
+
 }
 
 void TetraMesh::labelFixedId()
@@ -148,16 +94,17 @@ int TetraMesh::addRigidBody( const std::vector<size_t>& vertex_ids)
     Rigid r = Rigid(vertex_ids);
 
     Vec3 cord = Vec3(0);
+    int r_id = rigid_bodies.size();
     for(size_t i = 0; i < vertex_ids.size(); i++)
     {
         Vertex &v = vertices[vertex_ids[i]];
-        if (v.rigid == NULL)
+        if (v.rigid == -1)
         {
-            v.rigid = &r;
+            v.rigid = r_id;
             cord += v.m_cord;
         }
         else{
-            printf("Conflict with vertex %d.\n", v.id);
+            printf("Conflict with vertex %d.\n", (int)v.id);
             return 1;
         }
     }
@@ -169,6 +116,42 @@ int TetraMesh::addRigidBody( const std::vector<size_t>& vertex_ids)
 
     return 0;
 }
+
+int TetraMesh::addHole( const std::vector<iVec3>& face_ids)
+{
+    Hole h;
+
+    /* initialize hole */
+    h.vertices.clear();
+    h.holeface.clear();
+
+    int h_id = holes.size();
+    for(size_t i = 0; i < face_ids.size(); i++)
+    {
+        /* for each face, build face class and add vertices to hole vertices*/
+        Face f;
+        f.v_id = face_ids[i];
+        for(size_t j = 0; j < 3; j++)
+        {
+            f.v[j] = &this->vertices[ f.v_id[j] ];
+            if (f.v[j]->hole == -1)
+            {
+                f.v[j]->hole = h_id;
+                h.vertices.push_back(f.v_id[j]);
+            }
+            else if (f.v[j]->hole != h_id){
+                printf("Hole %d conflict with vertex %d.\n", h_id, (int)f.v_id[j]);
+                return 1;
+            }
+        }
+
+        h.holeface.push_back(f);
+    }
+
+    holes.push_back(h);
+    return 0;
+}
+
 
 int TetraMesh::read( const string& filename )
 {

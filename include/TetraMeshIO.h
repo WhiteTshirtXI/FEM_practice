@@ -21,9 +21,10 @@ namespace BallonFEM{
             TetraMeshData(){};
             std::vector<Vec3> vertices;
             std::vector<iVec4> tetrahedrons;
+            std::vector<iVec3> surface;
             std::vector<size_t> fixed;
             std::vector<std::vector<size_t>> rigid;
-            std::vector<std::vector<size_t>> holes;
+            std::vector<std::vector<iVec3>> holes;
 
     };
 
@@ -48,12 +49,17 @@ namespace BallonFEM{
             /* when begin with t, read tetra info */
             static void readTetra   ( std::stringstream& ss, TetraMeshData& data );
 
+            /* when begin with f, read surface info */
+            static void readSurf   ( std::stringstream& ss, TetraMeshData& data );
+
             /* when begin with x, read fixed vertices */
             static void readFixed   ( std::stringstream& ss, TetraMeshData& data );
 
             /* when begin with r, read rigid body by vertices */
             static void readRigid   ( std::stringstream& ss, TetraMeshData& data );
 
+            /* when begin with r, read rigid body by vertices */
+            static void readHole    ( std::stringstream& ss, TetraMeshData& data );
     };
 }
 
