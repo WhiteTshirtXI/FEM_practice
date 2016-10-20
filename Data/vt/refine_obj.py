@@ -5,6 +5,7 @@
 # then generate surface data to the .obj file
 
 import argparse
+import re
 import numpy as np
 
 # return v position
@@ -88,7 +89,7 @@ def add_surface(in_file):
             return 0
 
         tetra = list( map(to_tetra, tetra) )
-        
+
         print('building tetra faces...')
         surf = []
         for t in tetra:
@@ -106,6 +107,9 @@ def add_surface(in_file):
                 surf.pop()
             else:
                 single.append(surf.pop()[1])
+        if surf:
+            single.append(surf.pop()[1])
+
         print("total %d faces of surface" % len(single))
 
         print("writing...")
@@ -127,10 +131,12 @@ if __name__=="__main__":
     tetra = [1, 2, 3, 4]
     assert( exame_and_switch(v_pos, tetra) == [2, 1, 3,4])
 
-    
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("file", help="the .obj file to add surface to.")
+    parser.add_argument("file", help="the .vt file to add surface to.")
     args = parser.parse_args()
 
-    refine_tetra(args.file, "output")
-    add_surface("output")
+    filename = re.split("\W", args.file)[-2]
+    print("writing to %s.obj" % filename)
+    refine_tetra(args.file, filename + '.obj')
+    add_surface(filename + '.obj')

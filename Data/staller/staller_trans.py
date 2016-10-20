@@ -64,7 +64,7 @@ if __name__=='__main__':
     print("tetra number: %d" % len(tetra))
 
     objname = re.split("\W", args.file)[-1]
-    fh = open(objname + '.obj', 'w')
+    fh = open(objname + '.vt', 'w')
 
     for v in vertex:
         fh.write('v %s %s %s\n' % (v[0], v[1], v[2]))
