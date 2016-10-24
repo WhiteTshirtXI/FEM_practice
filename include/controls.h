@@ -33,6 +33,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods);
 void reshape(GLFWwindow* window, int w, int h);
 
 void help();
+
+/* debug use */
+void mOutput();
 }
 
 #endif

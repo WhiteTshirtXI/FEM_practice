@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctime>
 
 #include <string>
 #include <sstream>
@@ -28,13 +29,13 @@ ArcBall arcball;
 BallonFEM::Engine engine;
 BallonFEM::TetraMesh* m_tetra;
 
-static double force = 0.001;
+static double force = 0;
 static int modified = 0;
 static int outputcount = 0;		// output id
 
 void mAddParameter()
 {
-	force += 0.0001;
+	force += 5e-5;
 	modified = 0;
 	printf("force = %.4f\n", force);
 }
@@ -42,67 +43,39 @@ void mAddParameter()
 /* Do something to tetra mesh */
 void mProcess()
 {
-	if (modified == 0){
-		/* add force to tetra mesh */
-		//m_tetra->vertices[9].m_f_ext = BallonFEM::Vec3(0, force, force);
-		engine.setAirModel(new BallonFEM::AirModel_Isobaric(force, 0));
-		engine.inputData();
-		modified = 1;
-	}
-
-    /* compute deformation */
-    engine.solveStaticPos();
-    engine.stepToNext();
-    engine.outputData();
-
-    shadFlag = 1;
-}
-
-void mMeasure()
-{
-	BallonFEM::Vec3 dir(0, 0, force);
-	/* add displacement to tetra mesh */
-	if (modified == 0){
-		for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-		{
-			BallonFEM::Vertex &v = m_tetra->vertices[i];
-			if (abs(v.m_cord.z - 2) < 1e-2)
-				v.m_pos = v.m_cord + dir;
-		}
-		engine.inputData();
-		/* specify fixed vertices */
-		for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-		{
-			/* top and bottom faces */
-			if (abs(abs(m_tetra->vertices[i].m_cord.z) - 2) < 1e-2)
-				m_tetra->vertices[i].m_fixed = true;
-		}
-		m_tetra->labelFixedId();
-
-		modified = 1;
-	}
-
-	/* compute deformation and forces */
-	engine.solveStaticPos();
-	engine.stepToNext();
-	engine.outputData();
-	engine.forceTest();
-
-	/* calculate total force */
-	/* watch the force on bottom plane is equally*/
-	BallonFEM::Vec3 f(0.0);
-	for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+	std::vector<double> solveTime;
+	mOutput();
+	for (size_t i = 0; i < 20; i++)
 	{
-		BallonFEM::Vertex &v = m_tetra->vertices[i];
-		if (abs(v.m_pos.z + 2) < 1e-2)
-			f += v.m_velocity;
-	}
-	printf("Displacement of Z = 2 plane: %f %f %f\n", dir.x, dir.y, dir.z);
-	printf("Total Force f = %f, %f, %f \n", f.x, f.y, f.z);
-	printf("Young's modulus = %f \n", 4 * f.z / (3.1415926 * dir.z));
+		mAddParameter();
+		if (modified == 0){
+			/* add force to tetra mesh */
+			//m_tetra->vertices[9].m_f_ext = BallonFEM::Vec3(0, force, force);
+			engine.setAirModel(new BallonFEM::AirModel_Isobaric(force, 0));
+			engine.inputData();
+			modified = 1;
+		}
 
-	/* re draw */
-	shadFlag = 1;
+		/* compute deformation */
+
+		std::clock_t start;
+		start = std::clock();
+		engine.solveStaticPos();
+		solveTime.push_back((std::clock() - start) / (double) CLOCKS_PER_SEC);
+
+		engine.stepToNext();
+		engine.outputData();
+		mOutput();
+		shadFlag = 1;
+	}
+
+	double count = 0;
+	for (size_t i = 0; i < solveTime.size(); i++)
+	{
+		printf("solve time for step %d: %f \n", i, solveTime[i]);
+		count += solveTime[i];
+	}
+	printf("total time spent %f", count);
 }
 
 /* Reset the tetra mesh to original state */
@@ -129,7 +102,7 @@ void mOutput()
 
 	std::ostringstream ss;
 	ss << "output/p_";
-	ss << outputcount;
+	ss << std::setw(7) << std::setfill('0') << outputcount;
 	ss << ".obj";
 	std::string name(ss.str());
 
@@ -175,7 +148,7 @@ void computeMatrixFromInputs()
                         glm::vec3(camera.x, camera.y, 0), /* and looks at this point */
                         glm::vec3(0, 1, 0)                    /* Head is up */
             );
-    Projection = glm::perspective(45.0f, win_width/(float) win_height, 0.1f, 100.0f);
+    Projection = glm::perspective(45.0f, win_width/(float) win_height, 0.1f, 500.0f);
 }
 
 glm::vec3 getCamera(){
@@ -293,9 +266,6 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
     case GLFW_KEY_SPACE:
         mProcess();
         break;
-	case GLFW_KEY_M:
-		mMeasure();
-		break;
 	case GLFW_KEY_A:
 		mAddParameter();
 		break;

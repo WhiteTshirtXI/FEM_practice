@@ -4,6 +4,7 @@
 
 #include "Types.h"
 #include "Viewer.h"
+#include "controls.h"
 #include "Dynamic.h"
 
 extern int shadFlag;
@@ -229,7 +230,7 @@ namespace BallonFEM
 			int count_iter_cg = 0;		   /* conjugate gradient iter count */
             double riTri = r.dot(r);  /* compute dot( r_i, r_i )*/
 			double riTri_begin = riTri;
-			while ( (riTri > CONVERGE_ERROR_RATE * riTri_begin ) && ( count_iter_cg < 100 ) )
+			while ( (riTri > CONVERGE_ERROR_RATE * riTri_begin ) /*&& ( count_iter_cg < 500 )*/ )
             {
                 /* debug use */
 				count_iter_cg++;
@@ -272,6 +273,7 @@ namespace BallonFEM
 			next_state.output();
 			shadFlag = 1;
 			p_viewer->refresh();
+			//Control::mOutput();
 			
             /* update f_elas */
             computeElasticForces(next_state, f_elas.world_space_pos); 

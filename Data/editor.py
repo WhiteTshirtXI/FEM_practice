@@ -73,7 +73,7 @@ if __name__=="__main__":
 
     # exame file
     with open(filename, 'r') as fh:
-        s = fh.readlines();
+        s = fh.readlines()
         x = list( filter( lambda x: x.startswith("x"), s) )
         r = list( filter( lambda x: x.startswith("r"), s) )
 
