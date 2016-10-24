@@ -31,9 +31,6 @@ namespace BallonFEM
             /* copy v_pos_next, to v_pos*/
             void stepToNext();
 
-            /* solve v_pos and v_velocity for next timestep */
-            void solveNextTimestep(double timestep);
-
             /* solve v_pos for quasistatic simulation or static 
              * output static position to v_pos_next 
              */
@@ -73,6 +70,10 @@ namespace BallonFEM
 
             /* compute delta elastic force when given position pos and disturbe dpos */
             void computeForceDifferentials(ObjState &pos, DeltaState &dpos, Vvec3 &df_elas);
+
+            /* compute force differntial matrix */
+            typedef Eigen::SparseMatrix<double> SpMat;
+            void computeForceDiffMatrix(ObjState &pos, SpMat& K)
 
     };
 
