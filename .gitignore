@@ -46,5 +46,10 @@ Debug/
 Release/
 
 # data file
+*.tet
+*.ele
+*.node
+*.vt
+*.vtf
 *.png
 output/

@@ -3,7 +3,11 @@
 #include <glm/glm.hpp>
 
 #include "Types.h"
+#include "Viewer.h"
 #include "Dynamic.h"
+
+extern int shadFlag;
+extern View::Viewer *p_viewer;
 
 namespace BallonFEM
 {
@@ -35,11 +39,6 @@ namespace BallonFEM
     {
         cur_state.project();
         cur_state.output();
-        for (size_t i = 0; i < m_size; i++)
-        {
-			Vertex &v = m_tetra->vertices[i];
-            v.m_pos = cur_state.world_space_pos[i];
-        }
     }
 
     void Engine::stepToNext()
@@ -269,6 +268,11 @@ namespace BallonFEM
             next_state.update(dstate);
 			next_state.project();
 
+			/* debug watch use*/
+			next_state.output();
+			shadFlag = 1;
+			p_viewer->refresh();
+			
             /* update f_elas */
             computeElasticForces(next_state, f_elas.world_space_pos); 
             for(size_t i = 0; i < m_size; i++)
@@ -278,7 +282,6 @@ namespace BallonFEM
 			err_felas = f_elas.dot(f_elas);
         }
 
-		/* debug use */
 		printf("f_sum error %f \n", err_felas);
 		printf("finish solving \n");
     }

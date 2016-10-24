@@ -6,6 +6,7 @@
 
 using namespace std;
 
+View::Viewer *p_viewer;
 
 /*! main function for viewer
 */
@@ -27,6 +28,8 @@ int main(int argc, char * argv[])
     tetra.read(mesh_name.c_str());
 
     View::Viewer viewer(&tetra);
+
+	p_viewer = &(viewer);
 
     viewer.show();
 

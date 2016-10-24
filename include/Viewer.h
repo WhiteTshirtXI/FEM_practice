@@ -20,6 +20,8 @@ class Viewer
 
         Viewer(Mesh* mesh);
 
+		void refresh();
+
         void show();
 
     private:

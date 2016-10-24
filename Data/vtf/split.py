@@ -91,7 +91,7 @@ def face_is_boundary(face):
 
 if __name__=="__main__":
 
-    filename = "bend_FDM.vtf"
+    filename = "extrude_FDM.vtf"
     def vertex_is_boundary(v):
         return v[0] == 0
 
@@ -112,9 +112,11 @@ if __name__=="__main__":
         if v_old_id < v_id:
                         while (v_old_id < v_id):
                             v_old_id += 1
-                v_end.append(count)
-            count += 1
-    v_end.append(count)
+                            v_end.append(count)
+        count += 1
+    while (v_old_id < len(vertices)+1):
+        v_old_id += 1
+        v_end.append(count)
     assert(len(v_end) == len(vertices)+1), "v_end %d, vertices %d" % (len(v_end), len(vertices))
 
     face_color = [ -1 ] * len(faces)

@@ -52,25 +52,29 @@ Viewer::Viewer(Mesh* mesh)
     buffModel();
 }
 
+void Viewer::refresh()
+{
+	/* compute rotation and projection matrix */
+	computeMatrixFromInputs();
+
+	/* Render */
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	draw_mesh();
+	draw_axis();
+
+	/* Swap front and back buffers*/
+	glfwSwapBuffers(mainWindow);
+
+	/* Poll for and process event */
+	glfwPollEvents();
+}
+
 void Viewer::show()
 {
     while (!glfwWindowShouldClose(mainWindow))
     {
-        /* compute rotation and projection matrix */
-        computeMatrixFromInputs();
-
-        /* Render */
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
-        draw_mesh();
-        draw_axis();
-
-        /* Swap front and back buffers*/
-        glfwSwapBuffers(mainWindow);
-
-        /* Poll for and process event */
-        glfwPollEvents();
-
+		refresh();
     }
 }
 

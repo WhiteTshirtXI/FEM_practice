@@ -28,13 +28,13 @@ ArcBall arcball;
 BallonFEM::Engine engine;
 BallonFEM::TetraMesh* m_tetra;
 
-static double force = -0.01;
+static double force = 0.001;
 static int modified = 0;
 static int outputcount = 0;		// output id
 
 void mAddParameter()
 {
-	force += 0.001;
+	force += 0.0001;
 	modified = 0;
 	printf("force = %.4f\n", force);
 }
