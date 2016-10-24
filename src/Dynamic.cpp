@@ -268,6 +268,7 @@ namespace BallonFEM
             /* update v_pos_next and f_elas */
             next_state.update(dstate);
 			next_state.project();
+            dstate.clear();
 
 			/* debug watch use*/
 			next_state.output();
