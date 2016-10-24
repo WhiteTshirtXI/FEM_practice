@@ -172,7 +172,7 @@ int TetraMesh::read( const string& filename )
     return rval;
 }
 
-int TetraMesh::write( const string& filename )
+int TetraMesh::write( const string& filename, const string& additioninfo)
 {
     ofstream out( filename.c_str() );
 
@@ -182,6 +182,7 @@ int TetraMesh::write( const string& filename )
         return 1;
     }
 
+	out << additioninfo.c_str() << endl;
     TetraMeshIO::write( out, *this );
 
     return 0;

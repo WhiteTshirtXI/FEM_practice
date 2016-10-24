@@ -117,7 +117,7 @@ namespace BallonFEM{
             TetraMesh(){};
 
             int read( const std::string& filename );
-            int write( const std::string& filename );
+			int write(const std::string& filename, const std::string& additioninfo);
 
             /* perform after read to compute surface and tetra properties */
             void precomputation();

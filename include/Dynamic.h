@@ -6,6 +6,7 @@
 #include "Types.h"
 #include "TetraMesh.h"
 #include "ElasticModel.h"
+#include "AirModel.h"
 #include "ObjState.h"
 
 namespace BallonFEM
@@ -15,9 +16,11 @@ namespace BallonFEM
     {
         public:
             Engine(){};
-            Engine(TetraMesh* tetra, ElasticModel* model);
+            Engine(TetraMesh* tetra, ElasticModel* model, AirModel* a_model);
 
-            void setModel(ElasticModel* model){ m_model = model; };
+            void setElasticModel(ElasticModel* model){ m_model = model; };
+
+            void setAirModel(AirModel* model){ m_a_model = model; };
 
 			/* input data v_pos, v_velocity and f_ext */
 			void inputData();
@@ -42,8 +45,13 @@ namespace BallonFEM
             void forceTest();
 
         private:
+
             TetraMesh* m_tetra;
+
             ElasticModel* m_model;
+
+            AirModel* m_a_model;
+
 			size_t m_size;
 
             typedef std::vector<Vec3> Vvec3;

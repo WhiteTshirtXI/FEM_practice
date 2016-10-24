@@ -7,11 +7,12 @@
 
 namespace BallonFEM
 {
-    Engine::Engine(TetraMesh* tetra, ElasticModel* model)
+    Engine::Engine(TetraMesh* tetra, ElasticModel* model, AirModel* a_model)
     {
         m_tetra = tetra;
         m_size = tetra->vertices.size();
         m_model = model;
+        m_a_model = a_model;
 
 		f_ext.assign(m_size, Vec3(0));
 
@@ -78,11 +79,23 @@ namespace BallonFEM
             f_elas[id[2]] += H[2];
             f_elas[id[3]] -= H[0] + H[1] + H[2];
         }
+
+        /* add air pressure force */
+        for (size_t i = 0; i < m_tetra->holes.size(); i++)
+        {
+            double p = m_a_model->pressure(state.hole_volume[i]);
+            Hole &h = m_tetra->holes[i];
+            std::vector<size_t>::iterator j;
+
+            for (j = h.vertices.begin(); j != h.vertices.end(); j++)
+            {
+                f_elas[*j] += p * state.volume_gradient[*j];
+            }
+        }
     }
 
     void Engine::computeForceDifferentials(ObjState &state, DeltaState &dstate, Vvec3 &df_elas)
     {
-        df_elas.assign( m_size, Vec3(0.0));
         
         /* project from constrained freedom state to world space */
         Vvec3 &pos = state.world_space_pos;
@@ -90,6 +103,35 @@ namespace BallonFEM
         dstate.project();
         Vvec3 &dpos = dstate.world_space_pos;
 
+        df_elas.assign( m_size, Vec3(0.0));
+
+        /* compute air pressure force differentials */
+        state.volumeGradientDiff(dstate.world_space_pos, df_elas);
+
+        for (size_t i = 0; i < m_tetra->holes.size(); i++)
+        {
+            double p = m_a_model->pressure(state.hole_volume[i]);
+            Hole &h = m_tetra->holes[i];
+            std::vector<size_t>::iterator j;
+            
+            double dV = 0;
+            for (j = h.vertices.begin(); j != h.vertices.end(); j++)
+            {
+                /* p(V) * dG */
+                df_elas[*j] *= p;
+                dV += glm::dot( dstate.world_space_pos[*j], state.volume_gradient[*j] );
+            }
+
+            double dp = m_a_model->pressureDiff(state.hole_volume[i], dV);
+            if (dp != 0)
+            {
+                /* dp * G */
+                for (j = h.vertices.begin(); j != h.vertices.end(); j++)
+                    df_elas[*j] += dp * state.volume_gradient[*j];
+            }
+        }
+
+        /* compute elastic force Differentials */
         for(TIter t = m_tetra->tetrahedrons.begin();
                 t != m_tetra->tetrahedrons.end(); t++)
         {

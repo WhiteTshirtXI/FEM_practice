@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+#include <string>
+#include <sstream>
+#include <iomanip>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -24,13 +28,15 @@ ArcBall arcball;
 BallonFEM::Engine engine;
 BallonFEM::TetraMesh* m_tetra;
 
-static double force = 0.05;
+static double force = -0.01;
 static int modified = 0;
+static int outputcount = 0;		// output id
+
 void mAddParameter()
 {
-	force += 0.01;
+	force += 0.001;
 	modified = 0;
-	printf("force = %.2f\n", force);
+	printf("force = %.4f\n", force);
 }
 
 /* Do something to tetra mesh */
@@ -38,8 +44,8 @@ void mProcess()
 {
 	if (modified == 0){
 		/* add force to tetra mesh */
-		m_tetra->vertices[9].m_f_ext = BallonFEM::Vec3(0, force, force);
-
+		//m_tetra->vertices[9].m_f_ext = BallonFEM::Vec3(0, force, force);
+		engine.setAirModel(new BallonFEM::AirModel_Isobaric(force, 0));
 		engine.inputData();
 		modified = 1;
 	}
@@ -111,6 +117,26 @@ void mReset()
 	force = 0;
 	modified = 0;
 	shadFlag = 1;
+	outputcount = 0;
+}
+
+void mOutput()
+{
+	std::ostringstream info;
+	info << "#";
+	info << "pressure = ";
+	info << force;
+
+	std::ostringstream ss;
+	ss << "output/p_";
+	ss << outputcount;
+	ss << ".obj";
+	std::string name(ss.str());
+
+    printf("Write to %s. \n", name.c_str());
+
+    m_tetra->write(name, info.str());
+	outputcount++;
 }
 
 /* rotation quaternion and translation vector for the object */
@@ -133,7 +159,11 @@ void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
-    engine = BallonFEM::Engine(tetra, new BallonFEM::Elastic_neohookean(0.4, 0.4));
+    engine = BallonFEM::Engine(
+		tetra, 
+		new BallonFEM::Elastic_neohookean(0.4, 0.4), 
+		new BallonFEM::AirModel_Isobaric(force, 0)
+		);
 }
 
 /* update at each main loop */
@@ -235,7 +265,10 @@ void help()
 {
 	printf("w  -  Wireframe Display\n");
 	printf("f  -  Flat Shading \n");
-	printf("s  -  Smooth Shading\n");
+    printf("r  -  Reset All Parames \n");
+    printf("a  -  Add Force \n");
+    printf("space - Solve Static Position \n");
+	printf("o  -  Output obj file\n");
 	printf("?  -  Help Information\n");
 	printf("q - quit\n");
 }
@@ -253,10 +286,6 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		//Flat Shading
 		glPolygonMode(GL_FRONT, GL_FILL);
 		break;
-	case GLFW_KEY_S:
-		//Smooth Shading
-		glPolygonMode(GL_FRONT, GL_FILL);
-		break;
 	case GLFW_KEY_W:
 		//Wireframe mode
 		glPolygonMode(GL_FRONT, GL_LINE);
@@ -272,6 +301,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		break;
 	case GLFW_KEY_R:
 		mReset();
+		break;
+    case GLFW_KEY_O:
+        mOutput();
 		break;
 	case GLFW_KEY_H:
 	case GLFW_KEY_UNKNOWN:

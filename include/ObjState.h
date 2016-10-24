@@ -29,11 +29,22 @@ namespace BallonFEM
 		typedef std::vector<Vec3> Vvec3;
 		Vvec3 world_space_pos;
 
-		/* project to real world space and record in world_space_pos */
+        /* recorded volumes of holes */
+        std::vector<double> hole_volume;
+
+        /* volume gradient of vertices belongs to hole */
+        Vvec3 volume_gradient;
+
+		/* project to real world space and record in world_space_pos
+         * then calcualte volume of holes and volume gradients
+         */
 		void project();
 
 		/* update from DeltaState */
 		void update(DeltaState& dpos);
+
+        /* calculate volume gradient difference based on dr */
+        void volumeGradientDiff(Vvec3& dr, Vvec3& dg);
 
 		friend class DeltaState;
 
@@ -45,6 +56,9 @@ namespace BallonFEM
 
 		/* number of rigid bodys of tetramesh */
 		size_t m_r_size;
+
+        /* numer of holes of tetramesh */
+        size_t m_h_size;
 
 		/* positions for those who is not fixed nor bounded to a rigid body
 		* size equals to world_space_pos, meaningless nonzero value for
@@ -61,6 +75,13 @@ namespace BallonFEM
 
 		/* convert delta phi to quternion */
 		Quat omegaToQuat(Vec3 delta_phi);
+
+        /* calculate hole volume */
+        void holeVolume();
+
+        /* calculate hole volume and volume gradient */
+        void volumeGradient();
+
 
 	};
 

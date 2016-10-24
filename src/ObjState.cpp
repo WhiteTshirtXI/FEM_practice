@@ -26,8 +26,12 @@ namespace BallonFEM
 		m_tetra = other.m_tetra;
 		m_size = other.m_size;
 		m_r_size = other.m_r_size;
+        m_h_size = other.m_h_size;
 
 		world_space_pos.assign(other.world_space_pos.begin(), other.world_space_pos.end());
+        volume_gradient.assign(other.volume_gradient.begin(), other.volume_gradient.end());
+        hole_volume.assign(other.hole_volume.begin(), other.hole_volume.end());
+
 		m_pos.assign(other.m_pos.begin(), other.m_pos.end());
 		m_r_pos.assign(other.m_r_pos.begin(), other.m_r_pos.end());
 		m_r_rot.assign(other.m_r_rot.begin(), other.m_r_rot.end());
@@ -40,13 +44,15 @@ namespace BallonFEM
         m_tetra = tetra;
         m_size = tetra->vertices.size();
         m_r_size = tetra->rigid_bodies.size();
+        m_h_size = tetra->holes.size();
 
-        /* initialize world_space_pos */
-        world_space_pos.assign( m_size, Vec3(0));
+        /* initialize m_pos */
+        m_pos.assign( m_size, Vec3(0));
         for (size_t i = 0; i < m_size; i++)
         {
-           world_space_pos[i] = m_tetra->vertices[i].m_pos; 
+           m_pos[i] = m_tetra->vertices[i].m_pos; 
         }
+
 
         /* initialize m_r_pos and m_r_rot */
         m_r_pos.assign( m_r_size, Vec3(0));
@@ -58,8 +64,11 @@ namespace BallonFEM
             m_r_rot[i] = r.m_rot;
         }
 
-        /* initialize m_pos */
-        m_pos.assign( world_space_pos.begin(), world_space_pos.end() );
+        /* initialize world_space_pos, volume gradients and hole volume */
+        world_space_pos.assign( m_pos.begin(), m_pos.end() );
+        volume_gradient.assign( m_size, Vec3(0) );
+        hole_volume.assign( m_h_size, 0 );
+        this->project();
     }
 
     void ObjState::output()
@@ -107,6 +116,79 @@ namespace BallonFEM
                         R * (m_tetra->vertices[v_id].m_cord - cordc);
             }
         }
+
+        this->holeVolume();
+        this->volumeGradient();
+    }
+
+    void ObjState::holeVolume()
+    {
+        Vvec3 &pos = world_space_pos;
+
+        for(size_t i = 0; i < m_h_size; i++)
+        {
+            double &V = hole_volume[i];
+            Hole &h = m_tetra->holes[i];
+
+            V = 0;
+            for(FCIter f = h.holeface.begin(); f != h.holeface.end(); f++)
+            {
+                iVec3 v = f->v_id;
+                V += glm::dot(glm::cross(pos[v[0]], pos[v[1]]), pos[v[2]]);
+            }
+
+        /* since the hole surface normal towards inner, the V is negtive*/
+            V /= - 6.0;
+        }
+    }
+
+    void ObjState::volumeGradient()
+    {   
+        Vvec3 &pos = world_space_pos;
+        volume_gradient.assign( m_size, Vec3(0));
+
+        for(size_t i = 0; i < m_h_size; i++)
+        {
+            Hole &h = m_tetra->holes[i];
+            for(FCIter f = h.holeface.begin(); f != h.holeface.end(); f++)
+            {
+                iVec3 v = f->v_id;
+                /* 2An = (r1 - r3) x (r2 - r3) */
+                Vec3 n = glm::cross(pos[v[0]] - pos[v[2]], pos[v[1]] - pos[v[2]]);
+                volume_gradient[v[0]] += n;
+                volume_gradient[v[1]] += n;
+                volume_gradient[v[2]] += n;
+            }
+        }
+
+        /* since the hole surface normal towards inner, the V is negtive*/
+        for(size_t i = 0; i < m_size; i++)
+            volume_gradient[i] /= - 6.0;
+    }
+
+    void ObjState::volumeGradientDiff(Vvec3& dr, Vvec3& dg)
+    {
+        Vvec3 &pos = world_space_pos;
+        dg.assign( m_size, Vec3(0));
+
+        for(size_t i = 0; i < m_h_size; i++)
+        {
+            Hole &h = m_tetra->holes[i];
+            for(FCIter f = h.holeface.begin(); f != h.holeface.end(); f++)
+            {
+                iVec3 v = f->v_id;
+                /* d(2An) = (dr1 - dr3) x (r2 -r3) + (r1 - r3) x (dr2 - dr3) */
+                Vec3 dn = glm::cross(dr[v[0]] - dr[v[2]], pos[v[1]] - pos[v[2]])
+                        + glm::cross(pos[v[0]] - pos[v[2]], dr[v[1]] - dr[v[2]]);
+                dg[v[0]] += dn;
+                dg[v[1]] += dn;
+                dg[v[2]] += dn;
+            }
+        }
+
+        /* since the hole surface normal towards inner, the V is negtive*/
+        for(size_t i = 0; i < m_size; i++)
+            dg[i] /= - 6.0;
     }
 
     Quat ObjState::omegaToQuat(Vec3 delta_phi)
