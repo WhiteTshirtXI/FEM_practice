@@ -136,7 +136,7 @@ if __name__=="__main__":
     parser.add_argument("file", help="the .vt file to add surface to.")
     args = parser.parse_args()
 
-    filename = re.split("\W", args.file)[-2]
-    print("writing to %s.obj" % filename)
-    refine_tetra(args.file, filename + '.obj')
-    add_surface(filename + '.obj')
+    filename = re.split("[\\\\,/,\.]", args.file)[-2]
+    print("writing to %s.vtf" % filename)
+    refine_tetra(args.file, filename + '.vtf')
+    add_surface(filename + '.vtf')

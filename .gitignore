@@ -47,3 +47,4 @@ Release/
 
 # data file
 *.png
+output/
