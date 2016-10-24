@@ -94,6 +94,8 @@ namespace BallonFEM
 		typedef std::vector<Vec3> Vvec3;
 		Vvec3 world_space_pos;
 
+		void clear();
+
 		/* linear algebra algorithms */
 		/* assign this DeltaState alpha * other */
 		void assign(const double alpha, const DeltaState& other);

@@ -230,6 +230,15 @@ namespace BallonFEM
         dm_r_rot.assign( m_r_size, Vec3(0));
     }
 
+	void DeltaState::clear()
+	{
+		world_space_pos.assign(m_size, Vec3(0));
+
+		dm_pos.assign(m_size, Vec3(0));
+		dm_r_pos.assign(m_r_size, Vec3(0));
+		dm_r_rot.assign(m_r_size, Vec3(0));
+	}
+
     void DeltaState::assign(const double alpha, const DeltaState& other)
     {
         for (size_t i = 0; i < m_size; i++)
