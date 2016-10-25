@@ -9,19 +9,28 @@
 #include "controls.h"
 #include "Dynamic.h"
 
+namespace{
+    using namespace BallonFEM;
+    const Vec3 v[4] = {Vec3(0), Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)};
+    const Mat3 m[4][3] = {
+        { Mat3(v[1], v[0], v[0]), Mat3(v[2], v[0], v[0]), Mat3(v[3], v[0], v[0])},
+        { Mat3(v[0], v[1], v[0]), Mat3(v[0], v[2], v[0]), Mat3(v[0], v[3], v[0])},
+        { Mat3(v[0], v[0], v[1]), Mat3(v[0], v[0], v[2]), Mat3(v[0], v[0], v[3])},
+        { -Mat3(v[1], v[1], v[1]), -Mat3(v[2], v[2], v[2]), -Mat3(v[3], v[3], v[3])}
+    };
+
+}
+
 namespace BallonFEM
 {
-  void Engine::computeForceDiffMatrix(ObjState &pos, SpMat &K)
+  void Engine::computeForceDiffMat(ObjState &state, SpMat &K)
     {
         /* project from constrained freedom state to world space */
         Vvec3 &pos = state.world_space_pos;
 
-        typedef Eigen::Triplet<double> T;
-        std::vector<T> coefficients;
-        coefficients.reserve( 12 * 12 * pos.size() + );
-
+        ///////////////////////////////////////////////////////////////////
         /* compute air pressure force differential matrix */
-        state.volumeGradientDiffMatrix(K);
+        state.volumeGradientDiffMat(K);
 
         std::vector<T> pressure;
         pressure.reserve(pos.size());
@@ -35,14 +44,21 @@ namespace BallonFEM
             for (j = h.vertices.begin(); j != h.vertices.end(); j++)
             {
                 /* p(V) * dG */
-                pressure.push_back( T(*j, *j, p) );
+                pressure.push_back( T(3 * *j    , 3 * *j    , p) );
+                pressure.push_back( T(3 * *j + 1, 3 * *j + 1, p) );
+                pressure.push_back( T(3 * *j + 2, 3 * *j + 2, p) );
             }
         }
-        SpMat P(pos.size(), pos.size());
+        SpMat P(3 * pos.size(), 3 * pos.size());
         P.setFromTriplets(pressure.begin(), pressure.end());
         K *= P;
 
+        //////////////////////////////////////////////////////////////////
         /* compute elastic force Differentials */
+        std::vector<T> coefficients;
+        coefficients.clear();
+        coefficients.reserve( 12 * 12 * pos.size());
+
         for(TIter t = m_tetra->tetrahedrons.begin();
                 t != m_tetra->tetrahedrons.end(); t++)
         {
@@ -59,28 +75,119 @@ namespace BallonFEM
             /* calculate deformation gradient */
             Mat3 F = Ds * t->Bm;
             
-            /* assign world space delta position */
-            Vec3 &dv0 = dpos[id[0]];
-            Vec3 &dv1 = dpos[id[1]];
-            Vec3 &dv2 = dpos[id[2]];
-            Vec3 &dv3 = dpos[id[3]];
-            
-            /* calculate delta deformation in world space */
-            Mat3 dDs = Mat3(dv0 - dv3, dv1 - dv3, dv2 - dv3);
+            /* i is index of vertex, j is index of dimention */
+            for (size_t i = 0; i < 4; i++)
+                for(size_t j = 0; j < 3; j++)
+            {
+                /* calculate delta deformation in world space */
+                Mat3 dDs = m[i][j]; 
 
-            /* calculate delta deformation gradient */
-            Mat3 dF = dDs * t->Bm;
+                /* calculate delta deformation gradient */
+                Mat3 dF = dDs * t->Bm;
 
-            /* calculate delta Piola */
-            Mat3 dP = m_model->StressDiff(F, dF);
+                /* calculate delta Piola */
+                Mat3 dP = m_model->StressDiff(F, dF);
  
-            /* calculate forces contributed from this tetra */
-            Mat3 dH = - t->W * dP * transpose(t->Bm);
+                /* calculate forces contributed from this tetra */
+                Mat3 dH = - t->W * dP * transpose(t->Bm);
 
-            df_elas[id[0]] += dH[0];
-            df_elas[id[1]] += dH[1];
-            df_elas[id[2]] += dH[2];
-            df_elas[id[3]] -= dH[0] + dH[1] + dH[2];     
+                for(size_t w = 0; w < 3; w++)
+                    for(size_t l = 0; l < 3; l++)
+                        coefficients.push_back( T(3*id[w] + l, 3*id[i] + j,  H[w][l]));
+
+                Vec3 df_4 = - H[0] - H[1] - H[2];
+                for(size_t l = 0; l < 3; l++)
+                    coefficients.push_back( T(3*id[4] + l, 3*id[i] + j,  df_4[l]));
+            }
         }
+        SpMat E( 3 * pos.size(), 3 * pos.size());
+        E.setFromTriplets(coefficients.begin(), coefficients.end());
+
+        K += E;
     }
+
+  void Engine::solveStaticPosMat()
+  {
+      /* initialize next_state */
+        next_state = cur_state;
+		next_state.project();
+
+        /* initialize temp variable for iterative implicit solving */
+        DeltaState f_elas(next_state);
+        computeElasticForces(next_state, f_elas.world_space_pos); 
+        for(size_t i = 0; i < m_size; i++)
+            f_elas.world_space_pos[i] += f_ext[i];
+        f_elas.conterProject();
+        SpVec b = f_elas.toSpVec();
+
+        DeltaState dstate(next_state);
+
+        /* K = - df/dr, here Force Diff Mat compute df/dr */
+        SpMat K;
+        computeForceDiffMat(next_state, K);
+        K = -K;
+
+        /* convert K to \tilde K with W transfer. The restricted vertices
+         * has all 0 colume and raw so we add 1 to its diagnal */
+        SpMat W = dstate.projectMat();
+        K = W.transpose() * K * W + dstate.restrictedMat();
+        
+        /* solver */
+        Eigen::SparseLU<SpMat> solver;
+		
+		double err_felas = f_elas.dot(f_elas);
+		double err_begin = err_felas;
+		int count_iter = 0;		/* K dx = f iter count */
+        /* while not converge f == 0, iterate */
+		while ((err_felas > CONVERGE_ERROR_RATE * err_begin) && (err_felas > 1e-10))
+        {
+            /* debug use */
+			count_iter++;
+            printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_felas);
+
+            /* r0 = b - Ax0 */
+            SpVec r = b - K * dstate.toSpVec();
+
+
+            printf("building solver\n");
+            solver.compute(K);
+            if (solve.info() != "Success")
+            {
+                printf("decomposition failed!\n");
+                return;
+            }
+            SpVec x = solver.solve(r);
+            dstate.readSpVec(x);
+
+            /* update v_pos_next and f_elas */
+            next_state.update(dstate);
+			next_state.project();
+            dstate.clear();
+
+			/* debug watch use*/
+			next_state.output();
+			shadFlag = 1;
+			p_viewer->refresh();
+			//Control::mOutput();
+			
+            /* update K */
+            computeForceDiffMat(next_state, K);
+            K = -K;
+            dstate.projectMat();
+            K = W.transpose() * K * W + dstate.restrictedMat();
+
+            /* update f_elas */
+            computeElasticForces(next_state, f_elas.world_space_pos); 
+            for(size_t i = 0; i < m_size; i++)
+                f_elas.world_space_pos[i] += f_ext[i];
+            f_elas.conterProject();
+            b = f_elas.toSpVec();
+
+			err_felas = f_elas.dot(f_elas);
+        }
+
+		printf("f_sum error %f \n", err_felas);
+		printf("finish solving \n");
+  }
+
 }

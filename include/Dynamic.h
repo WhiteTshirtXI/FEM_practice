@@ -36,6 +36,8 @@ namespace BallonFEM
              */
             void solveStaticPos();
 
+            void solveStaticPosMat();
+
             /* test the comuteElasticForces, deforme v_pos and output f_ela 
              * to v_velocity
              * */
@@ -72,8 +74,7 @@ namespace BallonFEM
             void computeForceDifferentials(ObjState &pos, DeltaState &dpos, Vvec3 &df_elas);
 
             /* compute force differntial matrix */
-            typedef Eigen::SparseMatrix<double> SpMat;
-            void computeForceDiffMatrix(ObjState &pos, SpMat& K)
+            void computeForceDiffMat(ObjState &pos, SpMat& K)
 
     };
 

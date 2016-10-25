@@ -46,6 +46,9 @@ namespace BallonFEM
         /* calculate volume gradient difference based on dr */
         void volumeGradientDiff(Vvec3& dr, Vvec3& dg);
 
+        /* calculate volume gradient difference Matrix */
+        void volumeGradientDiffMat(SpMat& M);
+
 		friend class DeltaState;
 
 	private:
@@ -107,8 +110,21 @@ namespace BallonFEM
 		/* convert between obj state and real world spaces */
 		/* project to real world space and record in world_space_pos */
 		void project();
+
 		/* project real world space data to constrained freedom state */
 		void conterProject();
+
+        /* the matrix enable inner freedom to project to real world */
+        SpMat projectMat();
+
+        /* the matrix specify those restricted vertices */
+        SpMat restrictedMat();
+
+        /* convert to SpVec, equal to world space vec multiply transpose projectMatrix() */
+        SpVec toSpVec();
+
+        /* read in SpVec and update the inner representation */
+        void readSpVec(SpVec& stateVec);
 
 		/* dot function */
 		double dot(const DeltaState& other);

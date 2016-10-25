@@ -2,8 +2,12 @@
 #define _TYPE_H_
 
 #include <vector>
+
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 namespace BallonFEM
 {
@@ -23,6 +27,10 @@ namespace BallonFEM
     typedef glm::ivec3	iVec3;
     typedef glm::ivec4	iVec4;
     typedef glm::dquat  Quat;
+
+    typedef Eigen::VectorXd SpVec;
+    typedef Eigen::SparseMatrix<double> SpMat;
+    typedef Eigen::Triplet<double> T;
 
 
     typedef std::vector<Vertex>::iterator   VIter;

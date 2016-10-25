@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include <Eigen/Sparse>
+
 #include "Types.h"
 #include "Viewer.h"
 #include "controls.h"
@@ -172,11 +174,6 @@ namespace BallonFEM
             df_elas[id[3]] -= dH[0] + dH[1] + dH[2];     
         }
     }
-
-    void Engine::solveNextTimestep(double timestep)
-    {
-    }
-
 
 	#define CONVERGE_ERROR_RATE 1e-4
     void Engine::solveStaticPos()

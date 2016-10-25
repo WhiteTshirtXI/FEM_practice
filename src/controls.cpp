@@ -60,7 +60,7 @@ void mProcess()
 
 		std::clock_t start;
 		start = std::clock();
-		engine.solveStaticPos();
+		engine.solveStaticPosMat();
 		solveTime.push_back((std::clock() - start) / (double) CLOCKS_PER_SEC);
 
 		engine.stepToNext();
