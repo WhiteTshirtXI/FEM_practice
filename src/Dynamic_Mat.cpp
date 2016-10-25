@@ -9,6 +9,9 @@
 #include "controls.h"
 #include "Dynamic.h"
 
+extern int shadFlag;
+extern View::Viewer *p_viewer;
+
 namespace{
     using namespace BallonFEM;
     const Vec3 v[4] = {Vec3(0), Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)};
@@ -51,7 +54,7 @@ namespace BallonFEM
         }
         SpMat P(3 * pos.size(), 3 * pos.size());
         P.setFromTriplets(pressure.begin(), pressure.end());
-        K *= P;
+        K = K * P;
 
         //////////////////////////////////////////////////////////////////
         /* compute elastic force Differentials */
@@ -93,11 +96,11 @@ namespace BallonFEM
 
                 for(size_t w = 0; w < 3; w++)
                     for(size_t l = 0; l < 3; l++)
-                        coefficients.push_back( T(3*id[w] + l, 3*id[i] + j,  H[w][l]));
+                        coefficients.push_back( T(3*id[w] + l, 3*id[i] + j,  dH[w][l]));
 
-                Vec3 df_4 = - H[0] - H[1] - H[2];
+                Vec3 df_4 = - dH[0] - dH[1] - dH[2];
                 for(size_t l = 0; l < 3; l++)
-                    coefficients.push_back( T(3*id[4] + l, 3*id[i] + j,  df_4[l]));
+                    coefficients.push_back( T(3*id[3] + l, 3*id[i] + j,  df_4[l]));
             }
         }
         SpMat E( 3 * pos.size(), 3 * pos.size());
@@ -106,6 +109,7 @@ namespace BallonFEM
         K += E;
     }
 
+#define CONVERGE_ERROR_RATE 1e-4
   void Engine::solveStaticPosMat()
   {
       /* initialize next_state */
@@ -151,11 +155,12 @@ namespace BallonFEM
 
             printf("building solver\n");
             solver.compute(K);
-            if (solve.info() != "Success")
+            if (solver.info() != Eigen::Success)
             {
                 printf("decomposition failed!\n");
                 return;
             }
+			printf("solve delta_x \n");
             SpVec x = solver.solve(r);
             dstate.readSpVec(x);
 

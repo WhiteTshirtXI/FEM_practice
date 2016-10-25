@@ -35,7 +35,7 @@ static int outputcount = 0;		// output id
 
 void mAddParameter()
 {
-	force += 5e-5;
+	force += 5e-4;
 	modified = 0;
 	printf("force = %.4f\n", force);
 }
@@ -45,12 +45,12 @@ void mProcess()
 {
 	std::vector<double> solveTime;
 	mOutput();
-	for (size_t i = 0; i < 20; i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		mAddParameter();
 		if (modified == 0){
 			/* add force to tetra mesh */
-			//m_tetra->vertices[9].m_f_ext = BallonFEM::Vec3(0, force, force);
+			//m_tetra->vertices[3].m_f_ext = BallonFEM::Vec3(0, force, force);
 			engine.setAirModel(new BallonFEM::AirModel_Isobaric(force, 0));
 			engine.inputData();
 			modified = 1;
@@ -72,10 +72,10 @@ void mProcess()
 	double count = 0;
 	for (size_t i = 0; i < solveTime.size(); i++)
 	{
-		printf("solve time for step %d: %f \n", i, solveTime[i]);
+		printf("solve time for step %d: %f s \n", i, solveTime[i]);
 		count += solveTime[i];
 	}
-	printf("total time spent %f", count);
+	printf("total time spent %f s\n", count);
 }
 
 /* Reset the tetra mesh to original state */

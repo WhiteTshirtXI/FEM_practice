@@ -74,7 +74,7 @@ namespace BallonFEM
             void computeForceDifferentials(ObjState &pos, DeltaState &dpos, Vvec3 &df_elas);
 
             /* compute force differntial matrix */
-            void computeForceDiffMat(ObjState &pos, SpMat& K)
+			void computeForceDiffMat(ObjState &pos, SpMat& K);
 
     };
 

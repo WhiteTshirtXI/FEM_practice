@@ -34,7 +34,7 @@ namespace BallonFEM
         std::vector<T> coefficients;
         coefficients.clear();
         /* to be completed */
-        coefficients.reserve( 9 * 9 * m_tetra->holes[0].holeface.size());
+        //coefficients.reserve( 9 * 9 * m_tetra->holes[0].holeface.size());
 
         /**/
         Vvec3 &pos = world_space_pos;
@@ -119,15 +119,26 @@ namespace BallonFEM
     {
         SpVec stateVec( 3 * m_size + 6 * m_r_size );
 
+		size_t count = 0;
         /* output vertices state, fixed and rigid part should be zero */
-        for (size_t i = 0; i < m_size; i++)
-            stateVec << dm_pos[i].x, dm_pos[i].y, dm_pos[i].z;
+		for (size_t i = 0; i < m_size; i++)
+		{
+			stateVec(count    ) = dm_pos[i].x;
+			stateVec(count + 1) = dm_pos[i].y;
+			stateVec(count + 2) = dm_pos[i].z;
+			count += 3;
+		}
 
         /* output rigid body state */
         for (size_t i = 0; i < m_r_size; i++)
         {
-            stateVec << dm_r_pos[i].x, dm_r_pos[i].y, dm_r_pos[i].z;
-            stateVec << dm_r_rot[i].x, dm_r_rot[i].y, dm_r_rot[i].z;
+			stateVec(count	  ) = dm_r_pos[i].x;
+			stateVec(count + 1) = dm_r_pos[i].y;
+			stateVec(count + 2) = dm_r_pos[i].z;
+			stateVec(count + 3) = dm_r_rot[i].x;
+			stateVec(count + 4) = dm_r_rot[i].y;
+			stateVec(count + 5) = dm_r_rot[i].z;
+			count += 6;
         }
 
         return stateVec;
@@ -135,17 +146,26 @@ namespace BallonFEM
 
     void DeltaState::readSpVec(SpVec& stateVec)
     {
-        std::stringstream ss;
-        ss << stateVec;
-        /* output vertices state, fixed and rigid part should be zero */
-        for (size_t i = 0; i < m_size; i++)
-            ss >> dm_pos[i].x >> dm_pos[i].y >> dm_pos[i].z;
+		size_t count = 0;
+		/* output vertices state, fixed and rigid part should be zero */
+		for (size_t i = 0; i < m_size; i++)
+		{
+			dm_pos[i].x = stateVec(count);
+			dm_pos[i].y = stateVec(count + 1);
+			dm_pos[i].z = stateVec(count + 2);
+			count += 3;
+		}
 
-        /* output rigid body state */
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-            ss >> dm_r_pos[i].x >> dm_r_pos[i].y >> dm_r_pos[i].z;
-            ss >> dm_r_rot[i].x >> dm_r_rot[i].y >> dm_r_rot[i].z;
-        }
+		/* output rigid body state */
+		for (size_t i = 0; i < m_r_size; i++)
+		{
+			dm_r_pos[i].x = stateVec(count);
+			dm_r_pos[i].y = stateVec(count + 1);
+			dm_r_pos[i].z = stateVec(count + 2);
+			dm_r_rot[i].x = stateVec(count + 3);
+			dm_r_rot[i].y = stateVec(count + 4);
+			dm_r_rot[i].z = stateVec(count + 5);
+			count += 6;
+		}
     }
 }
