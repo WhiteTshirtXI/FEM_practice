@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include <Eigen/Sparse>
+#include <Eigen/SparseQR>
 
 #include "Types.h"
 #include "Viewer.h"
@@ -26,87 +27,89 @@ namespace{
 
 namespace BallonFEM
 {
-  void Engine::computeForceDiffMat(ObjState &state, SpMat &K)
-    {
-        /* project from constrained freedom state to world space */
-        Vvec3 &pos = state.world_space_pos;
 
-        ///////////////////////////////////////////////////////////////////
-        /* compute air pressure force differential matrix */
-        state.volumeGradientDiffMat(K);
+	void Engine::computeForceDiffMat(ObjState &state, SpMat &K)
+	{
+		printf("building force differential matrix \n");
+		/* project from constrained freedom state to world space */
+		Vvec3 &pos = state.world_space_pos;
 
-        std::vector<T> pressure;
-        pressure.reserve(pos.size());
-        for (size_t i = 0; i < m_tetra->holes.size(); i++)
-        {
-            double p = m_a_model->pressure(state.hole_volume[i]);
-            Hole &h = m_tetra->holes[i];
-            std::vector<size_t>::iterator j;
+		///////////////////////////////////////////////////////////////////
+		/* compute air pressure force differential matrix */
+		state.volumeGradientDiffMat(K);
+
+		std::vector<T> pressure;
+		pressure.reserve(pos.size());
+		for (size_t i = 0; i < m_tetra->holes.size(); i++)
+		{
+			double p = m_a_model->pressure(state.hole_volume[i]);
+			Hole &h = m_tetra->holes[i];
+			std::vector<size_t>::iterator j;
             
-            double dV = 0;
-            for (j = h.vertices.begin(); j != h.vertices.end(); j++)
-            {
-                /* p(V) * dG */
-                pressure.push_back( T(3 * *j    , 3 * *j    , p) );
-                pressure.push_back( T(3 * *j + 1, 3 * *j + 1, p) );
-                pressure.push_back( T(3 * *j + 2, 3 * *j + 2, p) );
-            }
-        }
-        SpMat P(3 * pos.size(), 3 * pos.size());
-        P.setFromTriplets(pressure.begin(), pressure.end());
-        K = K * P;
+			double dV = 0;
+			for (j = h.vertices.begin(); j != h.vertices.end(); j++)
+			{
+				/* p(V) * dG */
+				pressure.push_back( T(3 * *j    , 3 * *j    , p) );
+				pressure.push_back( T(3 * *j + 1, 3 * *j + 1, p) );
+				pressure.push_back( T(3 * *j + 2, 3 * *j + 2, p) );
+			}
+		}
+		SpMat P(3 * pos.size(), 3 * pos.size());
+		P.setFromTriplets(pressure.begin(), pressure.end());
+		K = K * P;
 
-        //////////////////////////////////////////////////////////////////
-        /* compute elastic force Differentials */
-        std::vector<T> coefficients;
-        coefficients.clear();
-        coefficients.reserve( 12 * 12 * pos.size());
+		//////////////////////////////////////////////////////////////////
+		/* compute elastic force Differentials */
+		std::vector<T> coefficients;
+		coefficients.clear();
+		coefficients.reserve( 12 * 12 * pos.size());
 
-        for(TIter t = m_tetra->tetrahedrons.begin();
-                t != m_tetra->tetrahedrons.end(); t++)
-        {
-            /* assgin world space position */
-            iVec4 &id = t->v_id;
-            Vec3 &v0 = pos[id[0]];
-            Vec3 &v1 = pos[id[1]];
-            Vec3 &v2 = pos[id[2]];
-            Vec3 &v3 = pos[id[3]];
+		for(TIter t = m_tetra->tetrahedrons.begin();
+				t != m_tetra->tetrahedrons.end(); t++)
+		{
+			/* assgin world space position */
+			iVec4 &id = t->v_id;
+			Vec3 &v0 = pos[id[0]];
+			Vec3 &v1 = pos[id[1]];
+			Vec3 &v2 = pos[id[2]];
+			Vec3 &v3 = pos[id[3]];
             
-            /* calculate deformation in world space */
-            Mat3 Ds = Mat3(v0 - v3, v1 - v3, v2 - v3);
+			/* calculate deformation in world space */
+			Mat3 Ds = Mat3(v0 - v3, v1 - v3, v2 - v3);
 
-            /* calculate deformation gradient */
-            Mat3 F = Ds * t->Bm;
+			/* calculate deformation gradient */
+			Mat3 F = Ds * t->Bm;
             
-            /* i is index of vertex, j is index of dimention */
-            for (size_t i = 0; i < 4; i++)
-                for(size_t j = 0; j < 3; j++)
-            {
-                /* calculate delta deformation in world space */
-                Mat3 dDs = m[i][j]; 
+			/* i is index of vertex, j is index of dimention */
+			for (size_t i = 0; i < 4; i++)
+				for(size_t j = 0; j < 3; j++)
+			{
+				/* calculate delta deformation in world space */
+				Mat3 dDs = m[i][j]; 
 
-                /* calculate delta deformation gradient */
-                Mat3 dF = dDs * t->Bm;
+				/* calculate delta deformation gradient */
+				Mat3 dF = dDs * t->Bm;
 
-                /* calculate delta Piola */
-                Mat3 dP = m_model->StressDiff(F, dF);
+				/* calculate delta Piola */
+				Mat3 dP = m_model->StressDiff(F, dF);
  
-                /* calculate forces contributed from this tetra */
-                Mat3 dH = - t->W * dP * transpose(t->Bm);
+				/* calculate forces contributed from this tetra */
+				Mat3 dH = - t->W * dP * transpose(t->Bm);
 
-                for(size_t w = 0; w < 3; w++)
-                    for(size_t l = 0; l < 3; l++)
-                        coefficients.push_back( T(3*id[w] + l, 3*id[i] + j,  dH[w][l]));
+				for(size_t w = 0; w < 3; w++)
+					for(size_t l = 0; l < 3; l++)
+						coefficients.push_back( T(3*id[w] + l, 3*id[i] + j,  dH[w][l]));
 
-                Vec3 df_4 = - dH[0] - dH[1] - dH[2];
-                for(size_t l = 0; l < 3; l++)
-                    coefficients.push_back( T(3*id[3] + l, 3*id[i] + j,  df_4[l]));
-            }
-        }
-        SpMat E( 3 * pos.size(), 3 * pos.size());
-        E.setFromTriplets(coefficients.begin(), coefficients.end());
+				Vec3 df_4 = - dH[0] - dH[1] - dH[2];
+				for(size_t l = 0; l < 3; l++)
+					coefficients.push_back( T(3*id[3] + l, 3*id[i] + j,  df_4[l]));
+			}
+		}
+		SpMat E( 3 * pos.size(), 3 * pos.size());
+		E.setFromTriplets(coefficients.begin(), coefficients.end());
 
-        K += E;
+		K += E;
     }
 
 #define CONVERGE_ERROR_RATE 1e-4
@@ -137,7 +140,7 @@ namespace BallonFEM
         K = W.transpose() * K * W + dstate.restrictedMat();
         
         /* solver */
-        Eigen::SparseLU<SpMat> solver;
+        Eigen::SimplicialLDLT<SpMat> solver;
 		
 		double err_felas = f_elas.dot(f_elas);
 		double err_begin = err_felas;

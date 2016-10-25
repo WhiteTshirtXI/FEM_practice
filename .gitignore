@@ -45,6 +45,11 @@ build/
 Debug/
 Release/
 
+# VS profile file
+*.psess
+*.vspx
+profile/
+
 # data file
 *.tet
 *.ele
