@@ -33,10 +33,12 @@ namespace BallonFEM
 
         std::vector<T> coefficients;
         coefficients.clear();
-        /* to be completed */
-        //coefficients.reserve( 9 * 9 * m_tetra->holes[0].holeface.size());
+        size_t count_holeface = 0;
+        for (size_t i = 0; i < m_h_size; i++)
+            count_holeface += m_tetra->holes[i].holeface.size();
+        coefficients.reserve( 9 * 9 * count_holeface);
 
-        /**/
+        /* compute contributions triangle by triangle */
         Vvec3 &pos = world_space_pos;
         for(size_t i = 0; i < m_h_size; i++)
         {
@@ -72,7 +74,11 @@ namespace BallonFEM
 
         std::vector<T> coefficients;
         coefficients.clear();
-        coefficients.reserve(3 * m_size);
+        size_t count_rigid = 0;
+        for (size_t i = 0; i < m_r_size; i++)
+            count_rigid += m_tetra->rigid_bodies[i].elements.size();
+        /* each vertex contribute 3 and rigid element contribute 9 */
+        coefficients.reserve(3 * m_size + 9 * count_rigid);
 
         /* vertices, fixed and rigid elements get 0 influence */
         for(VIter vi = m_tetra->vertices.begin(); vi != m_tetra->vertices.end(); vi++)
@@ -86,7 +92,27 @@ namespace BallonFEM
         }
 
         /* rigid bodies, begin at 3 * m_size */
-        // to be completed
+        size_t count = 3 * m_size;
+        for(size_t i = 0; i < m_r_size; i++)
+        {
+            Rigid &R = m_tetra->rigid_bodies[i];
+            for(size_t j = 0; j < R.elements.size(); j++)
+            {
+                size_t id = R.elements[j];
+                /* dr = drc + dw x (r - rc) */
+                coefficients.push_back(T( 3 * id    , count    , 1));
+                coefficients.push_back(T( 3 * id + 1, count + 1, 1));
+                coefficients.push_back(T( 3 * id + 2, count + 2, 1));
+
+                Vec3 r = m_state->m_r_pos[i] - m_state->world_space_pos[id];
+                coefficients.push_back(T( 3 * id + 1, count + 3, r.z ));
+                coefficients.push_back(T( 3 * id + 2, count + 3, -r.y));
+                coefficients.push_back(T( 3 * id    , count + 4, -r.z));
+                coefficients.push_back(T( 3 * id + 2, count + 4, r.x ));
+                coefficients.push_back(T( 3 * id    , count + 5, r.y ));
+                coefficients.push_back(T( 3 * id + 1, count + 5, -r.x));
+            }
+        }
 
         W.setFromTriplets(coefficients.begin(), coefficients.end());
 
