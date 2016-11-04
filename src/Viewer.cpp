@@ -13,7 +13,7 @@ using namespace Control;
 #include "shaderLoader.h"
 
 #include "Types.h"
-using namespace BallonFEM;
+using namespace BalloonFEM;
 
 int shadFlag = 0;
 

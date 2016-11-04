@@ -9,7 +9,7 @@
 namespace Control{
 
 /* controler initialize */
-void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra);
+void control_init(GLFWwindow* window, BalloonFEM::TetraMesh* tetra);
 
 /* runtime update */
 void computeMatrixFromInputs();

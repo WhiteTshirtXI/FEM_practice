@@ -7,7 +7,7 @@
 #include "TetraMesh.h"
 #include "ObjState.h"
 
-namespace BallonFEM
+namespace BalloonFEM
 {
     //////////////////////////////////////////////////////////////////////
     /* ObjState implementation */

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace BallonFEM{
+namespace BalloonFEM{
 
 int TetraMeshIO::read( istream& in, TetraMesh& tetra )
 {

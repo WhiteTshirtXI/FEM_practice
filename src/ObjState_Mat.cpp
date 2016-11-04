@@ -10,7 +10,7 @@
 #include "ObjState.h"
 
 namespace{
-    using namespace BallonFEM;
+    using namespace BalloonFEM;
     const Vec3 v[3] = {Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)};
     /* coeff of dr[i] in
      * d(2An) = (dr1 - dr3) x (r2 -r3) + (r1 - r3) x (dr2 - dr3) 
@@ -23,7 +23,7 @@ namespace{
 
 }
 
-namespace BallonFEM
+namespace BalloonFEM
 {
     void ObjState::volumeGradientDiffMat(SpMat &M)
     {

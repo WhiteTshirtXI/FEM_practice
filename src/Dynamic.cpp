@@ -12,7 +12,7 @@
 extern int shadFlag;
 extern View::Viewer *p_viewer;
 
-namespace BallonFEM
+namespace BalloonFEM
 {
     Engine::Engine(TetraMesh* tetra, ElasticModel* model, AirModel* a_model)
     {

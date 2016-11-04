@@ -26,8 +26,8 @@ namespace Control{
 ArcBall arcball;
 
 /* Engine */
-BallonFEM::Engine engine;
-BallonFEM::TetraMesh* m_tetra;
+BalloonFEM::Engine engine;
+BalloonFEM::TetraMesh* m_tetra;
 
 static double force = 0;
 static int modified = 0;
@@ -50,8 +50,8 @@ void mProcess()
 		mAddParameter();
 		if (modified == 0){
 			/* add force to tetra mesh */
-			//m_tetra->vertices[3].m_f_ext = BallonFEM::Vec3(0, force, force);
-			engine.setAirModel(new BallonFEM::AirModel_Isobaric(force, 0));
+			//m_tetra->vertices[3].m_f_ext = BalloonFEM::Vec3(0, force, force);
+			engine.setAirModel(new BalloonFEM::AirModel_Isobaric(force, 0));
 			engine.inputData();
 			modified = 1;
 		}
@@ -83,9 +83,9 @@ void mReset()
 {
 	for (size_t i = 0; i < m_tetra->vertices.size(); i++)
 	{
-		BallonFEM::Vertex &v = m_tetra->vertices[i];
+		BalloonFEM::Vertex &v = m_tetra->vertices[i];
 		v.m_pos = v.m_cord;
-		v.m_f_ext = BallonFEM::Vec3(0);
+		v.m_f_ext = BalloonFEM::Vec3(0);
 	}
 	force = 0;
 	modified = 0;
@@ -128,14 +128,14 @@ glm::mat4 View;
 glm::mat4 Projection;
 
 /* controler initialize */
-void control_init(GLFWwindow* window, BallonFEM::TetraMesh* tetra)
+void control_init(GLFWwindow* window, BalloonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
-    engine = BallonFEM::Engine(
+    engine = BalloonFEM::Engine(
 		tetra, 
-		new BallonFEM::Elastic_neohookean(0.4, 0.4), 
-		new BallonFEM::AirModel_Isobaric(force, 0)
+		new BalloonFEM::Elastic_neohookean(0.4, 0.4), 
+		new BalloonFEM::AirModel_Isobaric(force, 0)
 		);
 }
 

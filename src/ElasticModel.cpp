@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
-namespace BallonFEM
+namespace BalloonFEM
 {
 	float trace(Mat3 F)
 	{

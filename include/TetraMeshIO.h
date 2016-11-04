@@ -14,7 +14,7 @@
 #include "Types.h"
 #include "TetraMesh.h"
 
-namespace BallonFEM{
+namespace BalloonFEM{
 
     class TetraMeshData{
         public:

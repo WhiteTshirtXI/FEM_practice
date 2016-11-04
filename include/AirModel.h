@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-namespace BallonFEM
+namespace BalloonFEM
 {
     class AirModel;
 

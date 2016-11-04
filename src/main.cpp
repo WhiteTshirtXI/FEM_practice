@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
 	std::string mesh_name(argv[1]);
 		
     /* global mesh */
-    BallonFEM::TetraMesh tetra;
+    BalloonFEM::TetraMesh tetra;
 
     tetra.read(mesh_name.c_str());
 

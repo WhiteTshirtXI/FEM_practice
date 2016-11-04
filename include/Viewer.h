@@ -16,7 +16,7 @@ class Viewer
     public:
 
         /* Mesh type */
-        typedef BallonFEM::TetraMesh Mesh;
+        typedef BalloonFEM::TetraMesh Mesh;
 
         Viewer(Mesh* mesh);
 

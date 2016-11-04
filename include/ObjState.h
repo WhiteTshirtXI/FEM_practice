@@ -2,7 +2,7 @@
 #include "Types.h"
 
 
-namespace BallonFEM
+namespace BalloonFEM
 {
 	/* ObjState fully represent the state of obj, and can be updated by
 	* DeltaState */

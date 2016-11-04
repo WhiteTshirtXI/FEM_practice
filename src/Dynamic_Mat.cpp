@@ -14,7 +14,7 @@ extern int shadFlag;
 extern View::Viewer *p_viewer;
 
 namespace{
-    using namespace BallonFEM;
+    using namespace BalloonFEM;
     const Vec3 v[4] = {Vec3(0), Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)};
     const Mat3 m[4][3] = {
         { Mat3(v[1], v[0], v[0]), Mat3(v[2], v[0], v[0]), Mat3(v[3], v[0], v[0])},
@@ -25,7 +25,7 @@ namespace{
 
 }
 
-namespace BallonFEM
+namespace BalloonFEM
 {
 
 	void Engine::computeForceDiffMat(ObjState &state, SpMat &K)

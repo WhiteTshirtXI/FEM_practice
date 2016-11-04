@@ -7,7 +7,7 @@
 
 #include "Types.h"
 
-namespace BallonFEM{
+namespace BalloonFEM{
 
     typedef Vertex* pVertex;
 

@@ -9,7 +9,7 @@
 #include "AirModel.h"
 #include "ObjState.h"
 
-namespace BallonFEM
+namespace BalloonFEM
 {
 	/* take tetramesh and build ObjState and then solve them */
     class Engine

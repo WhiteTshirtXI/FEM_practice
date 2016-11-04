@@ -9,7 +9,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-namespace BallonFEM
+namespace BalloonFEM
 {
     /* basic geometry element */
     class Vertex;
