@@ -47,7 +47,7 @@ namespace BalloonFEM
         void volumeGradientDiff(Vvec3& dr, Vvec3& dg);
 
         /* calculate volume gradient difference Matrix */
-        void volumeGradientDiffMat(SpMat& M);
+        SpMat volumeGradientDiffMat();
 
 		friend class DeltaState;
 

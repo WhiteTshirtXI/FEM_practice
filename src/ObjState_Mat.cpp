@@ -25,12 +25,8 @@ namespace{
 
 namespace BalloonFEM
 {
-    void ObjState::volumeGradientDiffMat(SpMat &M)
+    SpMat ObjState::volumeGradientDiffMat()
     {
-        /* clear Matrix */
-        M.setZero();
-        M.resize( 3 * m_size, 3 * m_size);
-
         std::vector<T> coefficients;
         coefficients.clear();
         size_t count_holeface = 0;
@@ -62,8 +58,11 @@ namespace BalloonFEM
         }
 
         /* since the hole surface normal towards inner, the V is negtive*/
+        SpMat M( m_size * 3, m_size * 3);
         M.setFromTriplets(coefficients.begin(), coefficients.end());
         M /= -6.0; 
+
+        return M;
     }
 
 

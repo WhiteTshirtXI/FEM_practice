@@ -66,11 +66,18 @@ namespace BalloonFEM
             ObjState next_state;
 
             /* compute elastic force when given positions pos*/
-            void computeElasticForces(ObjState &pos, Vvec3 &f_elas);
+            void computeForces(ObjState &state, Vvec3 &f_elas);
+
+            void computeElasticForces(ObjState &state, Vvec3 &f_elas);
+            void computeAirForces(ObjState &state, Vvec3 &f_elas);
+            void computeFilmForces(ObjState &state, Vvec3 &f_elas);
 
             /* compute force differntial matrix */
-			void computeForceDiffMat(ObjState &pos, SpMat& K);
+			void computeForceDiffMat(ObjState &state, SpMat& K);
 
+			SpMat computeElasticDiffMat(ObjState &state);
+			SpMat computeAirDiffMat(ObjState &state);
+			SpMat computeFilmDiffMat(ObjState &state);
     };
 
 }
