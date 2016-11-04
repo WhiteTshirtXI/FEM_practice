@@ -76,7 +76,7 @@ namespace BalloonFEM
         coefficients.clear();
         size_t count_rigid = 0;
         for (size_t i = 0; i < m_r_size; i++)
-            count_rigid += m_tetra->rigid_bodies[i].elements.size();
+            count_rigid += m_tetra->rigids[i].elements.size();
         /* each vertex contribute 3 and rigid element contribute 9 */
         coefficients.reserve(3 * m_size + 9 * count_rigid);
 
@@ -95,7 +95,7 @@ namespace BalloonFEM
         size_t count = 3 * m_size;
         for(size_t i = 0; i < m_r_size; i++)
         {
-            Rigid &R = m_tetra->rigid_bodies[i];
+            Rigid &R = m_tetra->rigids[i];
             for(size_t j = 0; j < R.elements.size(); j++)
             {
                 size_t id = R.elements[j];

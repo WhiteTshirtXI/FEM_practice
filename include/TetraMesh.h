@@ -22,29 +22,17 @@ namespace BalloonFEM{
             Vertex( Vec3 cord, Vec3 pos ): 
                 m_cord( cord ), m_pos( pos ) {};
 
-            /* position in material coordinate */
-            Vec3 m_cord;
+            /* geometry property */
+            Vec3 m_cord;                /* position in material coordinate */
+            Vec3 m_pos;                 /* position in world space */
+            Vec3 m_velocity = Vec3(0);  /* velocity in world space */
+            Vec3 m_f_ext = Vec3(0);     /* exterio force */
             
-            /* position in world space */
-            Vec3 m_pos;
-
-            /* velocity in world space */
-            Vec3 m_velocity = Vec3(0);
-
-            /* exterio force */
-            Vec3 m_f_ext = Vec3(0);
-
-            /* index in tetramesh vertex vector */
-            size_t id;
-
-            /* if is fixed */
-            bool m_fixed = false;
-
-            /* if is connected to a Rigid Body */
-            int rigid = -1;
-
-            /* if is connected to a hole */
-            int hole = -1;
+            /* topology property */
+            size_t id;                  /* index in tetramesh vertex vector */
+            bool m_fixed = false;       /* if is fixed */
+            int rigid = -1;             /* connected Rigid id, -1 if not */
+            int hole = -1;              /* connected Hole id, -1 if not */
     };
 
     class Face
@@ -53,14 +41,46 @@ namespace BalloonFEM{
             Face(){};
             
             /* compute normal */
-            void precomputation();
+            void computeNorm();
             
             /* geometry property */
-            Vec3 m_normal;
+            Vec3 m_normal;  
 
             /* topology property */
-            pVertex v[3];
-            iVec3 v_id;
+            pVertex v[3];   /* pointer to vertices */
+            iVec3 v_id;     /* vertices ids */
+    };
+    
+    class Peice : public Face
+    {
+        public:
+            Peice():Face(){};
+
+            /* compute parameterized coefficient */
+            void precomputation();
+ 
+            /* geometry properties */
+            /* reverse matrix of parameter matrix [ u, v1; 0, v2] 
+             * u = |r1 - r3|, 
+             * v1 = (r2 - r3) * (r1 - r3) / u
+             * v2 = |(r2 - r3) - (r1 - r3) * v/u|
+             * */
+            Mat2 Bm;    
+            double W;   /* Area of face, |(r1 - r3) x (r2 - r3)|/2 */
+
+            /* topology properties */
+            iVec3 hindge_id = iVec3(-1);  /* index of hindge id correspond to vertex */
+    };
+
+    class Hindge
+    {
+        public:
+            Hindge(){};
+
+            /* geometry properties */
+
+            /* topology properties */
+            iVec2 peice_info[2];        /* information of peices, x stands for peice id, y for v local id*/
     };
 
     class Tetra
@@ -78,6 +98,20 @@ namespace BalloonFEM{
             /* topology property */
             pVertex v[4];
             iVec4 v_id;
+    };
+
+    //////////////////////////////////////////////////// organized structures
+    class Film
+    {
+        public:
+            Film(){};
+            
+            /* compute hindges based on given peices, fill in hindges and correspond
+             * part of peices elements*/
+            void computeHindges();
+
+            std::vector<Peice> peices;
+            std::vector<Hindge> hindges;
     };
 
 	class Rigid
@@ -104,13 +138,11 @@ namespace BalloonFEM{
         public:
             Hole(){};
             
-            /* related vertices */
-            std::vector<size_t> vertices;
-
-            /* related surfaces */
-            std::vector<Face> holeface;
+            std::vector<size_t> vertices; /* related vertices */
+            std::vector<Face> holeface;   /* related surfaces */
     };
 
+    ///////////////////////////////////////////////////// total container
     class TetraMesh
     {
         public:
@@ -128,29 +160,23 @@ namespace BalloonFEM{
 			/* re-exame vertices label to check if they are fixed */
 			void labelFixedId();
 
+            /* add hole information, by input iVec3 vector */
+            int addFilm( const std::vector<iVec3>& peice_ids );
+
             /* add rigid body constrains, by input v_ids contained in vector */
             int addRigidBody( const std::vector<size_t>& vertex_ids );
 
             /* add hole information, by input iVec3 vector */
-            int addHole( const std::vector<iVec3>& vertex_ids );
+            int addHole( const std::vector<iVec3>& face_ids );
 
-            /* vectors of vertices */
-            std::vector<Vertex> vertices;
-
-            /* boudary faces of tetramesh */
-            std::vector<Face> surface;
-
-            /* tetra mesh */
-            std::vector<Tetra> tetrahedrons;
-
-			/* fixed ids */
-			std::vector<size_t> fixed_ids;
-
-            /* rigid parts */
-            std::vector<Rigid> rigid_bodies;
-
-            /* holes */
-            std::vector<Hole> holes;
+		    /* variables */
+            std::vector<Vertex> vertices;       /* vectors of vertices */
+            std::vector<Tetra> tetrahedrons;    /* tetra mesh */
+            std::vector<Face>   surface;        /* boudary faces of tetramesh */
+			std::vector<size_t> fixed_ids;      /* fixed ids */
+            std::vector<Film>   films;          /* films */
+            std::vector<Rigid>  rigids;   /* rigid parts */
+            std::vector<Hole>   holes;          /* holes */
     };
 
 }

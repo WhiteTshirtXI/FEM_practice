@@ -43,7 +43,7 @@ namespace BalloonFEM
     {
         m_tetra = tetra;
         m_size = tetra->vertices.size();
-        m_r_size = tetra->rigid_bodies.size();
+        m_r_size = tetra->rigids.size();
         m_h_size = tetra->holes.size();
 
         /* initialize m_pos */
@@ -59,7 +59,7 @@ namespace BalloonFEM
         m_r_rot.assign( m_r_size, Quat(1,0,0,0));
         for (size_t i = 0; i < m_r_size; i++)
         {
-            Rigid &r = m_tetra->rigid_bodies[i];
+            Rigid &r = m_tetra->rigids[i];
             m_r_pos[i] = r.m_pos;
             m_r_rot[i] = r.m_rot;
         }
@@ -82,7 +82,7 @@ namespace BalloonFEM
 
         for (size_t i = 0; i < m_r_size; i++)
         {
-            Rigid &r = m_tetra->rigid_bodies[i];
+            Rigid &r = m_tetra->rigids[i];
             r.m_pos = m_r_pos[i];
             r.m_rot = m_r_rot[i];
         }
@@ -103,7 +103,7 @@ namespace BalloonFEM
             Vec3 rc = m_r_pos[i];
             
             /* current rigid body object */
-            Rigid &r = m_tetra->rigid_bodies[i];
+            Rigid &r = m_tetra->rigids[i];
             
             /* rigid body object mass center pos in material space */
             Vec3 cordc = r.m_cord;
@@ -291,7 +291,7 @@ namespace BalloonFEM
             Vec3 rc = m_state->m_r_pos[i];
             
             /* current rigid body object */
-            Rigid &r = m_tetra->rigid_bodies[i];
+            Rigid &r = m_tetra->rigids[i];
             
             for (size_t j = 0; j < r.elements.size(); j++)
             {
@@ -337,7 +337,7 @@ namespace BalloonFEM
             Vec3 rc = m_state->m_r_pos[i];
 
             /* current rigid body object */
-            Rigid &r = m_tetra->rigid_bodies[i];
+            Rigid &r = m_tetra->rigids[i];
             
             for (size_t j = 0; j < r.elements.size(); j++)
             {

@@ -23,6 +23,7 @@ namespace BalloonFEM{
             std::vector<iVec4> tetrahedrons;
             std::vector<iVec3> surface;
             std::vector<size_t> fixed;
+            std::vector<std::vector<iVec3>> films;
             std::vector<std::vector<size_t>> rigid;
             std::vector<std::vector<iVec3>> holes;
 
@@ -55,10 +56,13 @@ namespace BalloonFEM{
             /* when begin with x, read fixed vertices */
             static void readFixed   ( std::stringstream& ss, TetraMeshData& data );
 
+            /* when begin with fl, read film peices by (film_id, v_id * 3) */
+            static void readFilm    ( std::stringstream& ss, TetraMeshData& data );
+
             /* when begin with r, read rigid body by vertices */
             static void readRigid   ( std::stringstream& ss, TetraMeshData& data );
 
-            /* when begin with r, read rigid body by vertices */
+            /* when begin with h, read hole faces by (hole_id, v_id * 3) */
             static void readHole    ( std::stringstream& ss, TetraMeshData& data );
     };
 }

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <algorithm>
 
 #include <glm/glm.hpp>
 
@@ -15,12 +16,32 @@ using namespace std;
 namespace BalloonFEM
 {
     
-void Face::precomputation()
+void Face::computeNorm()
 {
     Vec3 a = this->v[0]->m_pos - this->v[2]->m_pos;
     Vec3 b = this->v[1]->m_pos - this->v[2]->m_pos;
 
     this->m_normal = glm::normalize(glm::cross(a, b));
+}
+
+void Peice::precomputation()
+{
+    Mat2 Dm(0);  /* coordinate vectors */
+    Vec3 e1 = v[0]->m_cord - v[2]->m_cord;
+    Vec3 e2 = v[1]->m_cord - v[2]->m_cord;
+
+    double u = glm::length(e1);
+    Dm[0][0] = u;
+    Dm[1][0] = glm::dot(e2, e1) / u;
+    e2 -= Dm[1][0] * e1 / u;
+    Dm[1][1] = glm::length(e2);
+
+    Bm = glm::inverse(Dm);
+
+	/* surface area of face */
+    W = glm::determinant(Dm) / 2;
+
+    this->computeNorm();
 }
 
 void Tetra::precomputation()
@@ -33,6 +54,91 @@ void Tetra::precomputation()
 
 	/* volume of the tetrahedron */
     W = glm::determinant(Dm) / 6;
+}
+
+void Film::computeHindges()
+{
+    /* struct used for storing peice_info and halfedge/edge, then sort them */
+    struct hindge_tmp
+    {
+        hindge_tmp(iVec2 halfedge, iVec2 peice_info)
+        {
+            peice_info = peice_info;
+            if (halfedge[0] > halfedge[1])
+            {
+                edge[0] = halfedge[1];
+                edge[1] = halfedge[0];
+            }else{
+                edge = halfedge;
+            }
+        };
+            
+        bool operator<(const hindge_tmp& other)
+        {
+            if (this->edge[0] < other.edge[0])
+            {
+                return true;
+            }
+
+            if (this->edge[0] > other.edge[0])
+            {
+                return false;
+            }
+
+            return this->edge[1] < other.edge[1];
+        };
+
+        iVec2 edge;
+        iVec2 peice_info;
+    };
+    
+    std::vector<hindge_tmp> edge_list;
+    edge_list.clear();
+    edge_list.reserve( this->peices.size() * 3 );
+
+    for(size_t i = 0; i < this->peices.size(); i++)
+    {
+        iVec3 v_id = peices[i].v_id;
+        for(size_t j = 0; j < 3; j++)
+        {
+            edge_list.push_back( 
+                    hindge_tmp(
+                        iVec2(v_id[(j+1)%3], v_id[(j+2)%3]),
+                        iVec2(i, j)
+                    ));
+        }
+    }
+
+    std::sort(edge_list.begin(), edge_list.end());
+    
+    /* fill in hindges */
+    this->hindges.clear();
+    this->hindges.reserve(edge_list.size() / 2);
+    size_t count = 0;
+    while (count < edge_list.size() - 1)
+    {
+        if (glm::all(glm::equal(edge_list[count].edge, edge_list[count+1].edge)))
+        {
+            Hindge h;
+            h.peice_info[0] = edge_list[count].edge;
+            h.peice_info[1] = edge_list[count+1].edge;
+            this->hindges.push_back(h);
+            count += 2;
+        }
+        else
+        {
+            count++;
+        }
+    }
+
+    /* fill in corresponding element of peices */
+    for(size_t i = 0; i < this->hindges.size(); i++)
+    {
+        Hindge &h = this->hindges[i];
+        this->peices[h.peice_info[0].x].hindge_id[h.peice_info[0].y] = i;
+        this->peices[h.peice_info[1].x].hindge_id[h.peice_info[1].y] = i;
+    }
+
 }
 
 void TetraMesh::precomputation()
@@ -55,6 +161,15 @@ void TetraMesh::precomputation()
         }
     }
 
+    printf("Precomputing properties of films.\n");
+    for(MIter m = films.begin(); m != films.end(); m++)
+    {
+        for(PIter p = m->peices.begin(); p != m->peices.end(); p++)
+        {
+            p->precomputation();
+        }
+    }
+
     printf("Total surface triangle %d \n", (int)surface.size());
 	recomputeSurfaceNorm();
 }
@@ -64,17 +179,16 @@ void TetraMesh::recomputeSurfaceNorm()
 	printf("Recompute properties of surfaces.\n");
 	for (FIter f = surface.begin(); f != surface.end(); f++)
 	{
-		f->precomputation();
+		f->computeNorm();
 	}
 
 	for (HIter h = holes.begin(); h != holes.end(); h++)
 	{
 		for (FIter f = h->holeface.begin(); f != h->holeface.end(); f++)
 		{
-			f->precomputation();
+			f->computeNorm();
 		}
 	}
-
 }
 
 void TetraMesh::labelFixedId()
@@ -89,12 +203,40 @@ void TetraMesh::labelFixedId()
     }
 }
 
+int TetraMesh::addFilm( const std::vector<iVec3>& peice_ids)
+{
+    Film f;
+    f.peices.clear();
+    f.peices.reserve( peice_ids.size() );
+    f.hindges.clear();
+    f.hindges.reserve( peice_ids.size() * 3 / 2 );
+
+    for(size_t i = 0; i < peice_ids.size(); i++)
+    {
+        Peice p;
+        /* for each face, build face class and add vertices to hole vertices*/
+        p.v_id = peice_ids[i];
+        for(size_t j = 0; j < 3; j++)
+        {
+            p.v[j] = &this->vertices[ p.v_id[j] ];
+        }
+
+        f.peices.push_back(p);
+    }
+
+    /* compute hindges */
+    f.computeHindges();
+
+    films.push_back(f);
+    return 0;
+}
+
 int TetraMesh::addRigidBody( const std::vector<size_t>& vertex_ids)
 {
     Rigid r = Rigid(vertex_ids);
 
     Vec3 cord = Vec3(0);
-    int r_id = rigid_bodies.size();
+    int r_id = rigids.size();
     for(size_t i = 0; i < vertex_ids.size(); i++)
     {
         Vertex &v = vertices[vertex_ids[i]];
@@ -112,7 +254,7 @@ int TetraMesh::addRigidBody( const std::vector<size_t>& vertex_ids)
 	r.m_cord = cord / (double)vertex_ids.size();
     r.m_pos = r.m_cord;
 
-    rigid_bodies.push_back(r);
+    rigids.push_back(r);
 
     return 0;
 }
@@ -123,7 +265,9 @@ int TetraMesh::addHole( const std::vector<iVec3>& face_ids)
 
     /* initialize hole */
     h.vertices.clear();
+    h.vertices.reserve( face_ids.size() + 3);
     h.holeface.clear();
+    h.holeface.reserve( face_ids.size() );
 
     int h_id = holes.size();
     for(size_t i = 0; i < face_ids.size(); i++)
@@ -151,7 +295,6 @@ int TetraMesh::addHole( const std::vector<iVec3>& face_ids)
     holes.push_back(h);
     return 0;
 }
-
 
 int TetraMesh::read( const string& filename )
 {

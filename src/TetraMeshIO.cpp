@@ -47,8 +47,9 @@ int TetraMeshIO::readTetraData(istream& in, TetraMeshData& data)
    
         if( token == "v"  ) { readPosition( ss, data ); continue; } // vertex
         if( token == "t"  ) { readTetra( ss, data );    continue; } // tetra 
-        if( token == "f"  ) { readSurf( ss, data );    continue; } // surface 
+        if( token == "f"  ) { readSurf( ss, data );     continue; } // surface 
 		if( token == "x"  ) { readFixed( ss, data );    continue; } // fixed vertices
+        if( token == "fl" ) { readFilm(  ss, data );    continue; } // film 
         if( token == "r"  ) { readRigid( ss, data );    continue; } // rigid body
         if( token == "h"  ) { readHole(  ss, data );    continue; } // hole 
         if( token[0] == '#' ) continue; // comment
@@ -97,6 +98,21 @@ void TetraMeshIO::readFixed( stringstream& ss, TetraMeshData& data)
     }
 }
 
+void TetraMeshIO::readFilm( stringstream& ss, TetraMeshData& data)
+{
+    size_t id, indexBias = 1;
+    int x, y, z;
+    ss >> id >> x >> y >> z;
+    while (data.films.size() < id)
+    {
+        std::vector<iVec3> film;
+        film.clear();
+        data.films.push_back(film);
+    }
+
+	data.films[id - indexBias].push_back(iVec3(x, y, z));
+}
+
 void TetraMeshIO::readRigid( stringstream& ss, TetraMeshData& data)
 {
     std::vector<size_t> rig;
@@ -132,7 +148,8 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
     tetra.tetrahedrons.clear();
     tetra.surface.clear();
     tetra.fixed_ids.clear();
-    tetra.rigid_bodies.clear();
+    tetra.films.clear();
+    tetra.rigids.clear();
     tetra.holes.clear();
 
     tetra.vertices.reserve( data.vertices.size() );
@@ -200,6 +217,16 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
 		tetra.fixed_ids[i] -= indexBias;
     }
     
+    /* assign films */
+    for(size_t i = 0; i < data.films.size(); i++)
+    {
+        std::vector<iVec3> &f = data.films[i];
+        std::vector<iVec3> tmp(f.begin(), f.end());
+
+        for(size_t j = 0; j < tmp.size(); j++)
+            tmp[j] -= indexBias;
+        tetra.addFilm(tmp);
+    }
 
     /* assign rigid bodies */
     for(size_t i = 0; i < data.rigid.size(); i++)
@@ -257,7 +284,7 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
         out << " " << tetra.fixed_ids[i] + indexBias;
     out << endl;
     
-    for(RCIter r = tetra.rigid_bodies.begin(); r != tetra.rigid_bodies.end(); r++)
+    for(RCIter r = tetra.rigids.begin(); r != tetra.rigids.end(); r++)
     {
         out << "r";
         for(size_t i = 0; i < r->elements.size(); i++)
