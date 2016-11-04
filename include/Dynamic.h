@@ -36,8 +36,6 @@ namespace BalloonFEM
              */
             void solveStaticPos();
 
-            void solveStaticPosMat();
-
             /* test the comuteElasticForces, deforme v_pos and output f_ela 
              * to v_velocity
              * */
@@ -69,9 +67,6 @@ namespace BalloonFEM
 
             /* compute elastic force when given positions pos*/
             void computeElasticForces(ObjState &pos, Vvec3 &f_elas);
-
-            /* compute delta elastic force when given position pos and disturbe dpos */
-            void computeForceDifferentials(ObjState &pos, DeltaState &dpos, Vvec3 &df_elas);
 
             /* compute force differntial matrix */
 			void computeForceDiffMat(ObjState &pos, SpMat& K);

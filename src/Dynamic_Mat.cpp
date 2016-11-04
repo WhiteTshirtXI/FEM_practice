@@ -113,7 +113,7 @@ namespace BalloonFEM
     }
 
 #define CONVERGE_ERROR_RATE 1e-4
-  void Engine::solveStaticPosMat()
+  void Engine::solveStaticPos()
   {
       /* initialize next_state */
         next_state = cur_state;
