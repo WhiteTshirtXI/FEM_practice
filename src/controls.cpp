@@ -132,11 +132,7 @@ void control_init(GLFWwindow* window, BalloonFEM::TetraMesh* tetra)
 {
     glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
-    engine = BalloonFEM::Engine(
-		tetra, 
-		new BalloonFEM::Elastic_neohookean(0.4, 0.4), 
-		new BalloonFEM::AirModel_Isobaric(force, 0)
-		);
+    engine = BalloonFEM::Engine(tetra);
 }
 
 /* update at each main loop */
