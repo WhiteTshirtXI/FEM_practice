@@ -56,6 +56,9 @@ namespace BalloonFEM
 
         /* compute elastic forces by tetrahedrons */
         computeElasticForces(state, f_elas); 
+
+		/* compute film forces by peices */
+		computeFilmForces(state, f_elas);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_elas);
@@ -68,8 +71,13 @@ namespace BalloonFEM
 	{
 		printf("building force differential matrix \n");
         
+		/* compute forces diff by air pressure */
         K = computeAirDiffMat(state);
 
+		/* compute film forces by peices */
+		K += computeFilmDiffMat(state);
+
+		/* compute elastic forces diff by tetrahedrons */
 		K += computeElasticDiffMat(state);
     }
 
