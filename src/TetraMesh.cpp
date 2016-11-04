@@ -61,9 +61,9 @@ void Film::computeHindges()
     /* struct used for storing peice_info and halfedge/edge, then sort them */
     struct hindge_tmp
     {
-        hindge_tmp(iVec2 halfedge, iVec2 peice_info)
+        hindge_tmp(iVec2 halfedge, iVec2 info)
         {
-            peice_info = peice_info;
+            peice_info = info;
             if (halfedge[0] > halfedge[1])
             {
                 edge[0] = halfedge[1];
@@ -120,8 +120,8 @@ void Film::computeHindges()
         if (glm::all(glm::equal(edge_list[count].edge, edge_list[count+1].edge)))
         {
             Hindge h;
-            h.peice_info[0] = edge_list[count].edge;
-            h.peice_info[1] = edge_list[count+1].edge;
+            h.peice_info[0] = edge_list[count].peice_info;
+            h.peice_info[1] = edge_list[count+1].peice_info;
             this->hindges.push_back(h);
             count += 2;
         }
