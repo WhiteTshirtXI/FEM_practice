@@ -49,52 +49,111 @@ namespace BalloonFEM
         std::swap(cur_state, next_state);
     }
     
-    void Engine::computeElasticForces(ObjState &state, Vvec3 &f_elas)
+    void Engine::computeForces(ObjState &state, Vvec3 &f_elas)
     {
         f_elas.assign( m_size, Vec3(0.0));
 
-        Vvec3 &pos = state.world_space_pos;
+        /* compute elastic forces by tetrahedrons */
+        computeElasticForces(state, f_elas); 
+        
+        /* compute forces by air pressure */
+		computeAirForces(state, f_elas);
 
-        for(TIter t = m_tetra->tetrahedrons.begin();
-                t != m_tetra->tetrahedrons.end(); t++)
-        {
-            iVec4 &id = t->v_id;
-            Vec3 &v0 = pos[id[0]];
-            Vec3 &v1 = pos[id[1]];
-            Vec3 &v2 = pos[id[2]];
-            Vec3 &v3 = pos[id[3]];
-            
-            /* calculate deformation in world space */
-            Mat3 Ds = Mat3(v0 - v3, v1 - v3, v2 - v3);
-
-            /* calculate deformation gradient */
-            Mat3 F = Ds * t->Bm;
-
-            /* calculate Piola for this tetra */
-            Mat3 P = m_model->Piola(F);
-
-            /* calculate forces contributed from this tetra */
-            Mat3 H = - t->W * P * transpose(t->Bm);
-
-            f_elas[id[0]] += H[0];
-            f_elas[id[1]] += H[1];
-            f_elas[id[2]] += H[2];
-            f_elas[id[3]] -= H[0] + H[1] + H[2];
-        }
-
-        /* add air pressure force */
-        for (size_t i = 0; i < m_tetra->holes.size(); i++)
-        {
-            double p = m_a_model->pressure(state.hole_volume[i]);
-            Hole &h = m_tetra->holes[i];
-            std::vector<size_t>::iterator j;
-
-            for (j = h.vertices.begin(); j != h.vertices.end(); j++)
-            {
-                f_elas[*j] += p * state.volume_gradient[*j];
-            }
-        }
+        for(size_t i = 0; i < m_size; i++)
+            f_elas[i] += f_ext[i];
     }
+
+	void Engine::computeForceDiffMat(ObjState &state, SpMat &K)
+	{
+		printf("building force differential matrix \n");
+        
+        K = computeAirDiffMat(state);
+
+		K += computeElasticDiffMat(state);
+    }
+
+    #define CONVERGE_ERROR_RATE 1e-4
+    void Engine::solveStaticPos()
+    {
+      /* initialize next_state */
+        next_state = cur_state;
+		next_state.project();
+
+        /* initialize temp variable for iterative implicit solving */
+        DeltaState f_elas(next_state);
+        computeForces(next_state, f_elas.world_space_pos); 
+        f_elas.conterProject();
+        SpVec b = f_elas.toSpVec();
+
+        DeltaState dstate(next_state);
+
+        /* K = - df/dr, here Force Diff Mat compute df/dr */
+        SpMat K;
+        computeForceDiffMat(next_state, K);
+        K = -K;
+
+        /* convert K to \tilde K with W transfer. The restricted vertices
+         * has all 0 colume and raw so we add 1 to its diagnal */
+        SpMat W = dstate.projectMat();
+        K = W.transpose() * K * W + dstate.restrictedMat();
+        
+        /* solver */
+        Eigen::SimplicialLDLT<SpMat> solver;
+		
+		double err_felas = f_elas.dot(f_elas);
+		double err_begin = err_felas;
+		int count_iter = 0;		/* K dx = f iter count */
+        /* while not converge f == 0, iterate */
+		while ((err_felas > CONVERGE_ERROR_RATE * err_begin) && (err_felas > 1e-10))
+        {
+            /* debug use */
+			count_iter++;
+            printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_felas);
+
+            /* r0 = b - Ax0 */
+            SpVec r = b - K * dstate.toSpVec();
+
+
+            printf("building solver\n");
+            solver.compute(K);
+            if (solver.info() != Eigen::Success)
+            {
+                printf("decomposition failed!\n");
+                return;
+            }
+			printf("solve delta_x \n");
+            SpVec x = solver.solve(r);
+            dstate.readSpVec(x);
+
+            /* update v_pos_next and f_elas */
+            next_state.update(dstate);
+			next_state.project();
+            dstate.clear();
+
+			/* debug watch use*/
+			next_state.output();
+			shadFlag = 1;
+			p_viewer->refresh();
+			//Control::mOutput();
+			
+            /* update K */
+            computeForceDiffMat(next_state, K);
+            K = -K;
+            dstate.projectMat();
+            K = W.transpose() * K * W + dstate.restrictedMat();
+
+            /* update f_elas */
+            computeForces(next_state, f_elas.world_space_pos); 
+            f_elas.conterProject();
+            b = f_elas.toSpVec();
+
+			err_felas = f_elas.dot(f_elas);
+        }
+
+		printf("f_sum error %f \n", err_felas);
+		printf("finish solving \n");
+    }
+
 
     void Engine::forceTest()
     {

@@ -22,6 +22,38 @@ namespace{
 
 namespace BalloonFEM
 {
+    void Engine::computeElasticForces(ObjState &state, Vvec3 &f_elas)
+    {
+        Vvec3 &pos = state.world_space_pos;
+
+        for(TIter t = m_tetra->tetrahedrons.begin();
+                t != m_tetra->tetrahedrons.end(); t++)
+        {
+            iVec4 &id = t->v_id;
+            Vec3 &v0 = pos[id[0]];
+            Vec3 &v1 = pos[id[1]];
+            Vec3 &v2 = pos[id[2]];
+            Vec3 &v3 = pos[id[3]];
+            
+            /* calculate deformation in world space */
+            Mat3 Ds = Mat3(v0 - v3, v1 - v3, v2 - v3);
+
+            /* calculate deformation gradient */
+            Mat3 F = Ds * t->Bm;
+
+            /* calculate Piola for this tetra */
+            Mat3 P = m_model->Piola(F);
+
+            /* calculate forces contributed from this tetra */
+            Mat3 H = - t->W * P * transpose(t->Bm);
+
+            f_elas[id[0]] += H[0];
+            f_elas[id[1]] += H[1];
+            f_elas[id[2]] += H[2];
+            f_elas[id[3]] -= H[0] + H[1] + H[2];
+        }
+    }
+
     SpMat Engine::computeElasticDiffMat(ObjState &state)
     {	
         printf("building elastic differential matrix \n");

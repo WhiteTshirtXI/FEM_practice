@@ -10,6 +10,22 @@
 
 namespace BalloonFEM
 {
+    void Engine::computeAirForces(ObjState &state, Vvec3 &f_elas)
+    {
+        /* add air pressure force */
+        for (size_t i = 0; i < m_tetra->holes.size(); i++)
+        {
+            double p = m_a_model->pressure(state.hole_volume[i]);
+            Hole &h = m_tetra->holes[i];
+            std::vector<size_t>::iterator j;
+
+            for (j = h.vertices.begin(); j != h.vertices.end(); j++)
+            {
+                f_elas[*j] += p * state.volume_gradient[*j];
+            }
+        }
+    }
+        
     SpMat Engine::computeAirDiffMat(ObjState &state)
     {
 	    printf("building force differential matrix \n");
