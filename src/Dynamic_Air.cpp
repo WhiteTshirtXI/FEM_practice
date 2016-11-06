@@ -28,7 +28,7 @@ namespace BalloonFEM
         
     SpMat Engine::computeAirDiffMat(ObjState &state)
     {
-	    printf("building force differential matrix \n");
+	    printf("building air pressure differential matrix \n");
 		/* project from constrained freedom state to world space */
 		Vvec3 &pos = state.world_space_pos;
 

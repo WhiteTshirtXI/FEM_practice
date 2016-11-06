@@ -49,6 +49,9 @@ namespace BalloonFEM
         /* calculate volume gradient difference Matrix */
         SpMat volumeGradientDiffMat();
 
+        /* calculate hindge angle gradient mat */
+        SpMat hindgeAngleGradient();
+
 		friend class DeltaState;
 
 	private:

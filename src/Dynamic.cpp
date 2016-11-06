@@ -128,6 +128,7 @@ namespace BalloonFEM
             if (solver.info() != Eigen::Success)
             {
                 printf("decomposition failed!\n");
+				printf("Number of non zeros: %d \n", K.nonZeros());
                 return;
             }
 			printf("solve delta_x \n");

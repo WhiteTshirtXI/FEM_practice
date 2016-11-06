@@ -27,30 +27,33 @@ namespace BalloonFEM
 		/* compute film elastic force */
 
 		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
-        for(PIter p = f->peices.begin();
-                p != f->peices.end(); p++)
-        {
-            iVec3 &id = p->v_id;
-            Vec3 &v0 = pos[id[0]];
-            Vec3 &v1 = pos[id[1]];
-            Vec3 &v2 = pos[id[2]];
-            
-            /* calculate deformation in world space */
-            Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
+		{
+			for (PIter p = f->peices.begin();
+				p != f->peices.end(); p++)
+			{
+				iVec3 &id = p->v_id;
+				Vec3 &v0 = pos[id[0]];
+				Vec3 &v1 = pos[id[1]];
+				Vec3 &v2 = pos[id[2]];
 
-            /* calculate deformation gradient */
-            Mat3x2 F = Ds * p->Bm;
+				/* calculate deformation in world space */
+				Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
 
-            /* calculate Piola for this tetra */
-            Mat3x2 P = m_film_model->Piola(F);
+				/* calculate deformation gradient */
+				Mat3x2 F = Ds * p->Bm;
 
-            /* calculate forces contributed from this tetra */
-            Mat3x2 H = - p->W * P * transpose(p->Bm);
+				/* calculate Piola for this tetra */
+				Mat3x2 P = m_film_model->Piola(F);
 
-            f_elas[id[0]] += H[0];
-            f_elas[id[1]] += H[1];
-            f_elas[id[2]] -= H[0] + H[1];
-        }
+				/* calculate forces contributed from this tetra */
+				Mat3x2 H = -p->W * P * transpose(p->Bm);
+
+				f_elas[id[0]] += H[0];
+				f_elas[id[1]] += H[1];
+				f_elas[id[2]] -= H[0] + H[1];
+			}
+		}
+        
     }
 
     SpMat Engine::computeFilmDiffMat(ObjState &state)
@@ -61,49 +64,54 @@ namespace BalloonFEM
 
 	    std::vector<T> coefficients;
 		coefficients.clear();
-		coefficients.reserve( 9 * 9 * m_tetra->surface.size());
+		size_t count_film = 0;
+		for (size_t i = 0; i < m_tetra->films.size(); i++)
+			count_film += m_tetra->films[i].peices.size();
+		coefficients.reserve( 9 * 9 * count_film);
 
-		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
-		for (PIter p = f->peices.begin();
-			p != f->peices.end(); p++)
-		{
-			/* assgin world space position */
-			iVec3 &id = p->v_id;
-			Vec3 &v0 = pos[id[0]];
-			Vec3 &v1 = pos[id[1]];
-			Vec3 &v2 = pos[id[2]];
-            
-			/* calculate deformation in world space */
-			Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
-
-			/* calculate deformation gradient */
-			Mat3x2 F = Ds * p->Bm;
-            
-			/* i is index of vertex, j is index of dimention */
-			for (size_t i = 0; i < 3; i++)
-				for(size_t j = 0; j < 3; j++)
+		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++){
+			for (PIter p = f->peices.begin();
+				p != f->peices.end(); p++)
 			{
-				/* calculate delta deformation in world space */
-				Mat3x2 dDs = m[i][j]; 
+				/* assgin world space position */
+				iVec3 &id = p->v_id;
+				Vec3 &v0 = pos[id[0]];
+				Vec3 &v1 = pos[id[1]];
+				Vec3 &v2 = pos[id[2]];
 
-				/* calculate delta deformation gradient */
-				Mat3x2 dF = dDs * p->Bm;
+				/* calculate deformation in world space */
+				Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
 
-				/* calculate delta Piola */
-				Mat3x2 dP = m_model->StressDiff(F, dF);
- 
-				/* calculate forces contributed from this tetra */
-				Mat3x2 dH = - p->W * dP * transpose(p->Bm);
+				/* calculate deformation gradient */
+				Mat3x2 F = Ds * p->Bm;
 
-				for(size_t w = 0; w < 2; w++)
-					for(size_t l = 0; l < 3; l++)
-						coefficients.push_back( T(3*id[w] + l, 3*id[i] + j,  dH[w][l]));
+				/* i is index of vertex, j is index of dimention */
+				for (size_t i = 0; i < 3; i++)
+				for (size_t j = 0; j < 3; j++)
+				{
+					/* calculate delta deformation in world space */
+					Mat3x2 dDs = m[i][j];
 
-				Vec3 df_3 = - dH[0] - dH[1];
-				for(size_t l = 0; l < 3; l++)
-					coefficients.push_back( T(3*id[2] + l, 3*id[i] + j,  df_3[l]));
+					/* calculate delta deformation gradient */
+					Mat3x2 dF = dDs * p->Bm;
+
+					/* calculate delta Piola */
+					Mat3x2 dP = m_model->StressDiff(F, dF);
+
+					/* calculate forces contributed from this tetra */
+					Mat3x2 dH = -p->W * dP * transpose(p->Bm);
+
+					for (size_t w = 0; w < 2; w++)
+					for (size_t l = 0; l < 3; l++)
+						coefficients.push_back(T(3 * id[w] + l, 3 * id[i] + j, dH[w][l]));
+
+					Vec3 df_3 = -dH[0] - dH[1];
+					for (size_t l = 0; l < 3; l++)
+						coefficients.push_back(T(3 * id[2] + l, 3 * id[i] + j, df_3[l]));
+				}
 			}
 		}
+		
 		SpMat E( 3 * pos.size(), 3 * pos.size());
 		E.setFromTriplets(coefficients.begin(), coefficients.end());
 

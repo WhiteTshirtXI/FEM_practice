@@ -21,7 +21,7 @@ namespace BalloonFEM
 				TetraMesh* tetra, 
 				ElasticModel* model = new Elastic_neohookean(0.4, 0.4), 
 				AirModel* a_model = new AirModel_Isobaric(0, 0), 
-				FilmModel* film_model = new Film_neohookean(0.4, 0.4)
+				FilmModel* film_model = new Film_neohookean_3d(0.4, 0.4)
 				);
 
             void setElasticModel(ElasticModel* model){ m_model = model; };
@@ -81,6 +81,7 @@ namespace BalloonFEM
             void computeElasticForces(ObjState &state, Vvec3 &f_elas);
             void computeAirForces(ObjState &state, Vvec3 &f_elas);
             void computeFilmForces(ObjState &state, Vvec3 &f_elas);
+            void computeBendingForces(ObjState &state, Vvec3 &f_elas);
 
             /* compute force differntial matrix */
 			void computeForceDiffMat(ObjState &state, SpMat& K);
@@ -88,6 +89,7 @@ namespace BalloonFEM
 			SpMat computeElasticDiffMat(ObjState &state);
 			SpMat computeAirDiffMat(ObjState &state);
 			SpMat computeFilmDiffMat(ObjState &state);
+			SpMat computeBendingDiffMat(ObjState &state);
     };
 
 }
