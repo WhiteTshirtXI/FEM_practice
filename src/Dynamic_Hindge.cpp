@@ -29,12 +29,12 @@ namespace BalloonFEM
                 /* normal of peice_info[0] */
                 iVec3 &id0 = f->peices[h->peice_info[0].x].v_id;
                 Vec3 n0 = glm::cross( pos[id0[0]] - pos[id0[2]], pos[id0[1]] - pos[id0[2]] );
-                n0 /= glm::length();
+                n0 /= glm::length(n0);
 
                 /* normal of peice_info[1] */
                 iVec3 &id1 = f->peices[h->peice_info[1].x].v_id;
                 Vec3 n1 = glm::cross( pos[id1[0]] - pos[id1[2]], pos[id1[1]] - pos[id1[2]] );
-                n1 /= glm::length();
+                n1 /= glm::length(n1);
 
                 /* edge direction */
                 Vec3 e = pos[id0[h->peice_info[0].y]] -  pos[id0[h->peice_info[0].y]];
@@ -52,6 +52,9 @@ namespace BalloonFEM
 
     SpMat Engine::computeBendingDiffMat(ObjState &state)
     {
+        SpMat K(m_size, m_size);
+
+        return K;
 
     }
 }

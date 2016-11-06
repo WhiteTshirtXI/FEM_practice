@@ -43,7 +43,7 @@ namespace BalloonFEM
 			Hole &h = m_tetra->holes[i];
 			std::vector<size_t>::iterator j;
             
-			double dV = 0;
+			//double dV = 0;
 			for (j = h.vertices.begin(); j != h.vertices.end(); j++)
 			{
 				/* p(V) * dG */
