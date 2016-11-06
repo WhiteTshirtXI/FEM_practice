@@ -50,35 +50,32 @@ namespace BalloonFEM
         std::swap(cur_state, next_state);
     }
     
-    void Engine::computeForces(ObjState &state, Vvec3 &f_elas)
+    SpMat Engine::computeForceAndGradient(ObjState &state, Vvec3 &f_sum)
     {
-        f_elas.assign( m_size, Vec3(0.0));
+        f_sum.assign( m_size, Vec3(0.0));
 
         /* compute elastic forces by tetrahedrons */
-        computeElasticForces(state, f_elas); 
+        computeElasticForces(state, f_sum); 
 
 		/* compute film forces by peices */
-		computeFilmForces(state, f_elas);
+		computeFilmForces(state, f_sum);
         
         /* compute forces by air pressure */
-		computeAirForces(state, f_elas);
+		computeAirForces(state, f_sum);
 
         for(size_t i = 0; i < m_size; i++)
-            f_elas[i] += f_ext[i];
-    }
+            f_sum[i] += f_ext[i];
 
-	void Engine::computeForceDiffMat(ObjState &state, SpMat &K)
-	{
-		printf("building force differential matrix \n");
-        
 		/* compute forces diff by air pressure */
-        K = computeAirDiffMat(state);
+        SpMat K = computeAirDiffMat(state);
 
 		/* compute film forces by peices */
 		K += computeFilmDiffMat(state);
 
 		/* compute elastic forces diff by tetrahedrons */
 		K += computeElasticDiffMat(state);
+
+        return K;
     }
 
     #define CONVERGE_ERROR_RATE 1e-4
@@ -87,41 +84,39 @@ namespace BalloonFEM
       /* initialize next_state */
         next_state = cur_state;
 		next_state.project();
+        DeltaState f_sum(next_state);
 
         /* initialize temp variable for iterative implicit solving */
-        DeltaState f_elas(next_state);
-        computeForces(next_state, f_elas.world_space_pos); 
-        f_elas.conterProject();
-        SpVec b = f_elas.toSpVec();
+        /* f is total force on each vertex */
+        /* K = - df/dr, here Force Diff Mat compute df/dr */
+        SpMat K = - computeForceAndGradient(next_state, f_sum.world_space_pos);
+        f_sum.conterProject();
+        SpVec b = f_sum.toSpVec();
+
 
         DeltaState dstate(next_state);
-
-        /* K = - df/dr, here Force Diff Mat compute df/dr */
-        SpMat K;
-        computeForceDiffMat(next_state, K);
-        K = -K;
 
         /* convert K to \tilde K with W transfer. The restricted vertices
          * has all 0 colume and raw so we add 1 to its diagnal */
         SpMat W = dstate.projectMat();
-        K = W.transpose() * K * W + dstate.restrictedMat();
+        SpMat R = dstate.restrictedMat();
+        K = W.transpose() * K * W + R;
         
         /* solver */
         Eigen::SimplicialLDLT<SpMat> solver;
 		
-		double err_felas = f_elas.dot(f_elas);
-		double err_begin = err_felas;
+		double err_f = f_sum.dot(f_sum);
+		double err_begin = err_f;
 		int count_iter = 0;		/* K dx = f iter count */
         /* while not converge f == 0, iterate */
-		while ((err_felas > CONVERGE_ERROR_RATE * err_begin) && (err_felas > 1e-10))
+		while ((err_f > CONVERGE_ERROR_RATE * err_begin) && (err_f > 1e-10))
         {
             /* debug use */
 			count_iter++;
-            printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_felas);
+            printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_f);
 
             /* r0 = b - Ax0 */
             SpVec r = b - K * dstate.toSpVec();
-
 
             printf("building solver\n");
             solver.compute(K);
@@ -135,7 +130,7 @@ namespace BalloonFEM
             SpVec x = solver.solve(r);
             dstate.readSpVec(x);
 
-            /* update v_pos_next and f_elas */
+            /* update v_pos_next and f_sum */
             next_state.update(dstate);
 			next_state.project();
             dstate.clear();
@@ -146,38 +141,34 @@ namespace BalloonFEM
 			p_viewer->refresh();
 			//Control::mOutput();
 			
-            /* update K */
-            computeForceDiffMat(next_state, K);
-            K = -K;
-            dstate.projectMat();
-            K = W.transpose() * K * W + dstate.restrictedMat();
+            /* update K and f*/
+            K = - computeForceAndGradient(next_state, f_sum.world_space_pos);
+            K = W.transpose() * K * W + R;
+            f_sum.conterProject();
+            b = f_sum.toSpVec();
 
-            /* update f_elas */
-            computeForces(next_state, f_elas.world_space_pos); 
-            f_elas.conterProject();
-            b = f_elas.toSpVec();
 
-			err_felas = f_elas.dot(f_elas);
+			err_f = f_sum.dot(f_sum);
         }
 
-		printf("f_sum error %f \n", err_felas);
+		printf("f_sum error %f \n", err_f);
 		printf("finish solving \n");
     }
 
 
     void Engine::forceTest()
     {
-        Vvec3 f_elas;
-        f_elas.assign( m_size, Vec3(0) );
+        Vvec3 f_sum;
+        f_sum.assign( m_size, Vec3(0) );
 
         /* compute nodal force for each vertex */
-        computeElasticForces(cur_state, f_elas);
+        computeElasticForces(cur_state, f_sum);
 
         /* output data */
         for (size_t i = 0; i < m_size; i++)
         {
             m_tetra->vertices[i].m_pos = cur_state.world_space_pos[i];
-            m_tetra->vertices[i].m_velocity = f_elas[i];
+            m_tetra->vertices[i].m_velocity = f_sum[i];
         }
     }
 

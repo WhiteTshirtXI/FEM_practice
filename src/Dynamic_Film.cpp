@@ -20,7 +20,7 @@ namespace{
 
 namespace BalloonFEM
 {
-    void Engine::computeFilmForces(ObjState &state, Vvec3 &f_elas)
+    void Engine::computeFilmForces(ObjState &state, Vvec3 &f_sum)
     {
         Vvec3 &pos = state.world_space_pos;
 
@@ -48,9 +48,9 @@ namespace BalloonFEM
 				/* calculate forces contributed from this tetra */
 				Mat3x2 H = -p->W * P * transpose(p->Bm);
 
-				f_elas[id[0]] += H[0];
-				f_elas[id[1]] += H[1];
-				f_elas[id[2]] -= H[0] + H[1];
+				f_sum[id[0]] += H[0];
+				f_sum[id[1]] += H[1];
+				f_sum[id[2]] -= H[0] + H[1];
 			}
 		}
         

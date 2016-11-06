@@ -10,7 +10,7 @@
 
 namespace BalloonFEM
 {
-    void Engine::computeAirForces(ObjState &state, Vvec3 &f_elas)
+    void Engine::computeAirForces(ObjState &state, Vvec3 &f_sum)
     {
         /* add air pressure force */
         for (size_t i = 0; i < m_tetra->holes.size(); i++)
@@ -21,7 +21,7 @@ namespace BalloonFEM
 
             for (j = h.vertices.begin(); j != h.vertices.end(); j++)
             {
-                f_elas[*j] += p * state.volume_gradient[*j];
+                f_sum[*j] += p * state.volume_gradient[*j];
             }
         }
     }
