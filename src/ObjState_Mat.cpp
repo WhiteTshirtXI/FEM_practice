@@ -81,7 +81,7 @@ namespace BalloonFEM
         int offset = 0;
         for(MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
         {
-            for(PIter p = f->peices.begin(); p != f->peices.end(); p++)
+            for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
             {
                 iVec3 &id = p->v_id;
                 /* edge dire , norm and Area */

@@ -14,12 +14,12 @@ extern View::Viewer *p_viewer;
 
 namespace BalloonFEM
 {
-    Engine::Engine(TetraMesh* tetra, ElasticModel* model, AirModel* a_model, FilmModel* film_model)
+    Engine::Engine(TetraMesh* tetra, ElasticModel* volume_model, AirModel* air_model, FilmModel* film_model)
     {
         m_tetra = tetra;
         m_size = tetra->vertices.size();
-        m_model = model;
-        m_a_model = a_model;
+        m_volume_model = volume_model;
+        m_air_model = air_model;
 		m_film_model = film_model;
 
 		f_ext.assign(m_size, Vec3(0));
@@ -57,7 +57,7 @@ namespace BalloonFEM
         /* compute elastic forces by tetrahedrons */
         computeElasticForces(state, f_sum); 
 
-		/* compute film forces by peices */
+		/* compute film forces by pieces */
 		computeFilmForces(state, f_sum);
         
         /* compute forces by air pressure */
@@ -69,7 +69,7 @@ namespace BalloonFEM
 		/* compute forces diff by air pressure */
         SpMat K = computeAirDiffMat(state);
 
-		/* compute film forces by peices */
+		/* compute film forces by pieces */
 		K += computeFilmDiffMat(state);
 
 		/* compute elastic forces diff by tetrahedrons */
@@ -146,7 +146,6 @@ namespace BalloonFEM
             K = W.transpose() * K * W + R;
             f_sum.conterProject();
             b = f_sum.toSpVec();
-
 
 			err_f = f_sum.dot(f_sum);
         }

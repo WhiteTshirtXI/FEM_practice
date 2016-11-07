@@ -42,7 +42,7 @@ namespace BalloonFEM
             Mat3 F = Ds * t->Bm;
 
             /* calculate Piola for this tetra */
-            Mat3 P = m_model->Piola(F);
+            Mat3 P = m_volume_model->Piola(F);
 
             /* calculate forces contributed from this tetra */
             Mat3 H = - t->W * P * transpose(t->Bm);
@@ -92,7 +92,7 @@ namespace BalloonFEM
 				Mat3 dF = dDs * t->Bm;
 
 				/* calculate delta Piola */
-				Mat3 dP = m_model->StressDiff(F, dF);
+				Mat3 dP = m_volume_model->StressDiff(F, dF);
  
 				/* calculate forces contributed from this tetra */
 				Mat3 dH = - t->W * dP * transpose(t->Bm);

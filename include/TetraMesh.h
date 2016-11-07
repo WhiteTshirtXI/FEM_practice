@@ -51,10 +51,10 @@ namespace BalloonFEM{
             iVec3 v_id;     /* vertices ids */
     };
     
-    class Peice : public Face
+    class Piece : public Face
     {
         public:
-            Peice():Face(){};
+            Piece():Face(){};
 
             /* compute parameterized coefficient */
             void precomputation();
@@ -80,7 +80,7 @@ namespace BalloonFEM{
             /* geometry properties */
 
             /* topology properties */
-            iVec2 peice_info[2];        /* information of peices, x stands for peice id, y for v local id*/
+            iVec2 piece_info[2];        /* information of pieces, x stands for piece id, y for v local id*/
     };
 
     class Tetra
@@ -106,11 +106,11 @@ namespace BalloonFEM{
         public:
             Film(){};
             
-            /* compute hindges based on given peices, fill in hindges and correspond
-             * part of peices elements*/
+            /* compute hindges based on given pieces, fill in hindges and correspond
+             * part of pieces elements*/
             void computeHindges();
 
-            std::vector<Peice> peices;
+            std::vector<Piece> pieces;
             std::vector<Hindge> hindges;
     };
 
@@ -161,7 +161,7 @@ namespace BalloonFEM{
 			void labelFixedId();
 
             /* add hole information, by input iVec3 vector */
-            int addFilm( const std::vector<iVec3>& peice_ids );
+            int addFilm( const std::vector<iVec3>& piece_ids );
 
             /* add rigid body constrains, by input v_ids contained in vector */
             int addRigidBody( const std::vector<size_t>& vertex_ids );

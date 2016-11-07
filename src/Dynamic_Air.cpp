@@ -15,7 +15,7 @@ namespace BalloonFEM
         /* add air pressure force */
         for (size_t i = 0; i < m_tetra->holes.size(); i++)
         {
-            double p = m_a_model->pressure(state.hole_volume[i]);
+            double p = m_air_model->pressure(state.hole_volume[i]);
             Hole &h = m_tetra->holes[i];
             std::vector<size_t>::iterator j;
 
@@ -33,13 +33,13 @@ namespace BalloonFEM
 		Vvec3 &pos = state.world_space_pos;
 
 		/* compute air pressure force differential matrix */
-		SpMat K = state.volumeGradientDiffMat();
+		SpMat E = state.volumeGradientDiffMat();
 
 		std::vector<T> pressure;
 		pressure.reserve(pos.size());
 		for (size_t i = 0; i < m_tetra->holes.size(); i++)
 		{
-			double p = m_a_model->pressure(state.hole_volume[i]);
+			double p = m_air_model->pressure(state.hole_volume[i]);
 			Hole &h = m_tetra->holes[i];
 			std::vector<size_t>::iterator j;
             
@@ -54,8 +54,8 @@ namespace BalloonFEM
 		}
 		SpMat P(3 * pos.size(), 3 * pos.size());
 		P.setFromTriplets(pressure.begin(), pressure.end());
-		K = K * P;
+		E = E * P;
 
-        return K;
+        return E;
     }
 }

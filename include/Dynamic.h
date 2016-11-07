@@ -21,12 +21,12 @@ namespace BalloonFEM
 				TetraMesh* tetra, 
 				ElasticModel* model = new Elastic_neohookean(0.4, 0.4), 
 				AirModel* a_model = new AirModel_Isobaric(0, 0), 
-				FilmModel* film_model = new Film_neohookean_3d(0.4, 0.4)
+				FilmModel* film_model = new Film_neohookean(0.4, 0.4)
 				);
 
-            void setElasticModel(ElasticModel* model){ m_model = model; };
+            void setElasticModel(ElasticModel* model){ m_volume_model = model; };
 
-            void setAirModel(AirModel* model){ m_a_model = model; };
+            void setAirModel(AirModel* model){ m_air_model = model; };
 
 			void setFilmModel(FilmModel* model){ m_film_model = model; };
 
@@ -53,9 +53,9 @@ namespace BalloonFEM
 
             TetraMesh* m_tetra;
 
-            ElasticModel* m_model;
+            ElasticModel* m_volume_model;
 
-            AirModel* m_a_model;
+            AirModel* m_air_model;
 
 			FilmModel* m_film_model;
 

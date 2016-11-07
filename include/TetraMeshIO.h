@@ -56,7 +56,7 @@ namespace BalloonFEM{
             /* when begin with x, read fixed vertices */
             static void readFixed   ( std::stringstream& ss, TetraMeshData& data );
 
-            /* when begin with fl, read film peices by (film_id, v_id * 3) */
+            /* when begin with fl, read film pieces by (film_id, v_id * 3) */
             static void readFilm    ( std::stringstream& ss, TetraMeshData& data );
 
             /* when begin with r, read rigid body by vertices */

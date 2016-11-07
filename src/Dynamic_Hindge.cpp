@@ -28,18 +28,18 @@ namespace BalloonFEM
         {
             for(EIter h = f->hindges.begin(); h != f->hindges.end(); h++)
             {
-                /* normal of peice_info[0] */
-                iVec3 &id0 = f->peices[h->peice_info[0].x].v_id;
+                /* normal of piece_info[0] */
+                iVec3 &id0 = f->pieces[h->piece_info[0].x].v_id;
                 Vec3 n0 = glm::cross( pos[id0[0]] - pos[id0[2]], pos[id0[1]] - pos[id0[2]] );
                 n0 /= glm::length(n0);
 
-                /* normal of peice_info[1] */
-                iVec3 &id1 = f->peices[h->peice_info[1].x].v_id;
+                /* normal of piece_info[1] */
+                iVec3 &id1 = f->pieces[h->piece_info[1].x].v_id;
                 Vec3 n1 = glm::cross( pos[id1[0]] - pos[id1[2]], pos[id1[1]] - pos[id1[2]] );
                 n1 /= glm::length(n1);
 
                 /* edge direction */
-                Vec3 e = pos[id0[h->peice_info[0].y]] -  pos[id0[h->peice_info[0].y]];
+                Vec3 e = pos[id0[h->piece_info[0].y]] -  pos[id0[h->piece_info[0].y]];
                 e /= glm::length(e);
 
                 /* energy is 2*sin(x/2)^2 */
@@ -48,7 +48,6 @@ namespace BalloonFEM
                 offset ++;
             }
         }
-
         
         //////////////////////////////////////////////////////////////////////
         /* compute heissen matrix and theta gradient */
@@ -60,7 +59,7 @@ namespace BalloonFEM
         offset = 0;     /* since there may be more than one film obj */
         for(MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
         {
-            for(PIter p = f->peices.begin(); p != f->peices.end(); p++)
+            for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
             {
                 iVec3 &v_id = p->v_id;
                 /* edge dire , norm and Area */

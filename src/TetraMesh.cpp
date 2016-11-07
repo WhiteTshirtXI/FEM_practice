@@ -24,7 +24,7 @@ void Face::computeNorm()
     this->m_normal = glm::normalize(glm::cross(a, b));
 }
 
-void Peice::precomputation()
+void Piece::precomputation()
 {
     Mat2 Dm(0);  /* coordinate vectors */
     Vec3 e1 = v[0]->m_cord - v[2]->m_cord;
@@ -58,47 +58,42 @@ void Tetra::precomputation()
 
 void Film::computeHindges()
 {
-    /* struct used for storing peice_info and halfedge/edge, then sort them */
+    /* struct used for storing piece_info and halfedge/edge, then sort them */
     struct hindge_tmp
     {
         hindge_tmp(iVec2 halfedge, iVec2 info)
         {
-            peice_info = info;
+            piece_info = info;
             if (halfedge[0] > halfedge[1])
             {
                 edge[0] = halfedge[1];
                 edge[1] = halfedge[0];
-            }else{
+            }
+			else{
                 edge = halfedge;
             }
         };
             
         bool operator<(const hindge_tmp& other)
         {
-            if (this->edge[0] < other.edge[0])
-            {
-                return true;
-            }
+            if (this->edge[0] < other.edge[0])  return true;
 
-            if (this->edge[0] > other.edge[0])
-            {
-                return false;
-            }
-
+            if (this->edge[0] > other.edge[0])  return false;
+          
             return this->edge[1] < other.edge[1];
         };
 
         iVec2 edge;
-        iVec2 peice_info;
+        iVec2 piece_info;
     };
     
     std::vector<hindge_tmp> edge_list;
     edge_list.clear();
-    edge_list.reserve( this->peices.size() * 3 );
+    edge_list.reserve( this->pieces.size() * 3 );
 
-    for(size_t i = 0; i < this->peices.size(); i++)
+    for(size_t i = 0; i < this->pieces.size(); i++)
     {
-        iVec3 v_id = peices[i].v_id;
+        iVec3 v_id = pieces[i].v_id;
         for(size_t j = 0; j < 3; j++)
         {
             edge_list.push_back( 
@@ -120,8 +115,8 @@ void Film::computeHindges()
         if (glm::all(glm::equal(edge_list[count].edge, edge_list[count+1].edge)))
         {
             Hindge h;
-            h.peice_info[0] = edge_list[count].peice_info;
-            h.peice_info[1] = edge_list[count+1].peice_info;
+            h.piece_info[0] = edge_list[count].piece_info;
+            h.piece_info[1] = edge_list[count+1].piece_info;
             this->hindges.push_back(h);
             count += 2;
         }
@@ -131,12 +126,12 @@ void Film::computeHindges()
         }
     }
 
-    /* fill in corresponding element of peices */
+    /* fill in corresponding element of pieces */
     for(size_t i = 0; i < this->hindges.size(); i++)
     {
         Hindge &h = this->hindges[i];
-        this->peices[h.peice_info[0].x].hindge_id[h.peice_info[0].y] = i;
-        this->peices[h.peice_info[1].x].hindge_id[h.peice_info[1].y] = i;
+        this->pieces[h.piece_info[0].x].hindge_id[h.piece_info[0].y] = i;
+        this->pieces[h.piece_info[1].x].hindge_id[h.piece_info[1].y] = i;
     }
 
 }
@@ -164,7 +159,7 @@ void TetraMesh::precomputation()
     printf("Precomputing properties of films.\n");
     for(MIter m = films.begin(); m != films.end(); m++)
     {
-        for(PIter p = m->peices.begin(); p != m->peices.end(); p++)
+        for(PIter p = m->pieces.begin(); p != m->pieces.end(); p++)
         {
             p->precomputation();
         }
@@ -203,25 +198,25 @@ void TetraMesh::labelFixedId()
     }
 }
 
-int TetraMesh::addFilm( const std::vector<iVec3>& peice_ids)
+int TetraMesh::addFilm( const std::vector<iVec3>& piece_ids)
 {
     Film f;
-    f.peices.clear();
-    f.peices.reserve( peice_ids.size() );
+    f.pieces.clear();
+    f.pieces.reserve( piece_ids.size() );
     f.hindges.clear();
-    f.hindges.reserve( peice_ids.size() * 3 / 2 );
+    f.hindges.reserve( piece_ids.size() * 3 / 2 );
 
-    for(size_t i = 0; i < peice_ids.size(); i++)
+    for(size_t i = 0; i < piece_ids.size(); i++)
     {
-        Peice p;
+        Piece p;
         /* for each face, build face class and add vertices to hole vertices*/
-        p.v_id = peice_ids[i];
+        p.v_id = piece_ids[i];
         for(size_t j = 0; j < 3; j++)
         {
             p.v[j] = &this->vertices[ p.v_id[j] ];
         }
 
-        f.peices.push_back(p);
+        f.pieces.push_back(p);
     }
 
     /* compute hindges */

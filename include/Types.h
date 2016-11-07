@@ -14,7 +14,7 @@ namespace BalloonFEM
     /* basic geometry element */
     class Vertex;
     class Face;
-    class Peice;
+    class Piece;
     class Hindge;
     class Tetra;
 
@@ -42,7 +42,7 @@ namespace BalloonFEM
     /* iterator definition of geometry elements */
     typedef std::vector<Vertex>::iterator   VIter;
     typedef std::vector<Face>::iterator     FIter;
-    typedef std::vector<Peice>::iterator    PIter;
+    typedef std::vector<Piece>::iterator    PIter;
     typedef std::vector<Hindge>::iterator   EIter;
     typedef std::vector<Tetra>::iterator    TIter;
     typedef std::vector<Film>::iterator     MIter;
@@ -51,7 +51,7 @@ namespace BalloonFEM
 
     typedef std::vector<Vertex>::const_iterator   VCIter;
     typedef std::vector<Face>::const_iterator     FCIter;
-    typedef std::vector<Peice>::const_iterator    PCIter;
+    typedef std::vector<Piece>::const_iterator    PCIter;
     typedef std::vector<Hindge>::const_iterator   ECIter;
     typedef std::vector<Tetra>::const_iterator    TCIter;
     typedef std::vector<Film>::const_iterator     MCIter;

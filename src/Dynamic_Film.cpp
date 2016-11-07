@@ -28,8 +28,7 @@ namespace BalloonFEM
 
 		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
 		{
-			for (PIter p = f->peices.begin();
-				p != f->peices.end(); p++)
+			for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
 			{
 				iVec3 &id = p->v_id;
 				Vec3 &v0 = pos[id[0]];
@@ -46,7 +45,7 @@ namespace BalloonFEM
 				Mat3x2 P = m_film_model->Piola(F);
 
 				/* calculate forces contributed from this tetra */
-				Mat3x2 H = -p->W * P * transpose(p->Bm);
+				Mat3x2 H = - p->W * P * transpose(p->Bm);
 
 				f_sum[id[0]] += H[0];
 				f_sum[id[1]] += H[1];
@@ -66,12 +65,12 @@ namespace BalloonFEM
 		coefficients.clear();
 		size_t count_film = 0;
 		for (size_t i = 0; i < m_tetra->films.size(); i++)
-			count_film += m_tetra->films[i].peices.size();
+			count_film += m_tetra->films[i].pieces.size();
 		coefficients.reserve( 9 * 9 * count_film);
 
-		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++){
-			for (PIter p = f->peices.begin();
-				p != f->peices.end(); p++)
+		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
+        {
+			for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
 			{
 				/* assgin world space position */
 				iVec3 &id = p->v_id;
@@ -96,7 +95,7 @@ namespace BalloonFEM
 					Mat3x2 dF = dDs * p->Bm;
 
 					/* calculate delta Piola */
-					Mat3x2 dP = m_model->StressDiff(F, dF);
+					Mat3x2 dP = m_film_model->StressDiff(F, dF);
 
 					/* calculate forces contributed from this tetra */
 					Mat3x2 dH = -p->W * dP * transpose(p->Bm);
@@ -105,7 +104,7 @@ namespace BalloonFEM
 					for (size_t l = 0; l < 3; l++)
 						coefficients.push_back(T(3 * id[w] + l, 3 * id[i] + j, dH[w][l]));
 
-					Vec3 df_3 = -dH[0] - dH[1];
+					Vec3 df_3 = - dH[0] - dH[1];
 					for (size_t l = 0; l < 3; l++)
 						coefficients.push_back(T(3 * id[2] + l, 3 * id[i] + j, df_3[l]));
 				}
