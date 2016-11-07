@@ -63,7 +63,7 @@ namespace BalloonFEM
         /* compute elastic force Differentials */
 		std::vector<T> coefficients;
 		coefficients.clear();
-		coefficients.reserve( 12 * 12 * pos.size());
+		coefficients.reserve( 12 * 12 * m_tetra->num_vertex);
 
 		for(TIter t = m_tetra->tetrahedrons.begin();
 				t != m_tetra->tetrahedrons.end(); t++)

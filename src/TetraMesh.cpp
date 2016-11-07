@@ -167,6 +167,22 @@ void TetraMesh::precomputation()
 
     printf("Total surface triangle %d \n", (int)surface.size());
 	recomputeSurfaceNorm();
+
+    /* compute mesh info */
+    num_vertex = vertices.size();
+    num_tetra = tetrahedrons.size();
+
+    num_pieces = 0;
+    num_hindges = 0;
+    for(MIter f = films.begin(); f != films.end(); f++)
+    {
+        num_pieces += f->pieces.size();
+        num_hindges += f->hindges.size();
+    }
+
+    num_holeface = 0;
+    for(HIter h = holes.begin(); h != holes.end(); h++)
+        num_holeface += h->holeface.size();
 }
 
 void TetraMesh::recomputeSurfaceNorm()

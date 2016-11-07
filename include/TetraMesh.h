@@ -171,12 +171,19 @@ namespace BalloonFEM{
 
 		    /* variables */
             std::vector<Vertex> vertices;       /* vectors of vertices */
-            std::vector<Tetra> tetrahedrons;    /* tetra mesh */
+            std::vector<Tetra>  tetrahedrons;   /* tetra mesh */
             std::vector<Face>   surface;        /* boudary faces of tetramesh */
 			std::vector<size_t> fixed_ids;      /* fixed ids */
             std::vector<Film>   films;          /* films */
             std::vector<Rigid>  rigids;   /* rigid parts */
             std::vector<Hole>   holes;          /* holes */
+
+            /* mesh info */
+            int num_vertex;
+            int num_tetra;
+            int num_pieces;
+            int num_hindges;
+            int num_holeface;
     };
 
 }
