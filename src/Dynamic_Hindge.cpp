@@ -44,34 +44,39 @@ namespace BalloonFEM
 
         ///////////////////////////////////////////////////////////////////////
         /* compute hindge angle theta and phi, dphi, ddphi */
+		printf("compute hindge angles \n");
         int offset = 0;
         for(MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
         {
+			std::vector<Piece> &pieces = f->pieces;
             for(EIter h = f->hindges.begin(); h != f->hindges.end(); h++)
             {
                 /* normal of piece_info[0] */
-                iVec3 &id0 = f->pieces[h->piece_info[0].x].v_id;
+                iVec3 &id0 = pieces[h->piece_info[0].x].v_id;
                 Vec3 n0 = cross( pos[id0[0]] - pos[id0[2]], pos[id0[1]] - pos[id0[2]] );
                 n0 /= length(n0);
 
                 /* normal of piece_info[1] */
-                iVec3 &id1 = f->pieces[h->piece_info[1].x].v_id;
+                iVec3 &id1 = pieces[h->piece_info[1].x].v_id;
                 Vec3 n1 = cross( pos[id1[0]] - pos[id1[2]], pos[id1[1]] - pos[id1[2]] );
                 n1 /= length(n1);
 
                 /* edge direction */
-                Vec3 e = pos[id0[h->piece_info[0].y]] -  pos[id0[h->piece_info[0].y]];
+				int i = h->piece_info[0].y;
+				int j = (i + 1) % 3, k = (i + 2) % 3;
+                Vec3 e = pos[id0[j]] -  pos[id0[k]];
                 e /= length(e);
 
                 /* energy is 2*sin(x/2)^2 */
-                dphi(offset) = dot(e, cross(n0, n1));
-                ddphi.coeffRef(offset, offset) = dot(n0, n1);
+                dphi(offset) = 10*dot(e, cross(n0, n1));
+                ddphi.coeffRef(offset, offset) = 10*dot(n0, n1);
                 offset ++;
             }
         }
         
         //////////////////////////////////////////////////////////////////////
-        /* compute heissen matrix and theta gradient */
+        /* compute hessian matrix and theta gradient */
+		printf("compute bending force and hessian matrix ");
         std::vector<T> theta_coeff;
         theta_coeff.clear();
 		theta_coeff.reserve( 2 * 9 * m_tetra->num_hindges );
@@ -100,13 +105,13 @@ namespace BalloonFEM
                     e[i] /= l[i];
 
                 /* norm and area */
-                Vec3 norm = - cross( e[0], e[1] );
+                Vec3 norm = cross( e[0], e[1] );
                 double A2 = length(norm);
                 norm /= A2;
 
                 /* height of vertex */
                 Vec3 h_inv = l / A2;
-                Mat3 w = h_inv * transpose(h_inv)
+				Mat3 w = outerProduct(h_inv, h_inv);
 
                 /* cosine of vertex */
 
@@ -125,9 +130,9 @@ namespace BalloonFEM
 
                 /* intermediate var Mi */
                 Mat3 M[3] = { 
-                    norm * transpose(m[0]), 
-                    norm * transpose(m[1]), 
-                    norm * transpose(m[2]), 
+                    outerProduct(norm, m[0]), 
+					outerProduct(norm, m[1]),
+					outerProduct(norm, m[2]),
                 };
 
                 /* intermediate var Ni */
@@ -141,7 +146,7 @@ namespace BalloonFEM
                 for(int i = 0; i < 3; i++)
                     if (p->hindge_id[i] != -1)
                     {
-                        c[i] = 1;
+                        c[i] = dphi(p->hindge_id[i]);
                         R[i] = N[i];
                     }
 
@@ -149,7 +154,7 @@ namespace BalloonFEM
                 double d[3] = {0, 0, 0};
                 for(int i = 0; i < 3; i++)
                 {
-                    int j = (i-1) % 3, k = (i+1) % 3;
+                    int j = (i+1) % 3, k = (i+2) % 3;
                     d[i] = c[j] * cos[k] + c[k] * cos[j] - c[i];
                 }
 
@@ -205,10 +210,10 @@ namespace BalloonFEM
         }
 
         /* compute bending force */
-        SpMat theta_grad(count_hindge, m_size);
+        SpMat theta_grad(m_tetra->num_hindges, 3 * m_tetra->num_vertex);
         theta_grad.setFromTriplets(theta_coeff.begin(), theta_coeff.end());
 
-        SpVec bendforce = dphi.transpose() * state.hindgeAngleGradient();
+        SpVec bendforce = dphi.transpose() * theta_grad;
 
         for(size_t i = 0; i < f_sum.size(); i++)
         {
@@ -218,11 +223,11 @@ namespace BalloonFEM
                     bendforce(3*i + 2));
         }
 
-        SpMat H(m_tetra->num_vertex, m_tetra->num_vertex);
+        SpMat H(3 * m_tetra->num_vertex, 3 * m_tetra->num_vertex);
 
         H.setFromTriplets(hessian_coeff.begin(), hessian_coeff.end());
 
-        H += theta_grad * ddphi * theta_grad.transpose();
+        H += theta_grad.transpose() * ddphi * theta_grad;
         
         return H;
     }

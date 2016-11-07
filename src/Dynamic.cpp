@@ -58,7 +58,7 @@ namespace BalloonFEM
         computeElasticForces(state, f_sum); 
 
 		/* compute film forces by pieces */
-		computeFilmForces(state, f_sum);
+		//computeFilmForces(state, f_sum);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_sum);
@@ -70,10 +70,13 @@ namespace BalloonFEM
         SpMat K = computeAirDiffMat(state);
 
 		/* compute film forces by pieces */
-		K += computeFilmDiffMat(state);
+		//K += computeFilmDiffMat(state);
 
 		/* compute elastic forces diff by tetrahedrons */
 		K += computeElasticDiffMat(state);
+
+        /* compute bending force and gradient */
+        K -= bendingForceAndGradient(state, f_sum);
 
         return K;
     }
