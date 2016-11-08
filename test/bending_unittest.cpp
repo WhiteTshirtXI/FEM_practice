@@ -70,13 +70,29 @@ TEST_F(BendingTest, TestForce){
 }
 
 TEST_F(BendingTest, TestStiffness){
-	/* bend the B(1, 0, 0) to B'(0, 0, 1) */
-	m_tetra.vertices[1].m_pos = Vec3(0, 0, 1);
+	/* bend the B(1, 0, 0) to B'(-1/sqrt(2), 0, 1) */
+	m_tetra.vertices[1].m_pos = Vec3(-sqrt(2)/2, 0, sqrt(2)/2);
 	m_engine->inputData();
 
 	Vvec3 force;
 	SpMat K = m_engine->forceTest(force);
 
 	/* exame the force */
+    SpVec dp = SpVec::Zero(m_tetra.num_vertex * 3);
+    dp( 3 * 1 + 0 ) = -1;       /* move B'(0, 0, 1) towards -x */
 
+    SpVec df = K * dp;
+
+	std::cout << df << std::endl;
+
+    /* exame */
+    /* D should be more compressed */
+	EXPECT_EQ(0, df(3 * 3));
+	EXPECT_EQ(0, df(3 * 3 + 1));
+	EXPECT_GT(0, df(3 * 3 + 2)) << df << std::endl ;
+
+	/* A, C should be symmetry by xoz plane */
+	EXPECT_EQ(df(3 * 0), df(3 * 2));
+	EXPECT_EQ(df(3 * 0 + 1), -df(3 * 2 + 1));
+	EXPECT_EQ(df(3 * 0 + 2), df(3 * 2 + 2));
 }
