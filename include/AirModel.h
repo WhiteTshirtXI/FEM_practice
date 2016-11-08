@@ -1,5 +1,5 @@
 #ifndef _AIRMODEL_H_
-#define _ELASTICMODEL_H_
+#define _AIRMODEL_H_
 
 #include "Types.h"
 

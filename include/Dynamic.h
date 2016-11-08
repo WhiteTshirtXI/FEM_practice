@@ -44,10 +44,9 @@ namespace BalloonFEM
              */
             void solveStaticPos();
 
-            /* test the comuteElasticForces, deforme v_pos and output f_ela 
-             * to v_velocity
-             * */
-            void forceTest();
+            /* test the computeForceAndGradient, output force and Gradient
+             */
+			SpMat forceTest(Vvec3 &f_sum);
 
         private:
 
@@ -61,7 +60,7 @@ namespace BalloonFEM
 
 			size_t m_size;
 
-            typedef std::vector<Vec3> Vvec3;
+            
 
             /* current position and current velocity */
             ObjState cur_state;

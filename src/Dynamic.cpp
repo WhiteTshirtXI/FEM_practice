@@ -158,20 +158,12 @@ namespace BalloonFEM
     }
 
 
-    void Engine::forceTest()
+    SpMat Engine::forceTest(Vvec3 &f_sum)
     {
-        Vvec3 f_sum;
         f_sum.assign( m_size, Vec3(0) );
 
         /* compute nodal force for each vertex */
-        computeElasticForces(cur_state, f_sum);
-
-        /* output data */
-        for (size_t i = 0; i < m_size; i++)
-        {
-            m_tetra->vertices[i].m_pos = cur_state.world_space_pos[i];
-            m_tetra->vertices[i].m_velocity = f_sum[i];
-        }
+        return computeForceAndGradient(cur_state, f_sum);
     }
 
 }

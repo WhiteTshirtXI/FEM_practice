@@ -68,8 +68,8 @@ namespace BalloonFEM
                 e /= length(e);
 
                 /* energy is 2*sin(x/2)^2 */
-                dphi(offset) = 10*dot(e, cross(n0, n1));
-                ddphi.coeffRef(offset, offset) = 10*dot(n0, n1);
+                dphi(offset) = dot(e, cross(n0, n1));
+                ddphi.coeffRef(offset, offset) = dot(n0, n1);
                 offset ++;
             }
         }
@@ -213,7 +213,7 @@ namespace BalloonFEM
         SpMat theta_grad(m_tetra->num_hindges, 3 * m_tetra->num_vertex);
         theta_grad.setFromTriplets(theta_coeff.begin(), theta_coeff.end());
 
-        SpVec bendforce = dphi.transpose() * theta_grad;
+        SpVec bendforce = - dphi.transpose() * theta_grad;
 
         for(size_t i = 0; i < f_sum.size(); i++)
         {

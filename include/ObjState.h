@@ -1,3 +1,5 @@
+#ifndef _OBJSTATE_H_
+#define _OBJSTATE_H_
 
 #include "Types.h"
 
@@ -157,3 +159,5 @@ namespace BalloonFEM
 		Vvec3 dm_r_rot;
 	};
 }
+
+#endif //!_OBJSTATE_H_

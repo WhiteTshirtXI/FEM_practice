@@ -12,6 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Dependence.h"
 #include "controls.h"
 #include "arcball.h"
 
@@ -35,7 +36,7 @@ static int outputcount = 0;		// output id
 
 void mAddParameter()
 {
-	force += 5e-4;
+	force += 5e-5;
 	modified = 0;
 	printf("force = %.4f\n", force);
 }
@@ -45,14 +46,14 @@ void mProcess()
 {
 	std::vector<double> solveTime;
 	mOutput();
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 1; i++)
 	{
 		mAddParameter();
 		if (modified == 0){
 			/* add force to tetra mesh */
 			
              for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-				m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, -force, 0);
+				m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, 0, force);
 			
 			engine.setAirModel(new BalloonFEM::AirModel_Isobaric(0, 0));
 			engine.inputData();
