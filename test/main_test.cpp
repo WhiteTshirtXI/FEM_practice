@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-#include "Viewer.h"
+#include "../include/Viewer.h"
 
 View::Viewer *p_viewer = NULL;
 

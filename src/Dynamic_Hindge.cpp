@@ -61,12 +61,13 @@ namespace BalloonFEM
                 Vec3 n1 = cross( pos[id1[0]] - pos[id1[2]], pos[id1[1]] - pos[id1[2]] );
                 n1 /= length(n1);
 
-                /* edge direction */
+                /* edge direction , is the positive direction of piece_info[0]*/
 				int i = h->piece_info[0].y;
 				int j = (i + 1) % 3, k = (i + 2) % 3;
-                Vec3 e = pos[id0[j]] -  pos[id0[k]];
+                Vec3 e = pos[id0[k]] -  pos[id0[j]];
                 e /= length(e);
 
+				/* signed theta is defined as positive when n0 n1 point away from each other */
                 /* energy is 2*sin(x/2)^2 */
                 dphi(offset) = dot(e, cross(n0, n1));
                 ddphi.coeffRef(offset, offset) = dot(n0, n1);
@@ -76,7 +77,7 @@ namespace BalloonFEM
         
         //////////////////////////////////////////////////////////////////////
         /* compute hessian matrix and theta gradient */
-		printf("compute bending force and hessian matrix ");
+		printf("compute bending force and hessian matrix \n");
         std::vector<T> theta_coeff;
         theta_coeff.clear();
 		theta_coeff.reserve( 2 * 9 * m_tetra->num_hindges );
@@ -92,22 +93,20 @@ namespace BalloonFEM
             for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
             {
                 iVec3 &v_id = p->v_id;
-                /* edge dire , length */
+                /* edge dire , length , norm and area*/
                 Vec3 e[3] = { 
                     pos[v_id[2]] - pos[v_id[1]],
                     pos[v_id[0]] - pos[v_id[2]],
                     pos[v_id[1]] - pos[v_id[0]],
                 };
 
-                Vec3 l = Vec3(length(e[0]), length(e[1]), length(e[2]));
-
-                for(int i = 0; i < 3; i++)
-                    e[i] /= l[i];
-
-                /* norm and area */
                 Vec3 norm = cross( e[0], e[1] );
                 double A2 = length(norm);
                 norm /= A2;
+
+				Vec3 l = Vec3(length(e[0]), length(e[1]), length(e[2]));
+				for (int i = 0; i < 3; i++)
+					e[i] /= l[i];
 
                 /* height of vertex */
                 Vec3 h_inv = l / A2;

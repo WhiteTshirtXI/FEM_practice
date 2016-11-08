@@ -6,7 +6,7 @@ using namespace glm;
 
 namespace BalloonFEM
 {
-	float trace(Mat3 F)
+	double trace(Mat3 F)
 	{
 		return F[0][0] + F[1][1] + F[2][2];
 	}
