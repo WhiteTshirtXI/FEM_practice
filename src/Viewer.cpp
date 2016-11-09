@@ -17,6 +17,7 @@ using namespace Control;
 using namespace BalloonFEM;
 
 int shadFlag = 0;
+Vvec3 force_vec, force_pos;
 
 namespace View{
 /* window parameter */
@@ -63,6 +64,7 @@ void Viewer::refresh()
 
 	draw_mesh();
 	draw_axis();
+	draw_force();
 
 	/* Swap front and back buffers*/
 	glfwSwapBuffers(mainWindow);
@@ -245,6 +247,25 @@ void Viewer::draw_axis()
 	glVertex3d(0, 0, 0);
 	glVertex3d(0, 0, 1);
 	glEnd();
+
+	glLineWidth(1.0);
+}
+
+void Viewer::draw_force()
+{
+	glLineWidth(2.0);
+	
+	glColor3f(1.0, 0.0, 0.0);	//red
+
+	for (int i = 0; i < force_vec.size(); i++)
+	{
+		Vec3 pos = force_pos[i];
+		Vec3 targ = pos + force_vec[i];
+		glBegin(GL_LINES);
+		glVertex3dv(&pos[0]);
+		glVertex3dv(&targ[0]);
+		glEnd();
+	}
 
 	glLineWidth(1.0);
 }

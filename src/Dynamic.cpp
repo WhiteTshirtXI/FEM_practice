@@ -58,7 +58,7 @@ namespace BalloonFEM
         computeElasticForces(state, f_sum); 
 
 		/* compute film forces by pieces */
-		//computeFilmForces(state, f_sum);
+		computeFilmForces(state, f_sum);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_sum);
@@ -70,7 +70,7 @@ namespace BalloonFEM
         SpMat K = computeAirDiffMat(state);
 
 		/* compute film forces by pieces */
-		//K += computeFilmDiffMat(state);
+		K += computeFilmDiffMat(state);
 
 		/* compute elastic forces diff by tetrahedrons */
 		K += computeElasticDiffMat(state);
@@ -81,7 +81,7 @@ namespace BalloonFEM
         return K;
     }
 
-    #define CONVERGE_ERROR_RATE 1e-4
+    #define CONVERGE_ERROR_RATE 1e-5
     void Engine::solveStaticPos()
     {
       /* initialize next_state */
@@ -158,9 +158,10 @@ namespace BalloonFEM
     }
 
 
-    SpMat Engine::forceTest(Vvec3 &f_sum)
+    SpMat Engine::forceTest(Vvec3 &f_sum, Vvec3 &f_loc)
     {
         f_sum.assign( m_size, Vec3(0) );
+		f_loc = cur_state.world_space_pos;
 
         /* compute nodal force for each vertex */
         return computeForceAndGradient(cur_state, f_sum);

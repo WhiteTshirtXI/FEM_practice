@@ -44,6 +44,9 @@ class Viewer
         /* draw axis */
         void draw_axis();
 
+		/* draw force */
+		void draw_force();
+
         Mesh* mesh;
 
         GLFWwindow* mainWindow;
