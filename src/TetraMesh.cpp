@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,6 +12,12 @@
 #include "TetraMeshIO.h"
 
 using namespace std;
+
+namespace{
+	int sgn(double val){
+		return ((double(0) < val) - (val < double(0)));
+	}
+}
 
 namespace BalloonFEM
 {
@@ -134,6 +140,7 @@ void Film::computeHindges()
         this->pieces[h.piece_info[1].x].hindge_id[h.piece_info[1].y] = i;
     }
 
+
 }
 
 void TetraMesh::precomputation()
@@ -163,6 +170,39 @@ void TetraMesh::precomputation()
         {
             p->precomputation();
         }
+
+		/* compute correspond angle */
+		for (EIter h = m->hindges.begin(); h != m->hindges.end(); h++)
+		{
+			/* normal of piece_info[0] */
+			Piece &p0 = m->pieces[h->piece_info[0].x];
+			iVec3 &id0 = p0.v_id;
+			Vec3 n0 = glm::cross(
+				vertices[id0[0]].m_cord - vertices[id0[2]].m_cord,
+				vertices[id0[1]].m_cord - vertices[id0[2]].m_cord
+				);
+			n0 /= length(n0);
+
+			/* normal of piece_info[1] */
+
+			Piece &p1 = m->pieces[h->piece_info[1].x];
+			iVec3 &id1 = p1.v_id;
+			Vec3 n1 = glm::cross(
+				vertices[id0[0]].m_cord - vertices[id0[2]].m_cord,
+				vertices[id0[1]].m_cord - vertices[id0[2]].m_cord
+				);
+			n1 /= length(n1);
+
+			/* edge direction , is the positive direction of piece_info[0]*/
+			int i = h->piece_info[0].y;
+			int j = (i + 1) % 3, k = (i + 2) % 3;
+			Vec3 e = vertices[id0[k]].m_cord - vertices[id0[j]].m_cord;
+			e /= length(e);
+
+			/* signed theta is defined as positive when n0 n1 point away from each other */
+			/* energy is 2*sin(x/2)^2 */
+			h->theta = acos(dot(n0, n1)) * sgn(dot(e, cross(n0, n1)));
+		}
     }
 
     printf("Total surface triangle %d \n", (int)surface.size());

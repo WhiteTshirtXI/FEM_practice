@@ -5,9 +5,7 @@
 
 #include "Types.h"
 #include "TetraMesh.h"
-#include "ElasticModel.h"
-#include "AirModel.h"
-#include "FilmModel.h"
+#include "Models.h"
 #include "ObjState.h"
 
 namespace BalloonFEM
@@ -21,14 +19,14 @@ namespace BalloonFEM
 				TetraMesh* tetra, 
 				ElasticModel* model = new Elastic_neohookean(0.4, 0.4), 
 				AirModel* a_model = new AirModel_Isobaric(0, 0), 
-				FilmModel* film_model = new Film_neohookean_3d(0.4, 0.4)
+				FilmModel* film_model = new Film_neohookean_3d(0.4, 0.4),
+                BendingModel* bend_model = new Bending_Willmore(0.01)
 				);
 
             void setElasticModel(ElasticModel* model){ m_volume_model = model; };
-
             void setAirModel(AirModel* model){ m_air_model = model; };
-
 			void setFilmModel(FilmModel* model){ m_film_model = model; };
+			void setBendingModel(BendingModel* model){ m_bend_model = model; };
 
 			/* input data v_pos, v_velocity and f_ext */
 			void inputData();
@@ -58,9 +56,9 @@ namespace BalloonFEM
 
 			FilmModel* m_film_model;
 
-			size_t m_size;
+            BendingModel* m_bend_model;
 
-            
+			size_t m_size;
 
             /* current position and current velocity */
             ObjState cur_state;

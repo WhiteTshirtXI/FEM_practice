@@ -33,6 +33,10 @@ namespace{
         for(int i = 0; i < 3; i++)
             coeff.push_back( T(target_off, source_off + i, H[i]) );
     }
+
+    int sgn(double val){
+        return ((double(0) < val) - (val < double(0)));
+    }
 }
 
 namespace BalloonFEM
@@ -72,8 +76,9 @@ namespace BalloonFEM
 
 				/* signed theta is defined as positive when n0 n1 point away from each other */
                 /* energy is 2*sin(x/2)^2 */
-                dphi(offset) = 0.01 * dot(e, cross(n0, n1));
-                ddphi.coeffRef(offset, offset) = 0.01 * dot(n0, n1);
+                double theta = acos(dot(n0, n1)) * sgn(dot(e, cross(n0, n1)));
+                dphi(offset) = m_bend_model->dphi(theta, h->theta);
+                ddphi.coeffRef(offset, offset) = m_bend_model->ddphi(theta, h->theta);
                 offset ++;
             }
         }

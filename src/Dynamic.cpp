@@ -14,13 +14,18 @@ extern View::Viewer *p_viewer;
 
 namespace BalloonFEM
 {
-    Engine::Engine(TetraMesh* tetra, ElasticModel* volume_model, AirModel* air_model, FilmModel* film_model)
+    Engine::Engine(TetraMesh* tetra, 
+            ElasticModel*   volume_model, 
+            AirModel*       air_model, 
+            FilmModel*      film_model,
+            BendingModel*   bend_model)
     {
         m_tetra = tetra;
         m_size = tetra->vertices.size();
         m_volume_model = volume_model;
         m_air_model = air_model;
 		m_film_model = film_model;
+        m_bend_model = bend_model;
 
 		f_ext.assign(m_size, Vec3(0));
 

@@ -8,6 +8,7 @@ namespace BalloonFEM
     class FilmModel;
 
     class Film_neohookean;
+    class Film_neohookean_3d;
 
     /* base class of elasticity models */
     class FilmModel

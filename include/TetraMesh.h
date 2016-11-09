@@ -78,6 +78,7 @@ namespace BalloonFEM{
             Hindge(){};
 
             /* geometry properties */
+			double theta;
 
             /* topology properties */
             iVec2 piece_info[2];        /* information of pieces, x stands for piece id, y for v local id*/
