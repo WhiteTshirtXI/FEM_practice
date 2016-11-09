@@ -20,6 +20,7 @@
 #include "Dynamic.h"
 
 extern int shadFlag;
+extern BalloonFEM::Vvec3 force_vec, force_pos;
 
 namespace Control{
 
@@ -36,25 +37,35 @@ static int outputcount = 0;		// output id
 
 void mAddParameter()
 {
-	force += 5e-5;
+	force += 1e-5;
 	modified = 0;
-	printf("force = %.4f\n", force);
+	printf("force = %f\n", force);
 }
 
 /* Do something to tetra mesh */
 void mProcess()
 {
 	std::vector<double> solveTime;
-	mOutput();
+	//mOutput();
 	for (size_t i = 0; i < 1; i++)
 	{
-		mAddParameter();
+		//mAddParameter();
 		if (modified == 0){
+			/* add disturbution */
+			/*for (BalloonFEM::VIter v = m_tetra->vertices.begin(); v != m_tetra->vertices.end(); v++)
+			{
+				if (v->m_cord.x > 1e-4)
+				{
+					double theta = 10 * v->m_cord.x;
+					v->m_pos = v->m_cord + BalloonFEM::Vec3(0, 0, 0.01*sin(theta));
+				}
+			}*/
+
 			/* add force to tetra mesh */
-			
-             for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-				m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, 0, force);
-			
+			//m_tetra->vertices[3].m_f_ext = BalloonFEM::Vec3(0, -force, 0);
+            for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+				m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, -force, 0 );
+
 			engine.setAirModel(new BalloonFEM::AirModel_Isobaric(0, 0));
 			engine.inputData();
 			modified = 1;
@@ -69,7 +80,8 @@ void mProcess()
 
 		engine.stepToNext();
 		engine.outputData();
-		mOutput();
+		BalloonFEM::SpMat K = engine.forceTest(force_vec, force_pos);
+		//mOutput();
 		shadFlag = 1;
 	}
 
@@ -80,6 +92,25 @@ void mProcess()
 		count += solveTime[i];
 	}
 	printf("total time spent %f s\n", count);
+}
+
+void mMeasure()
+{
+	mAddParameter();
+	//m_tetra->vertices[1].m_pos = BalloonFEM::Vec3(cos(force), 0, sin(force));
+	for (BalloonFEM::VIter v = m_tetra->vertices.begin(); v != m_tetra->vertices.end(); v++)
+	{
+		if (v->m_cord.x > 0)
+		{
+			double theta = force * v->m_pos.x;
+			v->m_pos = v->m_cord + BalloonFEM::Vec3((cos(theta) - 1)*v->m_pos.x, sin(theta)*v->m_pos.x, 0);
+		}
+	}
+		
+    engine.inputData();
+    BalloonFEM::SpMat K = engine.forceTest(force_vec, force_pos);
+	//printf("B location (%.4f, %.4f, %.4f), f[3].z = %.4f\n", cos(force), 0., sin(force), force_vec[3].z);
+	shadFlag = 1;
 }
 
 /* Reset the tetra mesh to original state */
@@ -265,6 +296,9 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		break;
     case GLFW_KEY_SPACE:
         mProcess();
+        break;
+	case GLFW_KEY_M:
+        mMeasure();
         break;
 	case GLFW_KEY_A:
 		mAddParameter();

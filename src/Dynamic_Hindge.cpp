@@ -1,8 +1,10 @@
 #include <vector>
+#include <iostream>
 
 #include <glm/glm.hpp>
 using namespace glm;
 
+#include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/SparseQR>
 
@@ -19,6 +21,7 @@ namespace{
     {
         for(int i = 0; i < 3; i++)
             for(int j = 0; j < 3; j++)
+			if (H[j][i] != 0)
                 coeff.push_back( T(target_off + i, source_off + j, H[j][i]) );
     }
 
@@ -39,7 +42,7 @@ namespace BalloonFEM
         /* compute theta */
         Vvec3 &pos = state.world_space_pos;
 
-        SpVec dphi(m_tetra->num_hindges);
+        SpVec dphi = SpVec::Zero(m_tetra->num_hindges);
         SpMat ddphi(m_tetra->num_hindges, m_tetra->num_hindges);
 
         ///////////////////////////////////////////////////////////////////////
@@ -69,8 +72,8 @@ namespace BalloonFEM
 
 				/* signed theta is defined as positive when n0 n1 point away from each other */
                 /* energy is 2*sin(x/2)^2 */
-                dphi(offset) = dot(e, cross(n0, n1));
-                ddphi.coeffRef(offset, offset) = dot(n0, n1);
+                dphi(offset) = 0.01 * dot(e, cross(n0, n1));
+                ddphi.coeffRef(offset, offset) = 0.01 * dot(n0, n1);
                 offset ++;
             }
         }
@@ -145,8 +148,8 @@ namespace BalloonFEM
                 for(int i = 0; i < 3; i++)
                     if (p->hindge_id[i] != -1)
                     {
-                        c[i] = dphi(p->hindge_id[i]);
-                        R[i] = N[i];
+						c[i] = dphi(p->hindge_id[i] + offset);
+                        R[i] = c[i]*N[i];
                     }
 
                 /* intermediate var di */
@@ -226,8 +229,8 @@ namespace BalloonFEM
 
         H.setFromTriplets(hessian_coeff.begin(), hessian_coeff.end());
 
-        H += theta_grad.transpose() * ddphi * theta_grad;
-        
+		H +=  theta_grad.transpose() * ddphi * theta_grad;
+
         return H;
     }
 }

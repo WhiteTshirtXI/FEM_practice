@@ -48,25 +48,35 @@ TEST_F(BendingTest, TestSetUp){
 
 
 TEST_F(BendingTest, TestForce){
-    /* bend the B(1, 0, 0) to B'(0, 0, 1) */
-    m_tetra.vertices[1].m_pos = Vec3(0, 0, 1);
-    m_engine->inputData();
 
-    Vvec3 force;
-    SpMat K = m_engine->forceTest(force);
+	const double PI = 3.1415926;
+	const int DIV = 100;
+	Vvec3 force;
+	SpMat K;
 
-    /* bending force on A, C should point at (-1, 0, 1) */
-	Vec3 d = normalize(Vec3(-1, 0, 1));
-	EXPECT_GT(1e-4, length(normalize(force[0]) - d));
-	EXPECT_GT(1e-4, length(normalize(force[2]) - d));
+	for (int i = 0; i < DIV; i++)
+	{
+		/* bend the B(1, 0, 0) to B'(cos(), 0, sin()) */
+		m_tetra.vertices[1].m_pos = Vec3(cos(PI*i / DIV), 0, sin(PI*i / DIV));
+		m_engine->inputData();
 
-    /* bending force on B should parallel to (1, 0, 0) */
-	d = Vec3(1, 0, 0);
-	EXPECT_GT(1e-4, length(normalize(force[1]) - d));
+		K = m_engine->forceTest(force);
 
-    /* bending force on D should parallel to (0, 0, -1) */
-	d = Vec3(0, 0, -1);
-	EXPECT_GT(1e-4, length(normalize(force[3]) - d));
+		EXPECT_GT(1e-6, length(force[3] - Vec3(0, 0, -sin(PI*i / DIV)))) << force[3].z << " " << -sin(PI*i / DIV) << std::endl;
+	}
+
+ //   /* bending force on A, C should point at (-1, 0, 1) */
+	//Vec3 d = normalize(Vec3(-1, 0, 1));
+	//EXPECT_GT(1e-4, length(normalize(force[0]) - d));
+	//EXPECT_GT(1e-4, length(normalize(force[2]) - d));
+
+ //   /* bending force on B should parallel to (1, 0, 0) */
+	//d = Vec3(1, 0, 0);
+	//EXPECT_GT(1e-4, length(normalize(force[1]) - d));
+
+ //   /* bending force on D should parallel to (0, 0, -1) */
+	//d = Vec3(0, 0, -1);
+	//EXPECT_GT(1e-4, length(normalize(force[3]) - d));
 }
 
 TEST_F(BendingTest, TestStiffness){
