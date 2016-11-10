@@ -181,27 +181,28 @@ void TetraMesh::precomputation()
 				vertices[id0[0]].m_cord - vertices[id0[2]].m_cord,
 				vertices[id0[1]].m_cord - vertices[id0[2]].m_cord
 				);
-			n0 /= length(n0);
+			n0 /= glm::length(n0);
 
 			/* normal of piece_info[1] */
 
 			Piece &p1 = m->pieces[h->piece_info[1].x];
 			iVec3 &id1 = p1.v_id;
 			Vec3 n1 = glm::cross(
-				vertices[id0[0]].m_cord - vertices[id0[2]].m_cord,
-				vertices[id0[1]].m_cord - vertices[id0[2]].m_cord
+				vertices[id1[0]].m_cord - vertices[id1[2]].m_cord,
+				vertices[id1[1]].m_cord - vertices[id1[2]].m_cord
 				);
-			n1 /= length(n1);
+			n1 /= glm::length(n1);
 
 			/* edge direction , is the positive direction of piece_info[0]*/
 			int i = h->piece_info[0].y;
 			int j = (i + 1) % 3, k = (i + 2) % 3;
 			Vec3 e = vertices[id0[k]].m_cord - vertices[id0[j]].m_cord;
-			e /= length(e);
+			e /= glm::length(e);
 
 			/* signed theta is defined as positive when n0 n1 point away from each other */
 			/* energy is 2*sin(x/2)^2 */
-			h->theta = acos(dot(n0, n1)) * sgn(dot(e, cross(n0, n1)));
+			double tmp = max(min(dot(n0, n1), 1.0), -1.0);
+			h->theta = acos(tmp) * sgn(dot(e, cross(n0, n1)));
 		}
     }
 

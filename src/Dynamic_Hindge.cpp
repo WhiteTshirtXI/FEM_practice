@@ -76,7 +76,8 @@ namespace BalloonFEM
 
 				/* signed theta is defined as positive when n0 n1 point away from each other */
                 /* energy is 2*sin(x/2)^2 */
-                double theta = acos(dot(n0, n1)) * sgn(dot(e, cross(n0, n1)));
+				double tmp = max(min(dot(n0, n1), 1.0), -1.0);
+                double theta = acos(tmp) * sgn(dot(e, cross(n0, n1)));
                 dphi(offset) = m_bend_model->dphi(theta, h->theta);
                 ddphi.coeffRef(offset, offset) = m_bend_model->ddphi(theta, h->theta);
                 offset ++;

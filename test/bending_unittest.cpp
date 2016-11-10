@@ -51,7 +51,7 @@ TEST_F(BendingTest, TestForce){
 
 	const double PI = 3.1415926;
 	const int DIV = 100;
-	Vvec3 force;
+	Vvec3 force, force_pos;
 	SpMat K;
 
 	for (int i = 0; i < DIV; i++)
@@ -60,7 +60,7 @@ TEST_F(BendingTest, TestForce){
 		m_tetra.vertices[1].m_pos = Vec3(cos(PI*i / DIV), 0, sin(PI*i / DIV));
 		m_engine->inputData();
 
-		K = m_engine->forceTest(force);
+		K = m_engine->forceTest(force, force_pos);
 
 		EXPECT_GT(1e-6, length(force[3] - Vec3(0, 0, -sin(PI*i / DIV)))) << force[3].z << " " << -sin(PI*i / DIV) << std::endl;
 	}
@@ -84,8 +84,8 @@ TEST_F(BendingTest, TestStiffness){
 	m_tetra.vertices[1].m_pos = Vec3(-sqrt(2)/2, 0, sqrt(2)/2);
 	m_engine->inputData();
 
-	Vvec3 force;
-	SpMat K = m_engine->forceTest(force);
+	Vvec3 force, force_pos;
+	SpMat K = m_engine->forceTest(force, force_pos);
 
 	/* exame the force */
     SpVec dp = SpVec::Zero(m_tetra.num_vertex * 3);
