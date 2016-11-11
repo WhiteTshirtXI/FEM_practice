@@ -51,7 +51,6 @@ namespace BalloonFEM
 
         ///////////////////////////////////////////////////////////////////////
         /* compute hindge angle theta and phi, dphi, ddphi */
-		printf("compute hindge angles \n");
         int offset = 0;
         for(MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
         {

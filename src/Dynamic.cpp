@@ -86,7 +86,7 @@ namespace BalloonFEM
         return K;
     }
 
-    #define CONVERGE_ERROR_RATE 1e-5
+    #define CONVERGE_ERROR_RATE 1e-4
     void Engine::solveStaticPos()
     {
       /* initialize next_state */
@@ -121,7 +121,7 @@ namespace BalloonFEM
         {
             /* debug use */
 			count_iter++;
-            printf("%d iter of K dv = f , err_felas = %f \n", count_iter, err_f);
+            printf("%d iter of K dv = f , err_felas = %.4e \n", count_iter, err_f);
 
             /* r0 = b - Ax0 */
             SpVec r = b - K * dstate.toSpVec();
