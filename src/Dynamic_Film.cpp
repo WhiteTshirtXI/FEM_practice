@@ -45,7 +45,7 @@ namespace BalloonFEM
 				Mat3x2 P = m_film_model->Piola(F);
 
 				/* calculate forces contributed from this tetra */
-				Mat3x2 H = - p->W * P * transpose(p->Bm);
+				Mat3x2 H = - p->volume() * P * transpose(p->Bm);
 
 				f_sum[id[0]] += H[0];
 				f_sum[id[1]] += H[1];
@@ -98,7 +98,7 @@ namespace BalloonFEM
 					Mat3x2 dP = m_film_model->StressDiff(F, dF);
 
 					/* calculate forces contributed from this tetra */
-					Mat3x2 dH = -p->W * dP * transpose(p->Bm);
+					Mat3x2 dH = - p->volume() * dP * transpose(p->Bm);
 
 					for (size_t w = 0; w < 2; w++)
 					for (size_t l = 0; l < 3; l++)

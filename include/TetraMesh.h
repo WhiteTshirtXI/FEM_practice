@@ -65,8 +65,11 @@ namespace BalloonFEM{
              * v1 = (r2 - r3) * (r1 - r3) / u
              * v2 = |(r2 - r3) - (r1 - r3) * v/u|
              * */
-            Mat2 Bm;    
+            Mat2 Bm;
+			double volume(){ return W*h; };
+
             double W;   /* Area of face, |(r1 - r3) x (r2 - r3)|/2 */
+            double h;   /* Thickness of face */
 
             /* topology properties */
             iVec3 hindge_id = iVec3(-1);  /* index of hindge id correspond to vertex */
@@ -162,7 +165,7 @@ namespace BalloonFEM{
 			void labelFixedId();
 
             /* add hole information, by input iVec3 vector */
-            int addFilm( const std::vector<iVec3>& piece_ids );
+            int addFilm( const std::vector<iVec3>& piece_ids, const std::vector<double>& piece_h );
 
             /* add rigid body constrains, by input v_ids contained in vector */
             int addRigidBody( const std::vector<size_t>& vertex_ids );

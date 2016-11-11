@@ -24,6 +24,7 @@ namespace BalloonFEM{
             std::vector<iVec3> surface;
             std::vector<size_t> fixed;
             std::vector<std::vector<iVec3>> films;
+            std::vector<std::vector<double>> films_thickness;
             std::vector<std::vector<size_t>> rigid;
             std::vector<std::vector<iVec3>> holes;
 

@@ -102,15 +102,21 @@ void TetraMeshIO::readFilm( stringstream& ss, TetraMeshData& data)
 {
     size_t id, indexBias = 1;
     int x, y, z;
-    ss >> id >> x >> y >> z;
+    float h;
+    ss >> id >> x >> y >> z >> h;
     while (data.films.size() < id)
     {
         std::vector<iVec3> film;
         film.clear();
         data.films.push_back(film);
+
+        std::vector<double> film_thick;
+        film_thick.clear();
+        data.films_thickness.push_back(film_thick);
     }
 
 	data.films[id - indexBias].push_back(iVec3(x, y, z));
+    data.films_thickness[id - indexBias].push_back(h);
 }
 
 void TetraMeshIO::readRigid( stringstream& ss, TetraMeshData& data)
@@ -222,10 +228,11 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
     {
         std::vector<iVec3> &f = data.films[i];
         std::vector<iVec3> tmp(f.begin(), f.end());
+        std::vector<double> &tmp_h = data.films_thickness[i];
 
         for(size_t j = 0; j < tmp.size(); j++)
             tmp[j] -= indexBias;
-        tetra.addFilm(tmp);
+        tetra.addFilm(tmp, tmp_h);
     }
 
     /* assign rigid bodies */
