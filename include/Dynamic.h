@@ -44,7 +44,7 @@ namespace BalloonFEM
 
             /* test the computeForceAndGradient, output force and Gradient
              */
-			SpMat forceTest(Vvec3 &f_sum, Vvec3 &f_loc);
+			//SpMat forceTest(Vvec3 &f_sum, Vvec3 &f_loc);
 
         private:
 
@@ -73,7 +73,7 @@ namespace BalloonFEM
             ObjState next_state;
 
             /* compute elastic force when given positions pos*/
-            SpMat computeForceAndGradient(ObjState &state, Vvec3 &f_sum);
+            void computeForceAndGradient(ObjState &state, SpVec &f, SpMat &A);
 
             void computeElasticForces(ObjState &state, Vvec3 &f_sum);
             void computeAirForces(ObjState &state, Vvec3 &f_sum);

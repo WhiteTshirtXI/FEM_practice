@@ -37,7 +37,7 @@ static int outputcount = 0;		// output id
 
 void mAddParameter()
 {
-	force += 1e-5;
+	force += 1e-2;
 	modified = 0;
 	printf("force = %f\n", force);
 }
@@ -63,10 +63,10 @@ void mProcess()
 
 			/* add force to tetra mesh */
 			//m_tetra->vertices[3].m_f_ext = BalloonFEM::Vec3(0, -force, 0);
-            for (size_t i = 0; i < m_tetra->vertices.size(); i++)
-				m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, -force, 0 );
+            /*for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+				m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, -force, 0 );*/
 
-			engine.setAirModel(new BalloonFEM::AirModel_Isobaric(0, 0));
+			engine.setAirModel(new BalloonFEM::AirModel_Isobaric(force, 0));
 			engine.inputData();
 			modified = 1;
 		}
@@ -80,7 +80,7 @@ void mProcess()
 
 		engine.stepToNext();
 		engine.outputData();
-		BalloonFEM::SpMat K = engine.forceTest(force_vec, force_pos);
+		//BalloonFEM::SpMat K = engine.forceTest(force_vec, force_pos);
 		//mOutput();
 		shadFlag = 1;
 	}
@@ -108,7 +108,7 @@ void mMeasure()
 	}
 		
     engine.inputData();
-    BalloonFEM::SpMat K = engine.forceTest(force_vec, force_pos);
+    //BalloonFEM::SpMat K = engine.forceTest(force_vec, force_pos);
 	//printf("B location (%.4f, %.4f, %.4f), f[3].z = %.4f\n", cos(force), 0., sin(force), force_vec[3].z);
 	shadFlag = 1;
 }

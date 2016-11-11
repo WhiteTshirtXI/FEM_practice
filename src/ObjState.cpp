@@ -36,6 +36,9 @@ namespace BalloonFEM
 		m_r_pos.assign(other.m_r_pos.begin(), other.m_r_pos.end());
 		m_r_rot.assign(other.m_r_rot.begin(), other.m_r_rot.end());
 
+        m_W = other.m_W;
+        m_R = other.m_R;
+
 		return *this;
     }
 
@@ -53,7 +56,6 @@ namespace BalloonFEM
            m_pos[i] = m_tetra->vertices[i].m_pos; 
         }
 
-
         /* initialize m_r_pos and m_r_rot */
         m_r_pos.assign( m_r_size, Vec3(0));
         m_r_rot.assign( m_r_size, Quat(1,0,0,0));
@@ -68,6 +70,7 @@ namespace BalloonFEM
         world_space_pos.assign( m_pos.begin(), m_pos.end() );
         volume_gradient.assign( m_size, Vec3(0) );
         hole_volume.assign( m_h_size, 0 );
+
         this->project();
     }
 
@@ -119,6 +122,8 @@ namespace BalloonFEM
 
         this->holeVolume();
         this->volumeGradient();
+        this->computeProjectMat();
+        this->computeRestrictedMat();
     }
 
     void ObjState::holeVolume()
@@ -200,176 +205,34 @@ namespace BalloonFEM
         return Quat(cos, sin * delta_phi);
     }
         
-    void ObjState::update(DeltaState& dpos)
+    void ObjState::update(SpVec& dpos)
     {
+        size_t offset = 0;
         for (size_t i = 0; i < m_size; i++)
         {
-            this->m_pos[i] += dpos.dm_pos[i];
+            Vec3 &vpos = this->m_pos[i];
+            vpos.x += dpos( 3 * i     + offset );
+            vpos.y += dpos( 3 * i + 1 + offset );
+            vpos.z += dpos( 3 * i + 2 + offset );
         }
+        offset += 3 * m_size;
 
         for (size_t i = 0; i < m_r_size; i++)
         {
-            this->m_r_pos[i] += dpos.dm_r_pos[i];
-            this->m_r_rot[i] = omegaToQuat(dpos.dm_r_rot[i]) * this->m_r_rot[i]; 
+            Vec3 &rpos = this->m_r_pos[i];
+            rpos.x += dpos( 6 * i     + offset );
+            rpos.y += dpos( 6 * i + 1 + offset );
+            rpos.z += dpos( 6 * i + 2 + offset );
+            Quat &rrot = this->m_r_rot[i];
+            Vec3 drot(0);
+            drot.x = dpos( 6 * i + 3 + offset );
+            drot.y = dpos( 6 * i + 4 + offset );
+            drot.z = dpos( 6 * i + 5 + offset );
+            rrot = omegaToQuat(drot) * rrot; 
         }
-    }
+        offset += 6 * m_r_size;
 
-    //////////////////////////////////////////////////////////////////////////
-    /* DeltaStae implementation */
-    DeltaState::DeltaState(ObjState& other)
-    {
-        m_tetra = other.m_tetra;
-        m_state = &other;
-        m_size = other.m_size;
-        m_r_size = other.m_r_size;
-
-		world_space_pos.assign(m_size, Vec3(0));
-
-        dm_pos.assign( m_size, Vec3(0));
-        dm_r_pos.assign( m_r_size, Vec3(0));
-        dm_r_rot.assign( m_r_size, Vec3(0));
-    }
-
-	void DeltaState::clear()
-	{
-		world_space_pos.assign(m_size, Vec3(0));
-
-		dm_pos.assign(m_size, Vec3(0));
-		dm_r_pos.assign(m_r_size, Vec3(0));
-		dm_r_rot.assign(m_r_size, Vec3(0));
-	}
-
-    void DeltaState::assign(const double alpha, const DeltaState& other)
-    {
-        for (size_t i = 0; i < m_size; i++)
-            dm_pos[i] = alpha * other.dm_pos[i];
-
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-            dm_r_pos[i] = alpha * other.dm_r_pos[i];
-            dm_r_rot[i] = alpha * other.dm_r_rot[i];
-        }
-    }
-
-    void DeltaState::addup( const double alpha, const DeltaState& other)
-    {
-        for (size_t i = 0; i < m_size; i++)
-            dm_pos[i] += alpha * other.dm_pos[i];
-
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-            dm_r_pos[i] += alpha * other.dm_r_pos[i];
-            dm_r_rot[i] += alpha * other.dm_r_rot[i];
-        }
-    }
-
-    void DeltaState::multiply(const double alpha)
-    {
-         for (size_t i = 0; i < m_size; i++)
-            dm_pos[i] *= alpha;
-
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-            dm_r_pos[i] *= alpha; 
-            dm_r_rot[i] *= alpha; 
-        }
-    }
-
-    void DeltaState::project()
-    {
-       /* first assign those not bounded vertex */
-        world_space_pos.assign(dm_pos.begin(), dm_pos.end());
-        
-        /* calculate rigid body elements world space pos */
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-            /* rotation matrix of current rigid body i */
-            Vec3 drot = dm_r_rot[i];
-
-            /* current mass center position of rigid body */
-            Vec3 drc = dm_r_pos[i];
-            Vec3 rc = m_state->m_r_pos[i];
-            
-            /* current rigid body object */
-            Rigid &r = m_tetra->rigids[i];
-            
-            for (size_t j = 0; j < r.elements.size(); j++)
-            {
-                size_t v_id = r.elements[j];
-                /* dr = drc + dR x (r - rc) */
-                world_space_pos[v_id] = drc + 
-                    glm::cross(drot, m_state->world_space_pos[v_id] - rc);
-            }
-        }
-		
-		/* for those fixed point world_spce_pos shold be set to 0 */
-		std::vector<size_t>::iterator i;
-		for (i = m_tetra->fixed_ids.begin(); i != m_tetra->fixed_ids.end(); i++)
-		{
-			world_space_pos[*i] = Vec3(0);
-		}
-    }
-
-    void DeltaState::conterProject()
-    {
-        /* copy data of free verteics from world_space_pos*/
-        dm_pos.assign(world_space_pos.begin(), world_space_pos.end());
-
-        /* make fixed vertex delta to be 0 */
-        std::vector<size_t>::iterator i;
-        for(i = m_tetra->fixed_ids.begin(); i != m_tetra->fixed_ids.end(); i++)
-        {
-            dm_pos[*i] = Vec3(0);
-        }
-
-        /* calculate rigid body delta */
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-            /* rotation matrix of current rigid body i */
-            Vec3 &drot = dm_r_rot[i];
-            drot = Vec3(0);
-
-            /* current mass center position of rigid body */
-            Vec3 &drc = dm_r_pos[i];
-            drc = Vec3(0);
-
-            /* current rigid body mass center pos */
-            Vec3 rc = m_state->m_r_pos[i];
-
-            /* current rigid body object */
-            Rigid &r = m_tetra->rigids[i];
-            
-            for (size_t j = 0; j < r.elements.size(); j++)
-            {
-                size_t v_id = r.elements[j];
-				
-				/* clear dm_pos */
-				dm_pos[v_id] = Vec3(0);
-
-                /* drc = sum(dr) */
-                drc += world_space_pos[v_id];
-
-                /* drot = sum(r x dr) */
-                drot += glm::cross(m_state->world_space_pos[v_id] - rc, 
-                                   world_space_pos[v_id]);
-            }
-        } 
-    }
-
-    double DeltaState::dot(const DeltaState& other)
-    {
-        double count = 0;
-
-        for (size_t i = 0; i < m_size; i++)
-			count += glm::dot(dm_pos[i], other.dm_pos[i]);
-
-        for (size_t i = 0; i <  m_r_size; i++)
-        {
-            count += glm::dot(dm_r_pos[i], other.dm_r_pos[i]);
-            count += glm::dot(dm_r_rot[i], other.dm_r_rot[i]);
-        }
-		
-		return count;
+        this->project();
     }
 
 }

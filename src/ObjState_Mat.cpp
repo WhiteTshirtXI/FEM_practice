@@ -149,10 +149,10 @@ namespace BalloonFEM
         return Theta;
     }
 
-    SpMat DeltaState::projectMat()
+    void ObjState::computeProjectMat()
     {
         /* present only consider fixed points */
-        SpMat W(3 * m_size, 3 * m_size + 6 * m_r_size);
+        m_W = SpMat(3 * m_size, this->freedomDegree());
 
         std::vector<T> coefficients;
         coefficients.clear();
@@ -186,7 +186,7 @@ namespace BalloonFEM
                 coefficients.push_back(T( 3 * id + 1, count + 1, 1));
                 coefficients.push_back(T( 3 * id + 2, count + 2, 1));
 
-                Vec3 r = m_state->m_r_pos[i] - m_state->world_space_pos[id];
+                Vec3 r = m_r_pos[i] - world_space_pos[id];
                 coefficients.push_back(T( 3 * id + 1, count + 3, r.z ));
                 coefficients.push_back(T( 3 * id + 2, count + 3, -r.y));
                 coefficients.push_back(T( 3 * id    , count + 4, -r.z));
@@ -194,16 +194,15 @@ namespace BalloonFEM
                 coefficients.push_back(T( 3 * id    , count + 5, r.y ));
                 coefficients.push_back(T( 3 * id + 1, count + 5, -r.x));
             }
+            count += 6;
         }
 
-        W.setFromTriplets(coefficients.begin(), coefficients.end());
-
-        return W;
+        m_W.setFromTriplets(coefficients.begin(), coefficients.end());
     }
 
-    SpMat DeltaState::restrictedMat()
+    void ObjState::computeRestrictedMat()
     {
-        SpMat I(3 * m_size + 6 * m_r_size, 3 * m_size + 6 * m_r_size);
+        m_R = SpMat(this->freedomDegree(), this->freedomDegree());
 
         std::vector<T> coefficients;
         coefficients.clear();
@@ -218,62 +217,6 @@ namespace BalloonFEM
                 coefficients.push_back(T( 3 * vi->id + 2, 3 * vi->id + 2, 1));
             }
         }
-        I.setFromTriplets(coefficients.begin(), coefficients.end());
-
-        return I;
-    }
-
-    SpVec DeltaState::toSpVec()
-    {
-        SpVec stateVec( 3 * m_size + 6 * m_r_size );
-
-		size_t count = 0;
-        /* output vertices state, fixed and rigid part should be zero */
-		for (size_t i = 0; i < m_size; i++)
-		{
-			stateVec(count    ) = dm_pos[i].x;
-			stateVec(count + 1) = dm_pos[i].y;
-			stateVec(count + 2) = dm_pos[i].z;
-			count += 3;
-		}
-
-        /* output rigid body state */
-        for (size_t i = 0; i < m_r_size; i++)
-        {
-			stateVec(count	  ) = dm_r_pos[i].x;
-			stateVec(count + 1) = dm_r_pos[i].y;
-			stateVec(count + 2) = dm_r_pos[i].z;
-			stateVec(count + 3) = dm_r_rot[i].x;
-			stateVec(count + 4) = dm_r_rot[i].y;
-			stateVec(count + 5) = dm_r_rot[i].z;
-			count += 6;
-        }
-
-        return stateVec;
-    }
-
-    void DeltaState::readSpVec(SpVec& stateVec)
-    {
-		size_t count = 0;
-		/* output vertices state, fixed and rigid part should be zero */
-		for (size_t i = 0; i < m_size; i++)
-		{
-			dm_pos[i].x = stateVec(count);
-			dm_pos[i].y = stateVec(count + 1);
-			dm_pos[i].z = stateVec(count + 2);
-			count += 3;
-		}
-
-		/* output rigid body state */
-		for (size_t i = 0; i < m_r_size; i++)
-		{
-			dm_r_pos[i].x = stateVec(count);
-			dm_r_pos[i].y = stateVec(count + 1);
-			dm_r_pos[i].z = stateVec(count + 2);
-			dm_r_rot[i].x = stateVec(count + 3);
-			dm_r_rot[i].y = stateVec(count + 4);
-			dm_r_rot[i].z = stateVec(count + 5);
-			count += 6;
-		}
+        m_R.setFromTriplets(coefficients.begin(), coefficients.end());
     }
 }

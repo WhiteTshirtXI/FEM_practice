@@ -8,14 +8,6 @@ namespace BalloonFEM
 {
 	/* ObjState fully represent the state of obj, and can be updated by
 	* DeltaState */
-	class ObjState;
-
-	/* DeltaState is the infinitesimal displacement of ObjState, and can be
-	* defined to perform linear algorithm
-	* */
-	class DeltaState;
-
-
 	class ObjState
 	{
 	public:
@@ -42,8 +34,8 @@ namespace BalloonFEM
          */
 		void project();
 
-		/* update from DeltaState */
-		void update(DeltaState& dpos);
+		/* update from delata state represented by SpVec */
+		void update(SpVec& dpos);
 
         /* calculate volume gradient difference based on dr */
         void volumeGradientDiff(Vvec3& dr, Vvec3& dg);
@@ -54,7 +46,17 @@ namespace BalloonFEM
         /* calculate hindge angle gradient mat */
         SpMat hindgeAngleGradient();
 
-		friend class DeltaState;
+        /* projecti Mat, from unrestricted freedom to real world pos */
+        SpMat projectMat(){return m_W;};
+
+        /* the matrix specify those restricted vertices */
+        SpMat restrictedMat(){return m_R;};
+
+        /* the freedom of state, including those fixed vertices */
+        size_t freedomDegree()
+        {
+            return 3 * m_size + 6 * m_r_size;
+        }
 
 	private:
 		TetraMesh* m_tetra;
@@ -81,6 +83,12 @@ namespace BalloonFEM
 		/* rotation quaternion for rigid body */
 		Vquat m_r_rot;
 
+        /* project Mat */
+        SpMat m_W;
+
+        /* restric mat */
+        SpMat m_R;
+
 		/* convert delta phi to quternion */
 		Quat omegaToQuat(Vec3 delta_phi);
 
@@ -90,73 +98,11 @@ namespace BalloonFEM
         /* calculate hole volume and volume gradient */
         void volumeGradient();
 
-
-	};
-
-	class DeltaState
-	{
-	public:
-		DeltaState(){};
-		DeltaState(ObjState& other);
-
-		typedef std::vector<Vec3> Vvec3;
-		Vvec3 world_space_pos;
-
-		void clear();
-
-		/* linear algebra algorithms */
-		/* assign this DeltaState alpha * other */
-		void assign(const double alpha, const DeltaState& other);
-		/* add alpha * other to this DeltaState */
-		void addup(const double alpha, const DeltaState& other);
-		/* self-multiply alpha */
-		void multiply(const double alpha);
-
-		/* convert between obj state and real world spaces */
-		/* project to real world space and record in world_space_pos */
-		void project();
-
-		/* project real world space data to constrained freedom state */
-		void conterProject();
-
-        /* the matrix enable inner freedom to project to real world */
-        SpMat projectMat();
+        /* calculate projection mat */
+        void computeProjectMat();
 
         /* the matrix specify those restricted vertices */
-        SpMat restrictedMat();
-
-        /* convert to SpVec, equal to world space vec multiply transpose projectMatrix() */
-        SpVec toSpVec();
-
-        /* read in SpVec and update the inner representation */
-        void readSpVec(SpVec& stateVec);
-
-		/* dot function */
-		double dot(const DeltaState& other);
-
-		friend class ObjState;
-
-	private:
-		TetraMesh* m_tetra;
-		ObjState* m_state;
-
-		/* number of vertices of tetramesh */
-		size_t m_size;
-
-		/* number of rigid bodys of tetramesh */
-		size_t m_r_size;
-
-		/* positions for those who is not fixed nor bounded
-		* to a rigid body, size equals to world_space_pos,
-		* but Vec3(0) value for the fixed and bounded vertices.
-		*/
-		Vvec3 dm_pos;
-
-		/* positions for rigid body mass centers */
-		Vvec3 dm_r_pos;
-
-		/* rotation omega for rigid body */
-		Vvec3 dm_r_rot;
+        void computeRestrictedMat();
 	};
 }
 

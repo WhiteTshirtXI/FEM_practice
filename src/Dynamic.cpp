@@ -55,8 +55,9 @@ namespace BalloonFEM
         std::swap(cur_state, next_state);
     }
     
-    SpMat Engine::computeForceAndGradient(ObjState &state, Vvec3 &f_sum)
+    void Engine::computeForceAndGradient(ObjState &state, SpVec &f, SpMat &A)
     {
+        Vvec3 f_sum;
         f_sum.assign( m_size, Vec3(0.0));
 
         /* compute elastic forces by tetrahedrons */
@@ -82,8 +83,22 @@ namespace BalloonFEM
 
         /* compute bending force and gradient */
         K -= bendingForceAndGradient(state, f_sum);
+        
+        /* convert force to SpVec */
+        SpVec f_real = SpVec::Zero(3 * m_size);
+        for (size_t i = 0; i < f_sum.size(); i++)
+        {
+            f_real( 3 * i ) = f_sum[i].x;
+            f_real( 3 * i + 1) = f_sum[i].y;
+            f_real( 3 * i + 2) = f_sum[i].z;
+        }
 
-        return K;
+        /* convert K to \tilde K with W transfer. The restricted vertices
+         * has all 0 colume and raw so we add 1 to its diagnal */
+        A = - state.projectMat().transpose() * K * state.projectMat() + state.restrictedMat();
+
+        f = state.projectMat().transpose() * f_real;
+
     }
 
     #define CONVERGE_ERROR_RATE 1e-4
@@ -92,26 +107,19 @@ namespace BalloonFEM
       /* initialize next_state */
         next_state = cur_state;
 		next_state.project();
-        DeltaState f_sum(next_state);
+        SpVec f_sum = SpVec::Zero(next_state.freedomDegree());
 
         /* initialize temp variable for iterative implicit solving */
         /* f is total force on each vertex */
         /* K = - df/dr, here Force Diff Mat compute df/dr */
-        SpMat K = - computeForceAndGradient(next_state, f_sum.world_space_pos);
-        f_sum.conterProject();
-        SpVec b = f_sum.toSpVec();
+        SpMat K;
+        computeForceAndGradient(next_state, f_sum, K);
 
-
-        DeltaState dstate(next_state);
-
-        /* convert K to \tilde K with W transfer. The restricted vertices
-         * has all 0 colume and raw so we add 1 to its diagnal */
-        SpMat W = dstate.projectMat();
-        SpMat R = dstate.restrictedMat();
-        K = W.transpose() * K * W + R;
+        SpVec dstate = SpVec::Zero(next_state.freedomDegree());
         
         /* solver */
         Eigen::SimplicialLDLT<SpMat> solver;
+        SpVec &b = f_sum;
 		
 		double err_f = f_sum.dot(f_sum);
 		double err_begin = err_f;
@@ -124,7 +132,7 @@ namespace BalloonFEM
             printf("%d iter of K dv = f , err_felas = %.4e \n", count_iter, err_f);
 
             /* r0 = b - Ax0 */
-            SpVec r = b - K * dstate.toSpVec();
+            SpVec r = b - K * dstate;
 
             printf("building solver\n");
             solver.compute(K);
@@ -135,13 +143,11 @@ namespace BalloonFEM
                 return;
             }
 			printf("solve delta_x \n");
-            SpVec x = solver.solve(r);
-            dstate.readSpVec(x);
+            SpVec dstate = solver.solve(r);
 
             /* update v_pos_next and f_sum */
             next_state.update(dstate);
-			next_state.project();
-            dstate.clear();
+            dstate.setZero();
 
 			/* debug watch use*/
 			next_state.output();
@@ -150,10 +156,7 @@ namespace BalloonFEM
 			//Control::mOutput();
 			
             /* update K and f*/
-            K = - computeForceAndGradient(next_state, f_sum.world_space_pos);
-            K = W.transpose() * K * W + R;
-            f_sum.conterProject();
-            b = f_sum.toSpVec();
+            computeForceAndGradient(next_state, f_sum, K);
 
 			err_f = f_sum.dot(f_sum);
         }
@@ -163,13 +166,14 @@ namespace BalloonFEM
     }
 
 
-    SpMat Engine::forceTest(Vvec3 &f_sum, Vvec3 &f_loc)
-    {
-        f_sum.assign( m_size, Vec3(0) );
-		f_loc = cur_state.world_space_pos;
+  //  void Engine::forceTest(Vvec3 &f_sum, Vvec3 &f_loc)
+  //  {
+  //      f_sum.assign( m_size, Vec3(0) );
+		//f_loc = cur_state.world_space_pos;
 
-        /* compute nodal force for each vertex */
-        return computeForceAndGradient(cur_state, f_sum);
-    }
+		//SpVec f = SpVec::Zero(cur_state.freedomDegree());
+  //      /* compute nodal force for each vertex */
+  //      return computeForceAndGradient(cur_state, f_sum);
+  //  }
 
 }
