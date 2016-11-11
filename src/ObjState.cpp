@@ -31,6 +31,7 @@ namespace BalloonFEM
 		world_space_pos.assign(other.world_space_pos.begin(), other.world_space_pos.end());
         volume_gradient.assign(other.volume_gradient.begin(), other.volume_gradient.end());
         hole_volume.assign(other.hole_volume.begin(), other.hole_volume.end());
+        thickness = other.thickness;
 
 		m_pos.assign(other.m_pos.begin(), other.m_pos.end());
 		m_r_pos.assign(other.m_r_pos.begin(), other.m_r_pos.end());
@@ -64,6 +65,17 @@ namespace BalloonFEM
             Rigid &r = m_tetra->rigids[i];
             m_r_pos[i] = r.m_pos;
             m_r_rot[i] = r.m_rot;
+        }
+
+        /* initialize piece thickness */
+        int piece_id = 0;
+        for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
+        {
+            for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+            {
+                this->thickness(piece_id) = p->h;
+                piece_id ++;
+            }
         }
 
         /* initialize world_space_pos, volume gradients and hole volume */

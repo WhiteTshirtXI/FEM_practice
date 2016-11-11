@@ -60,11 +60,13 @@ namespace BalloonFEM
         Vvec3 f_sum;
         f_sum.assign( m_size, Vec3(0.0));
 
+        SpMat T( 3 * m_tetra->num_vertex, m_tetra->num_pieces );
+
         /* compute elastic forces by tetrahedrons */
         computeElasticForces(state, f_sum); 
 
 		/* compute film forces by pieces */
-		computeFilmForces(state, f_sum);
+		computeFilmForces(state, f_sum, T);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_sum);

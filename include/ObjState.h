@@ -29,6 +29,9 @@ namespace BalloonFEM
         /* volume gradient of vertices belongs to hole */
         Vvec3 volume_gradient;
 
+        /* thickness of pieces */
+        SpVec thickness;
+
 		/* project to real world space and record in world_space_pos
          * then calcualte volume of holes and volume gradients
          */
