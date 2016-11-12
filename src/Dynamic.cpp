@@ -60,13 +60,11 @@ namespace BalloonFEM
         Vvec3 f_sum;
         f_sum.assign( m_size, Vec3(0.0));
 
-        SpMat T( 3 * m_tetra->num_vertex, m_tetra->num_pieces );
-
         /* compute elastic forces by tetrahedrons */
         computeElasticForces(state, f_sum); 
 
 		/* compute film forces by pieces */
-		computeFilmForces(state, f_sum, T);
+		computeFilmForces(state, f_sum);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_sum);
@@ -100,7 +98,6 @@ namespace BalloonFEM
         A = - state.projectMat().transpose() * K * state.projectMat() + state.restrictedMat();
 
         f = state.projectMat().transpose() * f_real;
-
     }
 
     #define CONVERGE_ERROR_RATE 1e-4

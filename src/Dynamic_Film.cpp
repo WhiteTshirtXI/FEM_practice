@@ -109,6 +109,8 @@ namespace BalloonFEM
 					/* calculate forces contributed from this tetra */
 					Mat3x2 dH = - p->volume() * dP * transpose(p->Bm);
 
+                    pushMat3x2(coefficients, id, id[i] + j, dH);
+                    /*
 					for (size_t w = 0; w < 2; w++)
 					for (size_t l = 0; l < 3; l++)
 						coefficients.push_back(T(3 * id[w] + l, 3 * id[i] + j, dH[w][l]));
@@ -116,6 +118,7 @@ namespace BalloonFEM
 					Vec3 df_3 = - dH[0] - dH[1];
 					for (size_t l = 0; l < 3; l++)
 						coefficients.push_back(T(3 * id[2] + l, 3 * id[i] + j, df_3[l]));
+                    */
 				}
 			}
 		}

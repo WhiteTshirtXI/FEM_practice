@@ -28,6 +28,11 @@ namespace BalloonFEM
             void computeForceAndGradient(ObjState &state, SpVec &f, SpMat &A);
 
 			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri);
+
+        private:
+            const double m_alpha = 1.0;
+            const double m_beta = 1.0;
+            const double m_gamma = 1.0;
     };
 
 

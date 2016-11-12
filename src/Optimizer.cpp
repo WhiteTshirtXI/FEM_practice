@@ -3,6 +3,7 @@
 
 namespace
 {
+    using namespace BalloonFEM;
 
     void pushMat3x2(std::vector<T> &coeff, iVec3 v_id, int f_id, Mat3x2 H)
     {
@@ -13,6 +14,20 @@ namespace
                 coeff.push_back( T( 3 * v_id[i] + j, f_id, F[i][j]) );
             }
     }
+
+    SpVec vvec3TospVec(Vvec3 &f)
+    {
+        SpVec u = SpVec::Zero(3 * f.size());
+        for(size_t i = 0; i < f.size(); i++)
+        {
+            u( 3 * i     ) = f[i].x;
+            u( 3 * i + 1 ) = f[i].y;
+            u( 3 * i + 2 ) = f[i].z;
+        }
+
+        return u;
+    }
+
 }
 
 namespace BalloonFEM
@@ -27,13 +42,13 @@ namespace BalloonFEM
         Vvec3 f_sum;
         f_sum.assign( m_size, Vec3(0.0));
 
-        SpMat T( 3 * m_tetra->num_vertex, m_tetra->num_pieces );
+        SpMat Tri( 3 * m_tetra->num_vertex, m_tetra->num_pieces );
 
         /* compute elastic forces by tetrahedrons */
         computeElasticForces(state, f_sum); 
 
 		/* compute film forces by pieces */
-		computeFilmForces(state, f_sum, T);
+		computeFilmForces(state, f_sum, Tri);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_sum);
@@ -54,20 +69,35 @@ namespace BalloonFEM
         K -= bendingForceAndGradient(state, f_sum);
         
         /* convert force to SpVec */
-        SpVec f_real = SpVec::Zero(3 * m_size);
-        for (size_t i = 0; i < f_sum.size(); i++)
-        {
-            f_real( 3 * i ) = f_sum[i].x;
-            f_real( 3 * i + 1) = f_sum[i].y;
-            f_real( 3 * i + 2) = f_sum[i].z;
-        }
+        SpVec f_real = vvec3TospVec( f_sum );
+        SpVec x = vvec3TospVec( state.world_space_pos );
+        SpVec &h = state.thickness;
+        SpVec press = vvec3TospVec( state.volume_gradient );
 
-        /* convert K to \tilde K with W transfer. The restricted vertices
-         * has all 0 colume and raw so we add 1 to its diagnal */
-        A = - state.projectMat().transpose() * K * state.projectMat() + state.restrictedMat();
+        /* tmp mat */
+        size_t freedegree = state.freedomDegree() + m_tetra->num_pieces + m_tetra->holes.size();
+        SpMat mat_a( 3 * m_tetra->num_vertex, freedegree);
+        SpMat mat_b( m_tetra->num_pieces, freedegree );
+        SpMat mat_c( 3 * m_tetra->num_vertex, freedegree);
+        SpMat I(m_tetra->num_pieces, m_tetra->num_pieces);
+        I.setIdentity();
 
-        f = state.projectMat().transpose() * f_real;
+        mat_a.leftCols(state.freedomDegree()) = state.projectMat();
+        mat_b.middleCols(state.freedomDegree(), m_tetra->num_pieces) = I;
+        
+        mat_c.leftCols(state.freedomDegree()) = K * state.projectMat();
+        mat_c.middleCols(state.freedomDegree(), m_tetra->num_pieces) = Tri;
+        mat_c.rightCols(1) = press;
 
+        f = m_alpha * mat_a.transpose() * x 
+            + m_beta * mat_b.transpose() * h 
+            + m_gamma * mat_c.transpose() * f_real;
+
+        A = m_alpha * mat_a.transpose() * mat_a 
+            + m_beta * mat_b.transpose() * mat_b
+            + m_gamma * mat_c.transpose() * mat_c;
+
+        A.topLeftCorner(state.freedomDegree(), state.freedomDegree()) += state.restrictedMat();
     }
 
 	void Optimizer::computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri)
