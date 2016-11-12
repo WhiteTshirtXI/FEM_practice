@@ -46,7 +46,7 @@ namespace BalloonFEM
              */
 			//SpMat forceTest(Vvec3 &f_sum, Vvec3 &f_loc);
 
-        private:
+        protected:
 
             TetraMesh* m_tetra;
 
@@ -78,7 +78,6 @@ namespace BalloonFEM
             void computeElasticForces(ObjState &state, Vvec3 &f_sum);
             void computeAirForces(ObjState &state, Vvec3 &f_sum);
             void computeFilmForces(ObjState &state, Vvec3 &f_sum);
-			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri);
 
             /* compute force differntial matrix */
 			SpMat computeElasticDiffMat(ObjState &state);
