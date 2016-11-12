@@ -27,7 +27,7 @@ DDG_OPENGL_LIBS       = -lglut -lGL -lGLU -lX11
 TARGET = tetra 
 CC = g++
 LD = g++
-CFLAGS = -O3 -Wall -Werror -ansi -pedantic -std=c++11  $(DDG_INCLUDE_PATH) -I./include -I./src -DGL_GLEXT_PROTOTYPES 
+CFLAGS = -O3 -Wall -Werror -Wno-sign-compare -ansi -pedantic -std=c++11  $(DDG_INCLUDE_PATH) -I./include -I./src -DGL_GLEXT_PROTOTYPES 
 LFLAGS = -O3 -Wall -Werror -ansi -pedantic $(DDG_LIBRARY_PATH)
 LIBS = $(DDG_OPENGL_LIBS) $(DDG_BLAS_LIBS)
 

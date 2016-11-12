@@ -6,7 +6,6 @@
 
 #include <glm/glm.hpp>
 
-#include "Dependence.h"
 #include "Viewer.h"
 #include "controls.h"
 using namespace Control;
