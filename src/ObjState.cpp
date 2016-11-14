@@ -69,6 +69,7 @@ namespace BalloonFEM
 
         /* initialize piece thickness */
         int piece_id = 0;
+		this->thickness = SpVec::Zero(m_tetra->num_pieces);
         for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
         {
             for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
