@@ -1,8 +1,10 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Viewer.h"
 #include "TetraMesh.h"
+#include "Dynamic.h"
+#include "Control_Simulation.h"
+#include "Viewer.h"
 
 using namespace std;
 
@@ -24,10 +26,12 @@ int main(int argc, char * argv[])
 		
     /* global mesh */
     BalloonFEM::TetraMesh tetra;
-
     tetra.read(mesh_name.c_str());
 
-    View::Viewer viewer(&tetra);
+    BalloonFEM::Engine engine(&tetra);
+    BalloonFEM::ControlSim controler(&tetra, &engine);
+
+    View::Viewer viewer(&tetra, &controler);
 
 	p_viewer = &(viewer);
 

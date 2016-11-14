@@ -6,10 +6,8 @@
 
 #include "Types.h"
 #include "Viewer.h"
-#include "controls.h"
 #include "Dynamic.h"
 
-extern int shadFlag;
 extern View::Viewer *p_viewer;
 
 namespace BalloonFEM
@@ -150,8 +148,7 @@ namespace BalloonFEM
 
 			/* debug watch use*/
 			next_state.output();
-			shadFlag = 1;
-			p_viewer->refresh();
+			p_viewer->refresh(1);
 			//Control::mOutput();
 			
             /* update K and f*/

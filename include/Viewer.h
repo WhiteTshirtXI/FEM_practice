@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include "TetraMesh.h"
-#include "controls.h"
+#include "Controls.h"
 
 namespace View{
 
@@ -22,14 +22,14 @@ class Viewer
 
         Viewer(Mesh* mesh, Controler* controler);
 
-		void refresh();
+		void refresh(int rebuff = 0);
 
         void show();
 
     private:
 
         /* initialize window and OpenGL context */
-        void init_openGL(Controler* contr);
+        void init_openGL();
 
         /* setup the drawing */
         void setupGLstate();
