@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-namespace {
+namespace Control{
     
 class ArcBall
 {

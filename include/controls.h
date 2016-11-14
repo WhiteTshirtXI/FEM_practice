@@ -4,38 +4,99 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "ArcBall.h"
+
 #include "Types.h"
 
 namespace Control{
 
-/* controler initialize */
-void control_init(GLFWwindow* window, BalloonFEM::TetraMesh* tetra);
+class ControlBase
+{
+    public:
 
-/* runtime update */
-void computeMatrixFromInputs();
+    /* controler object initializer initialize */
+    ControlBase(BalloonFEM::TetraMesh* tetra);
 
-/* inner variable */
-glm::vec3 getCamera();
-glm::mat4 getMVP();
-glm::mat4 getModel();
-glm::mat4 getView();
-glm::mat4 getProjection();
+    /* controler window initialize */
+    virtual void control_init(GLFWwindow* window);
 
-/* input control */
-void mouseClick(GLFWwindow* window, int button, int action, int mods);
+    /* runtime update */
+    virtual void computeMatrixFromInputs();
 
-void mouseMove(GLFWwindow* window, double xpos, double ypos);
+    /* inner variable */
+    virtual glm::vec3 getCamera(){return camera;};
+	virtual glm::mat4 getMVP(){ return Projection * View * Model; };
+    virtual glm::mat4 getModel(){return Model;};
+    virtual glm::mat4 getView(){return View;};
+    virtual glm::mat4 getProjection(){return Projection;};
 
-void mouseScroll(GLFWwindow* window, double xoffset, double yoffset);
+    /* input control */
+    virtual void mouseClick(GLFWwindow* window, int button, int action, int mods);
 
-void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods);
+    virtual void mouseMove(GLFWwindow* window, double xpos, double ypos);
 
-void reshape(GLFWwindow* window, int w, int h);
+    virtual void mouseScroll(GLFWwindow* window, double xoffset, double yoffset);
 
-void help();
+    virtual void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-/* debug use */
-void mOutput();
+    virtual void reshape(GLFWwindow* window, int w, int h);
+
+    virtual void help();
+
+    /* debug use */
+    virtual void mOutput();
+
+    private:
+        /* arcball object */
+        ArcBall arcball;
+        
+        /* rotation quaternion and translation vector for the object */
+        glm::dquat  ObjRot = glm::dquat(1, 0, 0, 0);
+		glm::vec3   camera = glm::vec3(0, 0, 2);
+
+        /* inner variables */
+        int win_width, win_height;
+        double startx, starty;
+        int gButton; 
+        int gState; 
+
+        /* inner mantained */
+        glm::dmat4 Model;
+        glm::dmat4 View;
+        glm::dmat4 Projection;
+};
+
+ControlBase* controler;
+
+void mouseClick(GLFWwindow* window, int button, int action, int mods)
+{
+	controler->mouseClick(window, button, action, mods);
 }
 
+void mouseMove(GLFWwindow* window, double xpos, double ypos)
+{
+	controler->mouseMove(window, xpos, ypos);
+}
+
+void mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+	controler->mouseScroll(window, xoffset, yoffset);
+}
+
+void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	controler->keyBoard(window, key, scancode, action, mods);
+}
+
+void reshape(GLFWwindow* window, int w, int h)
+{
+	controler->reshape(window, w, h);
+}
+
+void help()
+{
+	controler->help();
+}
+
+}
 #endif

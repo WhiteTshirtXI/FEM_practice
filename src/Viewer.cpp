@@ -35,13 +35,17 @@ std::vector<unsigned int> faceID;
 GLuint ProgramID;
 GLuint MatrixID, CameraID, ModelID, EyeID;
 
-Viewer::Viewer(Mesh* mesh)
+Viewer::Viewer(Mesh* mesh, Controler* contr)
 {
     /* record mesh */
-    this->mesh = mesh;
+    this->m_mesh = mesh;
+	this->m_controler = contr;
+
+	/* set Control::controler to be current contr */
+	controler = contr;
 
     /* initialize Window and OpenGL */
-    init_openGL();
+    init_openGL(contr);
 
     /* setup drawing environment */
     setupGLstate();
@@ -56,7 +60,7 @@ Viewer::Viewer(Mesh* mesh)
 void Viewer::refresh()
 {
 	/* compute rotation and projection matrix */
-	computeMatrixFromInputs();
+	m_controler->computeMatrixFromInputs();
 
 	/* Render */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -80,7 +84,7 @@ void Viewer::show()
     }
 }
 
-void Viewer::init_openGL()
+void Viewer::init_openGL(Controler* contr)
 {
     if (!glfwInit())
     {
@@ -108,12 +112,13 @@ void Viewer::init_openGL()
     }
 
     /* set interactive callback */
-    control_init(mainWindow, mesh);
-    glfwSetKeyCallback(mainWindow, keyBoard);
-    glfwSetMouseButtonCallback(mainWindow, mouseClick);
-    glfwSetCursorPosCallback(mainWindow, mouseMove);
-	glfwSetScrollCallback(mainWindow, mouseScroll);
-    glfwSetWindowSizeCallback(mainWindow, reshape);
+    contr->control_init(mainWindow);
+	glfwSetKeyCallback(mainWindow, Control::keyBoard);
+	glfwSetMouseButtonCallback(mainWindow, Control::mouseClick);
+	glfwSetCursorPosCallback(mainWindow, Control::mouseMove);
+	glfwSetScrollCallback(mainWindow, Control::mouseScroll);
+	glfwSetWindowSizeCallback(mainWindow, Control::reshape);
+
 
 }
 
@@ -145,8 +150,8 @@ void Viewer::buffModel()
 
 	/* specify surface to be showed */
 
-	std::vector<Face> &surface = mesh->surface;
-	mesh->recomputeSurfaceNorm();
+	std::vector<Face> &surface = m_mesh->surface;
+	m_mesh->recomputeSurfaceNorm();
 
     /* prepare vertex & normal data */
     unsigned int N = surface.size();
@@ -201,11 +206,11 @@ void Viewer::draw_mesh()
     glBindVertexArray(VAO);
 
     /* buff uniform variable */
-    glm::mat4 MVP = getMVP(); 
+    glm::mat4 MVP = m_controler->getMVP(); 
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    glm::mat4 M = getModel();
+	glm::mat4 M = m_controler->getModel();
     glUniformMatrix4fv(ModelID, 1, GL_FALSE, &M[0][0]);
-    glm::vec3 camera = getCamera();
+	glm::vec3 camera = m_controler->getCamera();
     glUniform3f(CameraID, camera.x, camera.y, camera.z);
     
     glEnableVertexAttribArray(0);

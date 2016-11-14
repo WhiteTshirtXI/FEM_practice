@@ -21,10 +21,7 @@
 extern int shadFlag;
 extern BalloonFEM::Vvec3 force_vec, force_pos;
 
-namespace Control{
-
-/* arcball object */
-ArcBall arcball;
+namespace{
 
 /* Engine */
 BalloonFEM::Engine engine;
@@ -145,32 +142,24 @@ void mOutput()
     m_tetra->write(name, info.str());
 	outputcount++;
 }
+}
 
-/* rotation quaternion and translation vector for the object */
-glm::dquat  ObjRot(1, 0, 0, 0);
-glm::vec3   camera(0, 0, 2);
+namespace Control{
 
-/* inner variables */
-int win_width, win_height;
-double startx, starty;
-int gButton; 
-int gState; 
-
-/* inner mantained */
-glm::dmat4 Model;
-glm::mat4 View;
-glm::mat4 Projection;
-
-/* controler initialize */
-void control_init(GLFWwindow* window, BalloonFEM::TetraMesh* tetra)
+ControlBase::ControlBase(BalloonFEM::TetraMesh* tetra)
 {
-    glfwGetWindowSize(window, &win_width, &win_height);
     m_tetra = tetra;
     engine = BalloonFEM::Engine(tetra);
 }
+/* controler initialize */
+void ControlBase::control_init(GLFWwindow* mainWindow)
+{
+    glfwGetWindowSize(mainWindow, &win_width, &win_height);
+
+}
 
 /* update at each main loop */
-void computeMatrixFromInputs()
+void ControlBase::computeMatrixFromInputs()
 {
     Model = glm::toMat4(ObjRot);
     View = glm::lookAt(
@@ -181,29 +170,9 @@ void computeMatrixFromInputs()
     Projection = glm::perspective(45.0f, win_width/(float) win_height, 0.1f, 500.0f);
 }
 
-glm::vec3 getCamera(){
-    return camera;
-}
-
-glm::mat4 getMVP(){
-	return Projection * View * glm::mat4(Model);
-}
-
-glm::mat4 getView(){
-    return View;
-}
-
-glm::mat4 getModel(){
-    return glm::mat4(Model);
-}
-
-glm::mat4 getProjection(){
-    return Projection;
-}
-
 
 /*! mouse click call back function */
-void  mouseClick(GLFWwindow* window, int button, int action, int mods) {
+void  ControlBase::mouseClick(GLFWwindow* window, int button, int action, int mods) {
 	/* set up an arcball around the Eye's center
 	switch y coordinates to right handed system  */
     double xpos, ypos;
@@ -226,7 +195,7 @@ void  mouseClick(GLFWwindow* window, int button, int action, int mods) {
 }
 
 /*! mouse motion call back function */
-void mouseMove(GLFWwindow* window, double xpos, double ypos)
+void ControlBase::mouseMove(GLFWwindow* window, double xpos, double ypos)
 {
     glm::vec3   trans;
     glm::dquat  rot;
@@ -256,7 +225,7 @@ void mouseMove(GLFWwindow* window, double xpos, double ypos)
 }
 
 /* mouse middle scroll call back */
-void mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+void ControlBase::mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
 {
 	double scale = abs(40. * camera.z / win_height);
 	glm::vec3  trans = glm::vec3(0, 0, - scale * yoffset);
@@ -264,7 +233,7 @@ void mouseScroll(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 /*! helper function to remind the user about commands, hot keys */
-void help()
+void ControlBase::help()
 {
 	printf("w  -  Wireframe Display\n");
 	printf("f  -  Flat Shading \n");
@@ -277,7 +246,7 @@ void help()
 }
 
 /*! Keyboard call back function */
-void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
+void ControlBase::keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (action != GLFW_PRESS){
         return;
@@ -320,7 +289,7 @@ void keyBoard(GLFWwindow* window, int key, int scancode, int action, int mods)
 }
 
 /*! Called when a "resize" event is received by the window. */
-void reshape(GLFWwindow* window, int w, int h)
+void ControlBase::reshape(GLFWwindow* window, int w, int h)
 {
 	win_width = w;
 	win_height = h;

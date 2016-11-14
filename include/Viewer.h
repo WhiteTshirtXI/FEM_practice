@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include "TetraMesh.h"
+#include "controls.h"
 
 namespace View{
 
@@ -17,8 +18,9 @@ class Viewer
 
         /* Mesh type */
         typedef BalloonFEM::TetraMesh Mesh;
+		typedef Control::ControlBase Controler;
 
-        Viewer(Mesh* mesh);
+        Viewer(Mesh* mesh, Controler* controler);
 
 		void refresh();
 
@@ -27,7 +29,7 @@ class Viewer
     private:
 
         /* initialize window and OpenGL context */
-        void init_openGL();
+        void init_openGL(Controler* contr);
 
         /* setup the drawing */
         void setupGLstate();
@@ -47,10 +49,11 @@ class Viewer
 		/* draw force */
 		void draw_force();
 
-        Mesh* mesh;
+        Mesh* m_mesh;
+
+		Controler* m_controler;
 
         GLFWwindow* mainWindow;
-
 };
 
 }
