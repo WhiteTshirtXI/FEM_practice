@@ -1,4 +1,6 @@
+#include <iostream>
 #include "Types.h"
+#include "Viewer.h"
 #include "Optimizer.h"
 
 namespace
@@ -30,14 +32,151 @@ namespace
 
 }
 
+extern View::Viewer *p_viewer;
+
 namespace BalloonFEM
 {
-    void Optimizer::solveOptimal()
+    ////////////////////////////// OptState Function ///////////////////////////
+	size_t OptState::freedomDegree(){
+		return 3 * m_size + 6 * m_r_size + m_tetra->num_pieces + m_tetra->holes.size();
+	};
+
+    void OptState::update(SpVec dpos)
     {
-        this->solveStaticPos();
+        size_t offset = 0;
+
+		/* update vertex position */
+        for (size_t i = 0; i < m_size; i++)
+        {
+            Vec3 &vpos = this->m_pos[i];
+            vpos.x += dpos( 3 * i     + offset );
+            vpos.y += dpos( 3 * i + 1 + offset );
+            vpos.z += dpos( 3 * i + 2 + offset );
+        }
+        offset += 3 * m_size;
+
+		/* update rigid body */
+        for (size_t i = 0; i < m_r_size; i++)
+        {
+            Vec3 &rpos = this->m_r_pos[i];
+            rpos.x += dpos( 6 * i     + offset );
+            rpos.y += dpos( 6 * i + 1 + offset );
+            rpos.z += dpos( 6 * i + 2 + offset );
+            Quat &rrot = this->m_r_rot[i];
+            Vec3 drot(0);
+            drot.x = dpos( 6 * i + 3 + offset );
+            drot.y = dpos( 6 * i + 4 + offset );
+            drot.z = dpos( 6 * i + 5 + offset );
+            rrot = omegaToQuat(drot) * rrot; 
+        }
+        offset += 6 * m_r_size;
+
+        /* update thickness */
+        thickness += dpos.segment(offset, m_tetra->num_pieces);
+        offset += m_tetra->num_pieces;
+
+        /* update pressure */
+        pressure += dpos.tail(m_tetra->holes.size()); 
+
+        this->project();
     }
 
-    void Optimizer::computeForceAndGradient(ObjState &state, SpVec &f, SpMat &A)
+    /////////////////////////////// Optimizer Function ////////////////////////
+
+	Optimizer::Optimizer(
+		TetraMesh* tetra,
+		TetraMesh* target,
+		ElasticModel* volume_model,
+		AirModel* air_model,
+		FilmModel* film_model,
+		BendingModel* bend_model
+		) :Engine(tetra, volume_model, air_model, film_model, bend_model)
+	{
+        /* copy from Engine, but change state to OptState */
+        m_tetra = tetra;
+        m_size = tetra->vertices.size();
+        m_volume_model = volume_model;
+        m_air_model = air_model;
+		m_film_model = film_model;
+        m_bend_model = bend_model;
+
+		f_ext.assign(m_size, Vec3(0));
+
+		cur_state = new OptState();
+		next_state = new OptState();
+
+		this->inputData();
+
+		/* read in target */
+		m_target = target;
+		target_state = new OptState();
+		target_state->input(m_target);
+	};
+
+	#define CONVERGE_ERROR_RATE 1e-4
+    void Optimizer::solveOptimal()
+    {
+		/* initialize next_state */
+		*next_state = *cur_state;
+		next_state->project();
+		SpVec f_sum;
+
+		/* initialize temp variable for iterative implicit solving */
+		/* f is total force on each vertex */
+		/* K = - df/dr, here Force Diff Mat compute df/dr */
+		SpMat K;
+		computeForceAndGradient(*next_state, *target_state, f_sum, K);
+
+		SpVec dstate = SpVec::Zero(next_state->freedomDegree());
+
+		/* solver */
+		Eigen::SimplicialLDLT<SpMat> solver;
+		SpVec &b = f_sum;
+
+		double err_f = f_sum.dot(f_sum);
+		double err_begin = err_f;
+		int count_iter = 0;		/* K dx = f iter count */
+		/* while not converge f == 0, iterate */
+		while ((err_f > CONVERGE_ERROR_RATE * err_begin) && (err_f > 1e-10))
+		{
+			/* debug use */
+			count_iter++;
+			printf("%d iter of K dv = f , err_felas = %.4e \n", count_iter, err_f);
+
+			/* r0 = b - Ax0 */
+			SpVec r = b - K * dstate;
+
+			printf("building solver\n");
+			solver.compute(K);
+			if (solver.info() != Eigen::Success)
+			{
+				printf("decomposition failed!\n");
+				printf("Number of non zeros: %d \n", K.nonZeros());
+				return;
+			}
+			printf("solve delta_x \n");
+			SpVec dstate = solver.solve(r);
+
+			/* update v_pos_next and f_sum */
+			next_state->update(dstate);
+			dstate.setZero();
+
+			/* debug watch use*/
+			next_state->output();
+			p_viewer->refresh(1);
+			std::cout << "pressure: " << ((OptState*)next_state)->pressure << std::endl;
+
+			/* update K and f*/
+			computeForceAndGradient(*next_state, *target_state, f_sum, K);
+
+			err_f = f_sum.dot(f_sum);
+		}
+
+		printf("f_sum error %f \n", err_f);
+		printf("finish solving \n");
+    }
+
+    void Optimizer::computeForceAndGradient(ObjState &state, ObjState &target, SpVec &f, SpMat &A)
     {
         Vvec3 f_sum;
         f_sum.assign( m_size, Vec3(0.0));
@@ -70,12 +209,13 @@ namespace BalloonFEM
         
         /* convert force to SpVec */
         SpVec f_real = vvec3TospVec( f_sum );
-        SpVec x = vvec3TospVec( state.world_space_pos );
-        SpVec h = state.thickness;
+        SpVec x = vvec3TospVec( state.world_space_pos ) - vvec3TospVec(target.world_space_pos);
+        SpVec h = state.thickness - target.thickness;
         SpVec press = vvec3TospVec( state.volume_gradient );
 
         /* tmp mat */
-        size_t freedegree = state.freedomDegree() + m_tetra->num_pieces + m_tetra->holes.size();
+        size_t freedegree = state.freedomDegree();
+        size_t kineticDegree = 3 * m_tetra->num_vertex + 6 * m_tetra->rigids.size();
         SpMat mat_a( 3 * m_tetra->num_vertex, freedegree);		/* target position displacement mat */
         SpMat mat_b( m_tetra->num_pieces, freedegree );			/* target thickness displacement mat */
         SpMat mat_c( 3 * m_tetra->num_vertex, freedegree);		/* total force intensity mat */
@@ -84,18 +224,19 @@ namespace BalloonFEM
         SpMat I(m_tetra->num_pieces, m_tetra->num_pieces);
         I.setIdentity();
 
-        mat_a.leftCols(state.freedomDegree()) = state.projectMat();
-        mat_b.middleCols(state.freedomDegree(), m_tetra->num_pieces) = I;
+        mat_a.leftCols(kineticDegree) = state.projectMat();
+        mat_b.middleCols(kineticDegree, m_tetra->num_pieces) = I;
         
-        mat_c.leftCols(state.freedomDegree()) = K * state.projectMat();
-        mat_c.middleCols(state.freedomDegree(), m_tetra->num_pieces) = Tri;
+        mat_c.leftCols(kineticDegree) = K * state.projectMat();
+        mat_c.middleCols(kineticDegree, m_tetra->num_pieces) = Tri;
         mat_c.rightCols(1) = press.sparseView();
 
-		mat_d.leftCols(state.freedomDegree()) = state.restrictedMat();
+		mat_d.leftCols(kineticDegree) = state.restrictedMat();
 
         f = m_alpha * mat_a.transpose() * x 
             + m_beta * mat_b.transpose() * h 
             + m_gamma * mat_c.transpose() * f_real;
+		f = -f;
 
 		A = m_alpha * mat_a.transpose() * mat_a
 			+ m_beta * mat_b.transpose() * mat_b
@@ -149,4 +290,9 @@ namespace BalloonFEM
 
         Tri.setFromTriplets(triangle_coeff.begin(), triangle_coeff.end());
     }
+
+	void Optimizer::testFunc()
+	{
+		cur_state->thickness *= 2;
+	}
 }

@@ -61,7 +61,7 @@ namespace BalloonFEM
 			size_t m_size;
 
             /* current position and current velocity */
-            ObjState cur_state;
+            ObjState* cur_state;
             Vvec3 f_ext;
 
             /* constrains */
@@ -70,7 +70,7 @@ namespace BalloonFEM
             /* position and velocity for next time step, need to be solved
              * by backward Euler method
              * */
-            ObjState next_state;
+            ObjState* next_state;
 
             /* compute elastic force when given positions pos*/
             void computeForceAndGradient(ObjState &state, SpVec &f, SpMat &A);

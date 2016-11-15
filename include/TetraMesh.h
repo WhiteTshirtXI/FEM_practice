@@ -145,6 +145,7 @@ namespace BalloonFEM{
         public:
             Hole(){};
             
+			double p = 0;				  /* pressure of hole */
             std::vector<size_t> vertices; /* related vertices */
             std::vector<Face> holeface;   /* related surfaces */
     };

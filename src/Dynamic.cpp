@@ -27,12 +27,15 @@ namespace BalloonFEM
 
 		f_ext.assign(m_size, Vec3(0));
 
+		cur_state = new ObjState();
+		next_state = new ObjState();
+
 		this->inputData();
     }
 
 	void Engine::inputData()
 	{
-        cur_state.input(m_tetra);
+		cur_state->input(m_tetra);
 
 		/* load data */
 		for (size_t i = 0; i < m_size; i++)
@@ -44,7 +47,7 @@ namespace BalloonFEM
 
     void Engine::outputData()
     {
-        cur_state.output();
+        cur_state->output();
     }
 
     void Engine::stepToNext()
@@ -100,18 +103,18 @@ namespace BalloonFEM
     #define CONVERGE_ERROR_RATE 1e-4
     void Engine::solveStaticPos()
     {
-      /* initialize next_state */
-        next_state = cur_state;
-		next_state.project();
-        SpVec f_sum = SpVec::Zero(next_state.freedomDegree());
+		/* initialize next_state */
+        *next_state = *cur_state;
+		next_state->project();
+        SpVec f_sum = SpVec::Zero(next_state->freedomDegree());
 
         /* initialize temp variable for iterative implicit solving */
         /* f is total force on each vertex */
         /* K = - df/dr, here Force Diff Mat compute df/dr */
         SpMat K;
-        computeForceAndGradient(next_state, f_sum, K);
+        computeForceAndGradient(*next_state, f_sum, K);
 
-        SpVec dstate = SpVec::Zero(next_state.freedomDegree());
+        SpVec dstate = SpVec::Zero(next_state->freedomDegree());
         
         /* solver */
         Eigen::SimplicialLDLT<SpMat> solver;
@@ -142,16 +145,16 @@ namespace BalloonFEM
             SpVec dstate = solver.solve(r);
 
             /* update v_pos_next and f_sum */
-            next_state.update(dstate);
+            next_state->update(dstate);
             dstate.setZero();
 
 			/* debug watch use*/
-			next_state.output();
+			next_state->output();
 			p_viewer->refresh(1);
 			//Control::mOutput();
 			
             /* update K and f*/
-            computeForceAndGradient(next_state, f_sum, K);
+            computeForceAndGradient(*next_state, f_sum, K);
 
 			err_f = f_sum.dot(f_sum);
         }

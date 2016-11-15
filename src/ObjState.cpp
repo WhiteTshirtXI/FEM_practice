@@ -32,6 +32,7 @@ namespace BalloonFEM
         volume_gradient.assign(other.volume_gradient.begin(), other.volume_gradient.end());
         hole_volume.assign(other.hole_volume.begin(), other.hole_volume.end());
         thickness = other.thickness;
+		pressure = other.pressure;
 
 		m_pos.assign(other.m_pos.begin(), other.m_pos.end());
 		m_r_pos.assign(other.m_r_pos.begin(), other.m_r_pos.end());
@@ -79,6 +80,10 @@ namespace BalloonFEM
             }
         }
 
+		this->pressure = SpVec::Zero(m_tetra->holes.size());
+		for (size_t i = 0; i < m_tetra->holes.size(); i++)
+			this->pressure(i) = m_tetra->holes[i].p;
+
         /* initialize world_space_pos, volume gradients and hole volume */
         world_space_pos.assign( m_pos.begin(), m_pos.end() );
         volume_gradient.assign( m_size, Vec3(0) );
@@ -113,6 +118,10 @@ namespace BalloonFEM
 			p->h = thickness(piece_count);
 			piece_count++;
 		}
+
+		/* output pressure */
+		for (size_t i = 0; i < m_tetra->holes.size(); i++)
+			m_tetra->holes[i].p = this->pressure(i);
     }
 
     void ObjState::project()
@@ -232,6 +241,8 @@ namespace BalloonFEM
     void ObjState::update(SpVec& dpos)
     {
         size_t offset = 0;
+
+		/* update vertex position */
         for (size_t i = 0; i < m_size; i++)
         {
             Vec3 &vpos = this->m_pos[i];
@@ -241,6 +252,7 @@ namespace BalloonFEM
         }
         offset += 3 * m_size;
 
+		/* update rigid body */
         for (size_t i = 0; i < m_r_size; i++)
         {
             Vec3 &rpos = this->m_r_pos[i];

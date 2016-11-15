@@ -35,6 +35,7 @@ namespace BalloonFEM
     typedef glm::dquat      Quat;
 
 	typedef std::vector<Vec3> Vvec3;
+	typedef std::vector<Quat> Vquat;
 
     /* Eigen vec & mat definition */
     typedef Eigen::VectorXd                 SpVec;

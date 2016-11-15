@@ -17,10 +17,9 @@ namespace BalloonFEM
 
 		ObjState& operator=(const ObjState& other);
 
-		void input(TetraMesh* tetra);
-		void output();
+		virtual void input(TetraMesh* tetra);
+		virtual void output();
 
-		typedef std::vector<Vec3> Vvec3;
 		Vvec3 world_space_pos;
 
         /* recorded volumes of holes */
@@ -29,8 +28,8 @@ namespace BalloonFEM
         /* volume gradient of vertices belongs to hole */
         Vvec3 volume_gradient;
 
-        /* thickness of pieces */
-        SpVec thickness;
+        SpVec thickness;	/* thickness of pieces */
+		SpVec pressure;		/* pressure of each hole */
 
 		/* project to real world space and record in world_space_pos
          * then calcualte volume of holes and volume gradients
@@ -38,7 +37,10 @@ namespace BalloonFEM
 		void project();
 
 		/* update from delata state represented by SpVec */
-		void update(SpVec& dpos);
+		virtual void update(SpVec& dpos);
+
+		/* the freedom of state, including those fixed vertices */
+		virtual size_t freedomDegree(){ return 3 * m_size + 6 * m_r_size; };
 
         /* calculate volume gradient difference based on dr */
         void volumeGradientDiff(Vvec3& dr, Vvec3& dg);
@@ -55,23 +57,13 @@ namespace BalloonFEM
         /* the matrix specify those restricted vertices */
         SpMat restrictedMat(){return m_R;};
 
-        /* the freedom of state, including those fixed vertices */
-        size_t freedomDegree()
-        {
-            return 3 * m_size + 6 * m_r_size;
-        }
-
-	private:
+	protected:
 		TetraMesh* m_tetra;
 
-		/* number of vertices of tetramesh */
-		size_t m_size;
-
-		/* number of rigid bodys of tetramesh */
-		size_t m_r_size;
-
-        /* numer of holes of tetramesh */
-        size_t m_h_size;
+		
+		size_t m_size;	/* number of vertices of tetramesh */
+		size_t m_r_size; /* number of rigid bodys of tetramesh */
+        size_t m_h_size; /* numer of holes of tetramesh */
 
 		/* positions for those who is not fixed nor bounded to a rigid body
 		* size equals to world_space_pos, meaningless nonzero value for
@@ -79,33 +71,18 @@ namespace BalloonFEM
 		*/
 		Vvec3 m_pos;
 
-		/* positions for rigid body mass centers */
-		Vvec3 m_r_pos;
+		Vvec3 m_r_pos;	/* positions for rigid body mass centers */
+		Vquat m_r_rot;	/* rotation quaternion for rigid body */
 
-		typedef std::vector<Quat> Vquat;
-		/* rotation quaternion for rigid body */
-		Vquat m_r_rot;
+		Quat omegaToQuat(Vec3 delta_phi); /* convert delta phi to quternion */
 
-        /* project Mat */
-        SpMat m_W;
+		void computeProjectMat();	 /* calculate projection mat */
+		void computeRestrictedMat(); /* the matrix specify those restricted vertices */
+        SpMat m_W;					 /* project Mat */
+        SpMat m_R;					 /* restric mat */
 
-        /* restric mat */
-        SpMat m_R;
-
-		/* convert delta phi to quternion */
-		Quat omegaToQuat(Vec3 delta_phi);
-
-        /* calculate hole volume */
-        void holeVolume();
-
-        /* calculate hole volume and volume gradient */
-        void volumeGradient();
-
-        /* calculate projection mat */
-        void computeProjectMat();
-
-        /* the matrix specify those restricted vertices */
-        void computeRestrictedMat();
+        void holeVolume();		/* calculate hole volume */
+        void volumeGradient();	 /* calculate hole volume and volume gradient */
 	};
 }
 

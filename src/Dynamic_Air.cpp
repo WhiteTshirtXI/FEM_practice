@@ -15,7 +15,7 @@ namespace BalloonFEM
         /* add air pressure force */
         for (size_t i = 0; i < m_tetra->holes.size(); i++)
         {
-            double p = m_air_model->pressure(state.hole_volume[i]);
+            double p = state.pressure(i);
             Hole &h = m_tetra->holes[i];
             std::vector<size_t>::iterator j;
 
@@ -39,7 +39,7 @@ namespace BalloonFEM
 		pressure.reserve(pos.size());
 		for (size_t i = 0; i < m_tetra->holes.size(); i++)
 		{
-			double p = m_air_model->pressure(state.hole_volume[i]);
+			double p = state.pressure(i);
 			Hole &h = m_tetra->holes[i];
 			std::vector<size_t>::iterator j;
             
