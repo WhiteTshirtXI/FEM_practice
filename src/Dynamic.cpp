@@ -93,7 +93,7 @@ namespace BalloonFEM
 
         /* convert K to \tilde K with W transfer. The restricted vertices
          * has all 0 colume and raw so we add 1 to its diagnal */
-        A = - state.projectMat().transpose() * K * state.projectMat() + state.restrictedMat();
+        A = - state.projectMat().transpose() * K * state.projectMat() + state.restrictedMat().transpose() * state.restrictedMat();
 
         f = state.projectMat().transpose() * f_real;
     }

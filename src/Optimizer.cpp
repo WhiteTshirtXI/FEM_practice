@@ -71,14 +71,16 @@ namespace BalloonFEM
         /* convert force to SpVec */
         SpVec f_real = vvec3TospVec( f_sum );
         SpVec x = vvec3TospVec( state.world_space_pos );
-        SpVec &h = state.thickness;
+        SpVec h = state.thickness;
         SpVec press = vvec3TospVec( state.volume_gradient );
 
         /* tmp mat */
         size_t freedegree = state.freedomDegree() + m_tetra->num_pieces + m_tetra->holes.size();
-        SpMat mat_a( 3 * m_tetra->num_vertex, freedegree);
-        SpMat mat_b( m_tetra->num_pieces, freedegree );
-        SpMat mat_c( 3 * m_tetra->num_vertex, freedegree);
+        SpMat mat_a( 3 * m_tetra->num_vertex, freedegree);		/* target position displacement mat */
+        SpMat mat_b( m_tetra->num_pieces, freedegree );			/* target thickness displacement mat */
+        SpMat mat_c( 3 * m_tetra->num_vertex, freedegree);		/* total force intensity mat */
+		SpMat mat_d(3 * m_tetra->num_vertex, freedegree);		/* restrict mat */
+
         SpMat I(m_tetra->num_pieces, m_tetra->num_pieces);
         I.setIdentity();
 
@@ -87,17 +89,19 @@ namespace BalloonFEM
         
         mat_c.leftCols(state.freedomDegree()) = K * state.projectMat();
         mat_c.middleCols(state.freedomDegree(), m_tetra->num_pieces) = Tri;
-        mat_c.rightCols(1) = press;
+        mat_c.rightCols(1) = press.sparseView();
+
+		mat_d.leftCols(state.freedomDegree()) = state.restrictedMat();
 
         f = m_alpha * mat_a.transpose() * x 
             + m_beta * mat_b.transpose() * h 
             + m_gamma * mat_c.transpose() * f_real;
 
-        A = m_alpha * mat_a.transpose() * mat_a 
-            + m_beta * mat_b.transpose() * mat_b
-            + m_gamma * mat_c.transpose() * mat_c;
+		A = m_alpha * mat_a.transpose() * mat_a
+			+ m_beta * mat_b.transpose() * mat_b
+			+ m_gamma * mat_c.transpose() * mat_c
+			+ mat_d.transpose() * mat_d;
 
-        A.topLeftCorner(state.freedomDegree(), state.freedomDegree()) += state.restrictedMat();
     }
 
 	void Optimizer::computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri)

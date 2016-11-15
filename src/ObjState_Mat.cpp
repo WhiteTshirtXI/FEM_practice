@@ -202,7 +202,7 @@ namespace BalloonFEM
 
     void ObjState::computeRestrictedMat()
     {
-        m_R = SpMat(this->freedomDegree(), this->freedomDegree());
+        m_R = SpMat(3 * m_tetra->num_vertex, this->freedomDegree());
 
         std::vector<T> coefficients;
         coefficients.clear();
