@@ -30,6 +30,11 @@ void Face::computeNorm()
     this->m_normal = glm::normalize(glm::cross(a, b));
 }
 
+Vec3 Face::color()
+{
+	return Vec3(1, 1, 1);
+}
+
 void Piece::precomputation()
 {
     Mat2 Dm(0);  /* coordinate vectors */
@@ -48,6 +53,38 @@ void Piece::precomputation()
     W = glm::determinant(Dm) / 2;
 
     this->computeNorm();
+}
+
+Vec3 Piece::color()
+{
+	const double min_value = 0;
+	const double max_value = 10;
+	const double resolution = 1e-4;
+
+	Vec3 rgb;
+
+	double value = h;
+	if (value < min_value)
+		value = min_value;
+	else if (value > max_value)
+		value = max_value;
+
+	float lamda = (value - min_value) / (max_value - min_value);
+	if (resolution > 0.001)
+		lamda = int(lamda / resolution) * resolution;
+
+	float coef = lamda * 4.0f;
+
+	if (coef <= 1.0f)
+		rgb[0] = 0.0f, rgb[1] = coef, rgb[2] = 1.0f;
+	else if (coef <= 2.0f)
+		rgb[0] = 0.0f, rgb[1] = 1.0f, rgb[2] = 2.0f - coef;
+	else if (coef <= 3.0f)
+		rgb[0] = coef - 2.0f, rgb[1] = 1.0f, rgb[2] = 0.0f;
+	else
+		rgb[0] = 1.0f, rgb[1] = 4.0f - coef, rgb[2] = 0.0f;
+	
+	return rgb;
 }
 
 void Tetra::precomputation()

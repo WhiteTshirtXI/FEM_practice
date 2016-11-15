@@ -44,7 +44,6 @@ namespace BalloonFEM
 
     void Engine::outputData()
     {
-        cur_state.project();
         cur_state.output();
     }
 

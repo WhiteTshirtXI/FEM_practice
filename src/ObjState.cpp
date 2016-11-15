@@ -91,17 +91,28 @@ namespace BalloonFEM
     {
         this->project();
 
+		/* output vertex pos */
         for (size_t i = 0; i < m_size; i++)
         {
            m_tetra->vertices[i].m_pos = world_space_pos[i]; 
         }
 
+		/* output rigid body status */
         for (size_t i = 0; i < m_r_size; i++)
         {
             Rigid &r = m_tetra->rigids[i];
             r.m_pos = m_r_pos[i];
             r.m_rot = m_r_rot[i];
         }
+
+		/* output piece thickness */
+		size_t piece_count = 0;
+		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
+		for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+		{
+			p->h = thickness(piece_count);
+			piece_count++;
+		}
     }
 
     void ObjState::project()

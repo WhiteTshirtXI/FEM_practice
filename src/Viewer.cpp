@@ -23,11 +23,12 @@ namespace View{
     int win_height = 400;
 
 	/* GL render */
-	enum {verVBO, norVBO, faceVBO, cordVBO, num_VBO};
+	enum {verVBO, norVBO, colorVBO, faceVBO, cordVBO, num_VBO};
 	GLuint VAO;
 	GLuint VBO[num_VBO];
 	std::vector<glm::vec3> vertex;
 	std::vector<glm::vec3> norm;
+	std::vector<glm::vec3> color;
 	std::vector<unsigned int> faceID;
 
 	/* shader data */
@@ -151,23 +152,28 @@ namespace View{
 	    glGenBuffers(num_VBO, VBO);
 
 		/* specify surface to be showed */
+		typedef Piece FaceType;
+		typedef PIter FaceIter;
 
-		std::vector<Face> &surface = m_mesh->surface;
+		std::vector<FaceType> &surface = m_mesh->films[0].pieces;
 		m_mesh->recomputeSurfaceNorm();
 
 	    /* prepare vertex & normal data */
 	    unsigned int N = surface.size();
 	    vertex.assign(3*N, glm::vec3(0,0,0));
 	    norm.assign(3*N, glm::vec3(0,0,0));
+        color.assign(3*N, glm::vec3(0,0,0));
 	    unsigned int count = 0;
-	    for (FIter f = surface.begin() ; f != surface.end(); f++)
+	    for (FaceIter f = surface.begin() ; f != surface.end(); f++)
 	    {
 	        for (int i = 0; i < 3; i++)
 	        {
 	            Vec3 &pos = f->v[i]->m_pos;
 	            Vec3 &nor = f->m_normal;
+                Vec3 col = f->color();
 	            vertex[count] = glm::vec3(pos[0], pos[1], pos[2]); 
 	            norm[count] = glm::vec3(nor[0], nor[1], nor[2]);
+                color[count] = glm::vec3(col[0], col[1], col[2]);
 	            count ++;
 	        }
 	    }
@@ -177,6 +183,9 @@ namespace View{
 
 	    glBindBuffer(GL_ARRAY_BUFFER, VBO[norVBO]);
 	    glBufferData(GL_ARRAY_BUFFER, norm.size()*sizeof(glm::vec3), &norm[0], GL_STATIC_DRAW);
+
+	    glBindBuffer(GL_ARRAY_BUFFER, VBO[colorVBO]);
+	    glBufferData(GL_ARRAY_BUFFER, norm.size()*sizeof(glm::vec3), &color[0], GL_STATIC_DRAW);
 
 	    /* prepare faceID data */
 	    size_t M = N;
@@ -225,11 +234,16 @@ namespace View{
 	    glBindBuffer(GL_ARRAY_BUFFER, VBO[norVBO]);
 	    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+	    glEnableVertexAttribArray(2);
+	    glBindBuffer(GL_ARRAY_BUFFER, VBO[colorVBO]);
+	    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 	    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[faceVBO]);
 	    glDrawElements(GL_TRIANGLES, faceID.size(), GL_UNSIGNED_INT, (void*)0);
 
 	    glDisableVertexAttribArray(0);
 	    glDisableVertexAttribArray(1);
+	    glDisableVertexAttribArray(2);
 	}
 
 	void Viewer::draw_axis()

@@ -44,7 +44,9 @@ namespace BalloonFEM{
             void computeNorm();
             
             /* geometry property */
-            Vec3 m_normal;  
+            Vec3 m_normal;
+
+			virtual Vec3 color();
 
             /* topology property */
             pVertex v[3];   /* pointer to vertices */
@@ -67,6 +69,7 @@ namespace BalloonFEM{
              * */
             Mat2 Bm;
 			double volume(){ return W*h; };
+			Vec3 color();
 
             double W;   /* Area of face, |(r1 - r3) x (r2 - r3)|/2 */
             double h;   /* Thickness of face */
