@@ -14,6 +14,14 @@
 
 namespace BalloonFEM
 {
+
+	ControlSim::ControlSim(TetraMesh* tetra, Engine* engine)
+		: ControlBase()
+	{
+		m_tetra = tetra;
+		m_engine = engine;
+	}
+
     void ControlSim::help()
     {  printf("w  -  Wireframe Display\n");
 	    printf("f  -  Flat Shading \n");
