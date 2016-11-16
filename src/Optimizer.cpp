@@ -38,7 +38,7 @@ namespace BalloonFEM
 {
     ////////////////////////////// OptState Function ///////////////////////////
 	size_t OptState::freedomDegree(){
-		return 3 * m_size + 6 * m_r_size + m_tetra->num_pieces + m_tetra->holes.size();
+		return 3 * m_size + 6 * m_r_size + m_tetra->num_pieces;
 	};
 
     void OptState::update(SpVec dpos)
@@ -73,12 +73,7 @@ namespace BalloonFEM
 
         /* update thickness */
         thickness += dpos.segment(offset, m_tetra->num_pieces);
-		thickness = thickness.cwiseMax(1e-3);
         offset += m_tetra->num_pieces;
-
-        /* update pressure */
-        pressure += dpos.tail(m_tetra->holes.size()); 
-		pressure = pressure.cwiseMax(0.1);
 
         this->project();
     }
@@ -162,7 +157,7 @@ namespace BalloonFEM
 			SpVec dstate = solver.solve(r);
 
 			/* update v_pos_next and f_sum */
-			((OptState*)next_state)->update(0.5 * dstate);
+			((OptState*)next_state)->update(dstate);
 			dstate.setZero();
 
 			/* debug watch use*/
@@ -178,7 +173,7 @@ namespace BalloonFEM
 			err_f = f_sum.dot(f_sum);
 		}
 
-		printf("f_sum error %f \n", err_f);
+		printf("f_sum error %.4e \n", err_f);
 		printf("finish solving \n");
     }
 
@@ -211,13 +206,16 @@ namespace BalloonFEM
 		K += computeElasticDiffMat(state);
 
         /* compute bending force and gradient */
-        K -= bendingForceAndGradient(state, f_sum);
+        //K -= bendingForceAndGradient(state, f_sum);
         
         /* convert force to SpVec */
-        SpVec f_real = vvec3TospVec( f_sum );
+		SpVec f_freedeg = state.projectMat().transpose() * vvec3TospVec(f_sum);
         SpVec x = vvec3TospVec( state.world_space_pos ) - vvec3TospVec(target.world_space_pos);
 		SpVec h = state.thickness;
-        SpVec press = vvec3TospVec( state.volume_gradient );
+		SpVec h_delt = m_L * h;
+
+		/* output errors */
+		printf("pos_error = %.4e, thick_error = %.4e, f_error = %.4e \n", x.dot(x), h_delt.dot(h_delt), f_freedeg.dot(f_freedeg));
 
         /* tmp mat */
         size_t freedegree = state.freedomDegree();
@@ -234,21 +232,20 @@ namespace BalloonFEM
         mat_b.middleCols(kineticDegree, m_tetra->num_pieces) = m_L;
         
         mat_c.leftCols(kineticDegree) = K * state.projectMat();
-        mat_c.middleCols(kineticDegree, m_tetra->num_pieces) = Tri;
-        mat_c.rightCols(1) = press.sparseView();
+        mat_c.rightCols(m_tetra->num_pieces) = Tri;
 		mat_c = state.projectMat().transpose() * mat_c;
 
 		mat_d.leftCols(kineticDegree) = state.restrictedMat();
 
-        f = m_alpha * mat_a.transpose() * x 
-            + m_beta * mat_b.transpose() * h 
-			+ m_gamma * mat_c.transpose() * state.projectMat().transpose() * f_real;
+		f = m_alpha * mat_a.transpose() * x
+			+ m_beta * mat_b.transpose() * h_delt
+			+ m_gamma * mat_c.transpose() * f_freedeg;
 
 		///* penaty when h lower than h0 */
 		//SpVec penalty = h;
 		//for (size_t i = 0; i < m_tetra->num_pieces; i++)
 		//{
-		//	penalty(i) = (penalty(i) < 0) ? 1 : 0;
+		//	penalty(i) = (penalty(i) < 1e-3) ? 1 : 0;
 		//}
 		//
 		//f.segment(kineticDegree, m_tetra->num_pieces) -= m_penalty * penalty;
