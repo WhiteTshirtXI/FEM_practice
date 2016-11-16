@@ -73,10 +73,12 @@ namespace BalloonFEM
 
         /* update thickness */
         thickness += dpos.segment(offset, m_tetra->num_pieces);
+		thickness = thickness.cwiseMax(1e-3);
         offset += m_tetra->num_pieces;
 
         /* update pressure */
         pressure += dpos.tail(m_tetra->holes.size()); 
+		pressure = pressure.cwiseMax(0.1);
 
         this->project();
     }
@@ -111,6 +113,8 @@ namespace BalloonFEM
 		m_target = target;
 		target_state = new OptState();
 		target_state->input(m_target);
+
+        computeThicknessLap();
 	};
 
 	#define CONVERGE_ERROR_RATE 1e-4
@@ -137,7 +141,7 @@ namespace BalloonFEM
 		double err_begin = err_f;
 		int count_iter = 0;		/* K dx = f iter count */
 		/* while not converge f == 0, iterate */
-		while ((err_f > CONVERGE_ERROR_RATE * err_begin) && (err_f > 1e-10))
+		while ((err_f > CONVERGE_ERROR_RATE * err_begin) && (err_f > 1e-10) && (count_iter < 10))
 		{
 			/* debug use */
 			count_iter++;
@@ -158,14 +162,15 @@ namespace BalloonFEM
 			SpVec dstate = solver.solve(r);
 
 			/* update v_pos_next and f_sum */
-			((OptState*)next_state)->update(dstate);
+			((OptState*)next_state)->update(0.5 * dstate);
 			dstate.setZero();
 
 			/* debug watch use*/
 			next_state->output();
 			p_viewer->refresh(1);
 			std::cout << "pressure: " << next_state->pressure << std::endl;
-			std::cout << "thickness: " << next_state->thickness << std::endl;
+			std::cout << "thickness: max " << next_state->thickness.maxCoeff() << std::endl;
+			std::cout << "thickness: min " << next_state->thickness.minCoeff() << std::endl;
 
 			/* update K and f*/
 			computeForceAndGradient(*next_state, *target_state, f_sum, K);
@@ -211,7 +216,7 @@ namespace BalloonFEM
         /* convert force to SpVec */
         SpVec f_real = vvec3TospVec( f_sum );
         SpVec x = vvec3TospVec( state.world_space_pos ) - vvec3TospVec(target.world_space_pos);
-        SpVec h = state.thickness - target.thickness;
+		SpVec h = state.thickness;
         SpVec press = vvec3TospVec( state.volume_gradient );
 
         /* tmp mat */
@@ -226,7 +231,7 @@ namespace BalloonFEM
         I.setIdentity();
 
         mat_a.leftCols(kineticDegree) = state.projectMat();
-        mat_b.middleCols(kineticDegree, m_tetra->num_pieces) = I;
+        mat_b.middleCols(kineticDegree, m_tetra->num_pieces) = m_L;
         
         mat_c.leftCols(kineticDegree) = K * state.projectMat();
         mat_c.middleCols(kineticDegree, m_tetra->num_pieces) = Tri;
@@ -238,6 +243,16 @@ namespace BalloonFEM
         f = m_alpha * mat_a.transpose() * x 
             + m_beta * mat_b.transpose() * h 
 			+ m_gamma * mat_c.transpose() * state.projectMat().transpose() * f_real;
+
+		///* penaty when h lower than h0 */
+		//SpVec penalty = h;
+		//for (size_t i = 0; i < m_tetra->num_pieces; i++)
+		//{
+		//	penalty(i) = (penalty(i) < 0) ? 1 : 0;
+		//}
+		//
+		//f.segment(kineticDegree, m_tetra->num_pieces) -= m_penalty * penalty;
+
 		f = -f;
 
 		A = m_alpha * mat_a.transpose() * mat_a
@@ -292,6 +307,40 @@ namespace BalloonFEM
 
         Tri.setFromTriplets(triangle_coeff.begin(), triangle_coeff.end());
     }
+
+	void Optimizer::computeThicknessLap()
+	{
+        std::vector<T> coeff;
+        coeff.reserve(4 * m_tetra->num_hindges);
+        SpVec diag = SpVec::Zero(m_tetra->num_pieces);
+        
+        int offset = 0;
+        for(MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
+        {
+            for(EIter h = f->hindges.begin(); h != f->hindges.end(); h++)
+            {
+                int i = h->piece_info[0].x + offset;
+                int j = h->piece_info[1].x + offset;
+
+                coeff.push_back(T(i, i, 1));
+                coeff.push_back(T(i, j, -1));
+                coeff.push_back(T(j, j, 1));
+                coeff.push_back(T(j, i, -1));
+
+                diag(i) += 1;
+                diag(j) += 1;
+            }
+            offset += f->pieces.size();
+        }
+
+        m_L = SpMat(m_tetra->num_pieces, m_tetra->num_pieces);
+        m_L.setFromTriplets(coeff.begin(), coeff.end());
+
+        for(int i = 0; i < m_tetra->num_pieces; i++)
+            diag(i) = 1.0 / diag(i);
+
+        m_L = diag.asDiagonal() * m_L;
+	}
 
 	void Optimizer::testFunc()
 	{
