@@ -295,7 +295,7 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
     {
         out << "r";
         for(size_t i = 0; i < r->elements.size(); i++)
-            out << r->elements[i] + indexBias;
+            out << " " <<r->elements[i] + indexBias;
         out << endl;
     }
  
