@@ -36,6 +36,7 @@ namespace BalloonFEM
             void solveOptimal();
 
 			void testFunc();
+			TetraMesh* Target(){ return m_target;; }
 
 			void setCoeff(Vec3 coeff){ m_alpha = coeff.x; m_beta = coeff.y; m_gamma = coeff.z; };
         protected:
@@ -51,7 +52,7 @@ namespace BalloonFEM
             double m_alpha = 10.0;
             double m_beta = 1.0;
             double m_gamma = 100.0;
-			double m_penalty = 7;
+			double m_penalty = 10;
     };
 
 

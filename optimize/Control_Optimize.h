@@ -12,7 +12,7 @@ namespace BalloonFEM
     {
         public:
 
-            ControlOpt(TetraMesh* tetra, Optimizer* optimizer);
+            ControlOpt(TetraMesh* tetra, Optimizer* optimizer, Engine* engine);
 
             void help();
 
@@ -22,6 +22,7 @@ namespace BalloonFEM
 
             TetraMesh* m_tetra;
             Optimizer* m_optimizer;
+			Engine* m_engine;
 
             double force = 0;
             int modified = 0;
@@ -29,7 +30,8 @@ namespace BalloonFEM
 
             void AddParameter();
             void Process();
-            void Measure();
+            void Simulate();
+			void Target();
 
             void Reset();
             void Output();

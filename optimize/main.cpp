@@ -32,8 +32,9 @@ int main(int argc, char * argv[])
 	BalloonFEM::TetraMesh target;
 	target.read(target_name.c_str());
 
-    BalloonFEM::Optimizer engine(&tetra, &target);
-    BalloonFEM::ControlOpt controler(&tetra, &engine);
+    BalloonFEM::Optimizer opt(&tetra, &target);
+	BalloonFEM::Engine engine(&tetra);
+    BalloonFEM::ControlOpt controler(&tetra, &opt, &engine);
 
     View::Viewer viewer(&tetra, &controler);
 

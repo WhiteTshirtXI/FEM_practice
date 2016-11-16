@@ -15,11 +15,12 @@
 namespace BalloonFEM
 {
 
-	ControlOpt::ControlOpt(TetraMesh* tetra, Optimizer* engine)
+	ControlOpt::ControlOpt(TetraMesh* tetra, Optimizer* opt, Engine* engine)
 		: ControlBase()
 	{
 		m_tetra = tetra;
-		m_optimizer = engine;
+		m_optimizer = opt;
+		m_engine = engine;
 	}
 
     void ControlOpt::help()
@@ -52,6 +53,12 @@ namespace BalloonFEM
 		        break;
 			case GLFW_KEY_A:
 				AddParameter();
+				break;
+			case GLFW_KEY_S:
+				Simulate();
+				break;
+			case GLFW_KEY_T:
+				Target();
 				break;
 			case GLFW_KEY_R:
 				Reset();
@@ -88,7 +95,7 @@ namespace BalloonFEM
 
 	void ControlOpt::AddParameter()
 	{
-	    force += 1e-2;
+	    force += 1e-3;
 	    modified = 0;
 	    printf("force = %f\n", force);
 	}
@@ -96,10 +103,31 @@ namespace BalloonFEM
 	/* Do something to tetra mesh */
 	void ControlOpt::Process()
 	{
-		m_optimizer->setCoeff(Vec3(1e4, 10, 1e5));
+		m_optimizer->setCoeff(Vec3(1e3, 1e3, 1e6));
+		SpVec p(m_tetra->holes.size());
+		p << 0.1;
+		m_optimizer->setAirPressure(p);
 		m_optimizer->solveOptimal();
 		m_optimizer->stepToNext();
 		m_optimizer->outputData();
+		shadFlag = 1;
+	}
+
+	void ControlOpt::Simulate()
+	{
+		m_engine->inputData();
+		m_engine->solveStaticPos();
+		m_engine->stepToNext();
+		m_engine->outputData();
+		shadFlag = 1;
+	}
+
+	void ControlOpt::Target()
+	{
+		for (size_t i = 0; i < m_tetra->vertices.size(); i++)
+		{
+			m_tetra->vertices[i].m_pos = m_optimizer->Target()->vertices[i].m_pos;
+		}
 		shadFlag = 1;
 	}
 
