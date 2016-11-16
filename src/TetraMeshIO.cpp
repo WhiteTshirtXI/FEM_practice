@@ -300,17 +300,31 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
     }
  
     int count = indexBias;
-     for(HCIter h = tetra.holes.begin(); h != tetra.holes.end(); h++)
-	 {
-		 for (FCIter f = h->holeface.begin(); f != h->holeface.end(); f++)
-        {
-            out << "h " << count << " ";
-			out << f->v[0]->id + indexBias << " ";
-			out << f->v[1]->id + indexBias << " ";
-			out << f->v[2]->id + indexBias << endl;
-        }
-		count++;
+    for(HCIter h = tetra.holes.begin(); h != tetra.holes.end(); h++)
+	{
+		for (FCIter f = h->holeface.begin(); f != h->holeface.end(); f++)
+    {
+        out << "h " << count << " ";
+		out << f->v[0]->id + indexBias << " ";
+		out << f->v[1]->id + indexBias << " ";
+		out << f->v[2]->id + indexBias << endl;
     }
+	count++;
+
+	count = indexBias;
+	for (MCIter f = tetra.films.begin(); f != tetra.films.end(); f++)
+	{
+		for (PCIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+		{
+			out << "fl " << count << " ";
+			out << p->v[0]->id + indexBias << " ";
+			out << p->v[1]->id + indexBias << " ";
+			out << p->v[2]->id + indexBias << " ";
+			out << p->h << endl;
+		}
+		count++;
+	}
+}
 }
 
 }

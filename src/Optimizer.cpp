@@ -158,13 +158,14 @@ namespace BalloonFEM
 			SpVec dstate = solver.solve(r);
 
 			/* update v_pos_next and f_sum */
-			next_state->update(dstate);
+			((OptState*)next_state)->update(dstate);
 			dstate.setZero();
 
 			/* debug watch use*/
 			next_state->output();
 			p_viewer->refresh(1);
-			std::cout << "pressure: " << ((OptState*)next_state)->pressure << std::endl;
+			std::cout << "pressure: " << next_state->pressure << std::endl;
+			std::cout << "thickness: " << next_state->thickness << std::endl;
 
 			/* update K and f*/
 			computeForceAndGradient(*next_state, *target_state, f_sum, K);
@@ -230,12 +231,13 @@ namespace BalloonFEM
         mat_c.leftCols(kineticDegree) = K * state.projectMat();
         mat_c.middleCols(kineticDegree, m_tetra->num_pieces) = Tri;
         mat_c.rightCols(1) = press.sparseView();
+		mat_c = state.projectMat().transpose() * mat_c;
 
 		mat_d.leftCols(kineticDegree) = state.restrictedMat();
 
         f = m_alpha * mat_a.transpose() * x 
             + m_beta * mat_b.transpose() * h 
-            + m_gamma * mat_c.transpose() * f_real;
+			+ m_gamma * mat_c.transpose() * state.projectMat().transpose() * f_real;
 		f = -f;
 
 		A = m_alpha * mat_a.transpose() * mat_a

@@ -58,14 +58,14 @@ void Piece::precomputation()
 Vec3 Piece::color()
 {
 	const double min_value = 0;
-	const double max_value = 10;
+	const double max_value = 0.3;
 	const double resolution = 1e-4;
 
-	Vec3 rgb;
+	Vec3 rgb(0, 0, 0);
 
 	double value = h;
 	if (value < min_value)
-		value = min_value;
+		return Vec3(1,0,0);
 	else if (value > max_value)
 		value = max_value;
 

@@ -37,6 +37,7 @@ namespace BalloonFEM
 
 			void testFunc();
 
+			void setCoeff(Vec3 coeff){ m_alpha = coeff.x; m_beta = coeff.y; m_gamma = coeff.z; };
         protected:
 
 			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri);
@@ -45,9 +46,9 @@ namespace BalloonFEM
 			TetraMesh* m_target;
 			ObjState* target_state;
 
-            const double m_alpha = 1.0;
-            const double m_beta = 1.0;
-            const double m_gamma = 1000.0;
+            double m_alpha = 10.0;
+            double m_beta = 1.0;
+            double m_gamma = 100.0;
     };
 
 

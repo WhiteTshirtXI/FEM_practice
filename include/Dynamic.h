@@ -24,7 +24,7 @@ namespace BalloonFEM
 				);
 
             void setElasticModel(ElasticModel* model){ m_volume_model = model; };
-            void setAirModel(AirModel* model){ m_air_model = model; };
+            void setAirPressure(SpVec press){ cur_state->pressure = press; };
 			void setFilmModel(FilmModel* model){ m_film_model = model; };
 			void setBendingModel(BendingModel* model){ m_bend_model = model; };
 
