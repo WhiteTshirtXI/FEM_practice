@@ -76,7 +76,7 @@ namespace BalloonFEM
 
 	void ControlSim::AddParameter()
 	{
-	    force += 1e-2;
+	    force += 5e-4;
 	    modified = 0;
 	    printf("force = %f\n", force);
 	}
@@ -104,9 +104,10 @@ namespace BalloonFEM
 				//m_tetra->vertices[3].m_f_ext = BalloonFEM::Vec3(0, -force, 0);
 	            /*for (size_t i = 0; i < m_tetra->vertices.size(); i++)
 					m_tetra->vertices[i].m_f_ext = BalloonFEM::Vec3(0, -force, 0 );*/
-
-				m_engine->setAirModel(new BalloonFEM::AirModel_Isobaric(force, 0));
-				m_engine->inputData();
+				SpVec p(m_tetra->holes.size());
+				p << force;
+				m_engine->setAirPressure(p);
+				//m_engine->inputData();
 				modified = 1;
 			}
 

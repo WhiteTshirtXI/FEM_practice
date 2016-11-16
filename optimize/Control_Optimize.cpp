@@ -96,6 +96,7 @@ namespace BalloonFEM
 	/* Do something to tetra mesh */
 	void ControlOpt::Process()
 	{
+		m_optimizer->setCoeff(Vec3(1e4, 10, 1e5));
 		m_optimizer->solveOptimal();
 		m_optimizer->stepToNext();
 		m_optimizer->outputData();
@@ -107,7 +108,7 @@ namespace BalloonFEM
 		std::ostringstream info;
 		info << "#";
 		info << "pressure = ";
-		info << force;
+		info << m_tetra->holes[0].p << std::endl;
 
 		std::ostringstream ss;
 		ss << "output/p_";
@@ -117,6 +118,8 @@ namespace BalloonFEM
 
 	    printf("Write to %s. \n", name.c_str());
 
+		for (VIter v = m_tetra->vertices.begin(); v != m_tetra->vertices.end(); v++)
+			v->m_pos = v->m_cord;
 	    m_tetra->write(name, info.str());
 		outputcount++;
 	}
