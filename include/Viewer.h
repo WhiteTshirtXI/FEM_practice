@@ -49,6 +49,9 @@ class Viewer
 		/* draw force */
 		void draw_force();
 
+        /* draw stretches */
+        void draw_stretch();
+
         Mesh* m_mesh;
 
 		Controler* m_controler;

@@ -67,6 +67,8 @@ namespace Control{
 
             int shadFlag = 1;
 
+            bool stretchFlag = false;
+
 	    private:
 	        /* arcball object */
 	        ArcBall arcball;

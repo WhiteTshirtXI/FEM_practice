@@ -82,7 +82,7 @@ namespace BalloonFEM
 		K += computeElasticDiffMat(state);
 
         /* compute bending force and gradient */
-        K -= bendingForceAndGradient(state, f_sum);
+        //K -= bendingForceAndGradient(state, f_sum);
         
         /* convert force to SpVec */
         SpVec f_real = SpVec::Zero(3 * m_size);

@@ -89,7 +89,7 @@ Vec3 Piece::color()
 
 void Piece::computeStretch()
 {
-    Mat3x2 F = Mat3x2(v[0]->m_pos - v[2]->m_cord, v[1]->m_cord - v[2]->m_cord);
+    Mat3x2 F = Mat3x2(v[0]->m_pos - v[2]->m_pos, v[1]->m_pos - v[2]->m_pos);
     F = F * Bm;
 
     Mat2 E = glm::transpose(F) * F;

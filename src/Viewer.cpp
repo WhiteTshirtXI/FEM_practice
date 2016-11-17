@@ -70,6 +70,7 @@ namespace View{
 		draw_mesh();
 		draw_axis();
 		draw_force();
+        if (m_controler->stretchFlag) draw_stretch();
 
 		/* Swap front and back buffers*/
 		glfwSwapBuffers(mainWindow);
@@ -291,5 +292,33 @@ namespace View{
 
 		glLineWidth(1.0);
 	}
+    
+    void Viewer::draw_stretch()
+    {
+        glLineWidth(1.0);
+        glColor3f(0.0, 1.0, 0.0); //blue
+
+		double stretch_scale = 0.2;
+        for (MIter f = m_mesh->films.begin(); f != m_mesh->films.end(); f++)
+            for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+            {
+                Vec3 pos = p->v[0]->m_pos + p->v[1]->m_pos + p->v[2]->m_pos;
+                pos /= 3.0;
+                pos += 1e-2 * p->m_normal;
+
+				for (int i = 0; i < 1; i++)
+				{
+					double l = glm::length(p->stretch[i]);
+					l = (l - 1) / l;
+					Vec3 start = pos - p->stretch[i] * l * stretch_scale;
+					Vec3 targ = pos + p->stretch[i] * l * stretch_scale;
+					glBegin(GL_LINES);
+					glVertex3dv(&start[0]);
+					glVertex3dv(&targ[0]);
+					glEnd();
+				}
+            }
+        
+    }
 
 }

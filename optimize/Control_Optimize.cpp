@@ -60,6 +60,9 @@ namespace BalloonFEM
 			case GLFW_KEY_T:
 				Target();
 				break;
+			case GLFW_KEY_V:
+                stretchFlag = !stretchFlag;
+				break;
 			case GLFW_KEY_R:
 				Reset();
 				break;
@@ -95,7 +98,7 @@ namespace BalloonFEM
 
 	void ControlOpt::AddParameter()
 	{
-	    force += 1e-3;
+	    force += 0.1;
 	    modified = 0;
 	    printf("force = %f\n", force);
 	}
