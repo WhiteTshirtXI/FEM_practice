@@ -58,7 +58,7 @@ void Piece::precomputation()
 Vec3 Piece::color()
 {
 	const double min_value = 0;
-	const double max_value = 0.3;
+	const double max_value = 1;
 	const double resolution = 1e-4;
 
 	Vec3 rgb(0, 0, 0);
@@ -85,6 +85,28 @@ Vec3 Piece::color()
 		rgb[0] = 1.0f, rgb[1] = 4.0f - coef, rgb[2] = 0.0f;
 	
 	return rgb;
+}
+
+void Piece::computeStretch()
+{
+    Mat3x2 F = Mat3x2(v[0]->m_pos - v[2]->m_cord, v[1]->m_cord - v[2]->m_cord);
+    F = F * Bm;
+
+    Mat2 E = glm::transpose(F) * F;
+
+    double tr = E[0][0] + E[1][1];
+    double det = glm::determinant(E);
+    double e = sqrt(tr*tr - 4 * det);
+    if (e == 0)
+    {
+        stretch = F;
+    }
+    else
+    {
+        double theta = sgn(E[0][1]) * std::acos((E[0][0] - E[1][1])/e) / 2.0;
+        Mat2 V = Mat2(Vec2(cos(theta), sin(theta)), Vec2(-sin(theta), cos(theta)));
+        stretch = F * V;
+    }
 }
 
 void Tetra::precomputation()
@@ -272,12 +294,17 @@ void TetraMesh::recomputeSurfaceNorm()
 	}
 
 	for (HIter h = holes.begin(); h != holes.end(); h++)
-	{
 		for (FIter f = h->holeface.begin(); f != h->holeface.end(); f++)
 		{
 			f->computeNorm();
 		}
-	}
+
+    for (MIter f = films.begin(); f != films.end(); f++)
+        for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+        {
+            p->computeNorm();
+            p->computeStretch();
+        }
 }
 
 void TetraMesh::labelFixedId()

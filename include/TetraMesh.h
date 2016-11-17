@@ -60,6 +60,9 @@ namespace BalloonFEM{
 
             /* compute parameterized coefficient */
             void precomputation();
+
+            /* compute stretch vec and save at stretch */
+            void computeStretch();
  
             /* geometry properties */
             /* reverse matrix of parameter matrix [ u, v1; 0, v2] 
@@ -71,6 +74,10 @@ namespace BalloonFEM{
 			double volume(){ return W*h; };
 			Vec3 color();
 
+            /* face stretch property */
+            Mat3x2 stretch;
+
+            /* face area and thickness */
             double W;   /* Area of face, |(r1 - r3) x (r2 - r3)|/2 */
             double h;   /* Thickness of face */
 

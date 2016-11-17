@@ -26,6 +26,7 @@ namespace BalloonFEM
 
 	/* some definition */
 	typedef glm::dvec3	    Vec3;
+	typedef glm::dvec2	    Vec2;
 	typedef glm::dmat3	    Mat3;
     typedef glm::dmat2      Mat2;
     typedef glm::dmat2x3    Mat3x2;
