@@ -115,6 +115,7 @@ namespace BalloonFEM
 	void ControlOpt::Process()
 	{
 		m_optimizer->setCoeff(Vec3(1e3, 1e3, 1e6));
+		m_optimizer->inputData();
 		SpVec p(m_tetra->holes.size());
 		p << 0.1;
 		m_optimizer->setAirPressure(p);
@@ -155,7 +156,7 @@ namespace BalloonFEM
 	{
 		for (size_t i = 0; i < m_tetra->vertices.size(); i++)
 		{
-			m_tetra->vertices[i].m_pos = m_optimizer->Target()->vertices[i].m_pos;
+			m_tetra->vertices[i].m_pos = m_optimizer->Target()->vertices[i].m_cord;
 		}
 		shadFlag = 1;
 	}
