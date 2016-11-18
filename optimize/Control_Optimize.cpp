@@ -9,8 +9,10 @@
 #include <GLFW/glfw3.h>
 
 #include "Types.h"
-#include "Control_Optimize.h"
+#include "Models.h"
 #include "Optimizer.h"
+#include "Control_Optimize.h"
+
 
 namespace BalloonFEM
 {
@@ -56,6 +58,12 @@ namespace BalloonFEM
 				break;
 			case GLFW_KEY_S:
 				Simulate();
+				break;
+			case GLFW_KEY_C:
+				ChangeAnisoAngle();
+				break;
+			case GLFW_KEY_M:
+				SimulateAniso();
 				break;
 			case GLFW_KEY_T:
 				Target();
@@ -123,6 +131,24 @@ namespace BalloonFEM
 		m_engine->stepToNext();
 		m_engine->outputData();
 		shadFlag = 1;
+	}
+
+	void ControlOpt::ChangeAnisoAngle()
+	{
+		printf("Save current principle stretch direction as material first principle direction \n");
+		/* setting material principle direction */
+		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
+		for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+		{
+			p->aniso_angle = p->stretch_angle;
+		}
+	}
+
+	void ControlOpt::SimulateAniso()
+	{
+		m_engine->setFilmModel(new Film_aniso_neohookean_3d(0.4, 0.4, Vec2(0.9, 1.1)));
+		this->Simulate();
+		m_engine->setFilmModel(new Film_neohookean_3d(0.4, 0.4));
 	}
 
 	void ControlOpt::Target()

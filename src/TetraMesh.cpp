@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #include "Types.h"
 #include "TetraMesh.h"
@@ -16,6 +17,12 @@ using namespace std;
 namespace{
 	int sgn(double val){
 		return ((double(0) < val) - (val < double(0)));
+	}
+
+	double clap(double val){
+		if (val < -1) return -1;
+		if (val > 1) return 1;
+		return val;
 	}
 }
 
@@ -99,12 +106,13 @@ void Piece::computeStretch()
     double e = sqrt(tr*tr - 4 * det);
     if (e == 0)
     {
+		this->stretch_angle = 0;
         stretch = F;
     }
     else
     {
-        double theta = sgn(E[0][1]) * std::acos((E[0][0] - E[1][1])/e) / 2.0;
-        Mat2 V = Mat2(Vec2(cos(theta), sin(theta)), Vec2(-sin(theta), cos(theta)));
+		this->stretch_angle = sgn(E[0][1]) * std::acos( clap((E[0][0] - E[1][1]) / e) ) / 2.0;
+        Mat2 V = glm::orientate2(stretch_angle);
         stretch = F * V;
     }
 }

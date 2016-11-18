@@ -71,15 +71,20 @@ namespace BalloonFEM{
              * v2 = |(r2 - r3) - (r1 - r3) * v/u|
              * */
             Mat2 Bm;
-			double volume(){ return W*h; };
-			Vec3 color();
+            
+			/* angle between material's first principle direction and v1-v3 vector */
+            double aniso_angle = 0;	
+			/* angle between first principle stretch direction and v1-v3 vector */
+			double stretch_angle = 0; 
 
             /* face stretch property */
             Mat3x2 stretch;
 
             /* face area and thickness */
-            double W;   /* Area of face, |(r1 - r3) x (r2 - r3)|/2 */
-            double h;   /* Thickness of face */
+            double W;       /* Area of face, |(r1 - r3) x (r2 - r3)|/2 */
+            double h;       /* Thickness of face */
+			Vec3 color();   /* show thickness, h*/
+            double volume(){ return W*h; };
 
             /* topology properties */
             iVec3 hindge_id = iVec3(-1);  /* index of hindge id correspond to vertex */

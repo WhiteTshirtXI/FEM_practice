@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #include <Eigen/Sparse>
 #include <Eigen/SparseQR>
@@ -48,14 +49,17 @@ namespace BalloonFEM
 				/* calculate deformation in world space */
 				Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
 
+                /* coordinate transform */
+                Mat2 R = p->Bm * glm::orientate2(p->aniso_angle);
+
 				/* calculate deformation gradient */
-				Mat3x2 F = Ds * p->Bm;
+				Mat3x2 F = Ds * R;
 
 				/* calculate Piola for this tetra */
 				Mat3x2 P = m_film_model->Piola(F);
 
 				/* calculate forces contributed from this tetra */
-				Mat3x2 H = - p->volume() * P * transpose(p->Bm);
+				Mat3x2 H = - p->volume() * P * transpose(R);
 
 				f_sum[id[0]] += H[0];
 				f_sum[id[1]] += H[1];
@@ -90,8 +94,11 @@ namespace BalloonFEM
 				/* calculate deformation in world space */
 				Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
 
+                /* coordinate transform */
+                Mat2 R = p->Bm * glm::orientate2(p->aniso_angle);
+
 				/* calculate deformation gradient */
-				Mat3x2 F = Ds * p->Bm;
+				Mat3x2 F = Ds * R;
 
 				/* i is index of vertex, j is index of dimention */
 				for (size_t i = 0; i < 3; i++)
@@ -101,16 +108,15 @@ namespace BalloonFEM
 					Mat3x2 dDs = m[i][j];
 
 					/* calculate delta deformation gradient */
-					Mat3x2 dF = dDs * p->Bm;
+					Mat3x2 dF = dDs * R;
 
 					/* calculate delta Piola */
 					Mat3x2 dP = m_film_model->StressDiff(F, dF);
 
 					/* calculate forces contributed from this tetra */
-					Mat3x2 dH = - p->volume() * dP * transpose(p->Bm);
+					Mat3x2 dH = - p->volume() * dP * transpose(R);
 
                     pushMat3x2(coefficients, id, 3*id[i] + j, dH);
-                    
 				}
 			}
 		}

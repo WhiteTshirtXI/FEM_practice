@@ -31,6 +31,8 @@ namespace BalloonFEM
             void AddParameter();
             void Process();
             void Simulate();
+			void ChangeAnisoAngle();
+			void SimulateAniso();
 			void Target();
 
             void Reset();
