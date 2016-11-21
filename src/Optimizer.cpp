@@ -42,7 +42,7 @@ namespace BalloonFEM
 {
     ////////////////////////////// OptState Function ///////////////////////////
 	size_t OptState::freedomDegree(){
-		return 3 * m_size + 6 * m_r_size + m_tetra->num_pieces;
+		return 3 * m_size + 6 * m_r_size + 2 * m_tetra->num_pieces;
 	};
 
     void OptState::update(SpVec dpos)
@@ -75,9 +75,14 @@ namespace BalloonFEM
         }
         offset += 6 * m_r_size;
 
+        
         /* update thickness */
-        thickness += dpos.segment(offset, m_tetra->num_pieces);
-        offset += m_tetra->num_pieces;
+        // thickness += dpos.segment(offset, m_tetra->num_pieces);
+        // offset += m_tetra->num_pieces;
+    
+        /* update aniso_sigma */
+        aniso_sigma += dpos.segment(offset, 2 * m_tetra->num_pieces);
+        offset += 2 * m_tetra->num_pieces;
 
         this->project();
     }
@@ -170,6 +175,8 @@ namespace BalloonFEM
 			std::cout << "pressure: " << next_state->pressure << std::endl;
 			std::cout << "thickness: max " << next_state->thickness.maxCoeff() << std::endl;
 			std::cout << "thickness: min " << next_state->thickness.minCoeff() << std::endl;
+			std::cout << "sigma: max " << next_state->aniso_sigma.maxCoeff() << std::endl;
+			std::cout << "sigma: min " << next_state->aniso_sigma.minCoeff() << std::endl;
 
 			/* update K and f*/
 			computeForceAndGradient(*next_state, *target_state, f_sum, K);
@@ -217,33 +224,34 @@ namespace BalloonFEM
 		SpVec f_freedeg = state.projectMat().transpose() * vvec3TospVec(f_sum);
         SpVec x = vvec3TospVec( state.world_space_pos ) - vvec3TospVec(target.world_space_pos);
 		SpVec h = state.thickness;
+		SpVec sig_delt = state.aniso_sigma.array() - 1.0;
 		SpVec h_delt = m_L * h;
 
 		/* output errors */
-		printf("pos_error = %.4e, thick_error = %.4e, f_error = %.4e \n", x.dot(x), h_delt.dot(h_delt), f_freedeg.dot(f_freedeg));
+		printf("pos_error = %.4e, sig_error = %.4e, f_error = %.4e \n", x.dot(x), sig_delt.dot(sig_delt), f_freedeg.dot(f_freedeg));
 
         /* tmp mat */
         size_t freedegree = state.freedomDegree();
         size_t kineticDegree = 3 * m_tetra->num_vertex + 6 * m_tetra->rigids.size();
         SpMat mat_a( 3 * m_tetra->num_vertex, freedegree);		/* target position displacement mat */
-        SpMat mat_b( m_tetra->num_pieces, freedegree );			/* target thickness displacement mat */
+        SpMat mat_b( 2 * m_tetra->num_pieces, freedegree );			/* target thickness displacement mat */
         SpMat mat_c( 3 * m_tetra->num_vertex, freedegree);		/* total force intensity mat */
 		SpMat mat_d(3 * m_tetra->num_vertex, freedegree);		/* restrict mat */
 
-        SpMat I(m_tetra->num_pieces, m_tetra->num_pieces);
+        SpMat I(2 * m_tetra->num_pieces, 2 * m_tetra->num_pieces);
         I.setIdentity();
 
         mat_a.leftCols(kineticDegree) = state.projectMat();
-        mat_b.middleCols(kineticDegree, m_tetra->num_pieces) = m_L;
+        mat_b.middleCols(kineticDegree, 2 * m_tetra->num_pieces) = I;
         
         mat_c.leftCols(kineticDegree) = K * state.projectMat();
-        mat_c.rightCols(m_tetra->num_pieces) = Tri;
+        mat_c.rightCols(2 * m_tetra->num_pieces) = Sigma;
 		mat_c = state.projectMat().transpose() * mat_c;
 
 		mat_d.leftCols(kineticDegree) = state.restrictedMat();
 
 		f = m_alpha * mat_a.transpose() * x
-			+ m_beta * mat_b.transpose() * h_delt
+			+ m_beta * mat_b.transpose() * sig_delt
 			+ m_gamma * mat_c.transpose() * f_freedeg;
 
 		///* penaty when h lower than h0 */
