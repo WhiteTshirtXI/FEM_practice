@@ -285,7 +285,7 @@ namespace BalloonFEM
 				Mat3x2 F = Ds * p->Bm;
 
 				/* calculate Piola for this tetra */
-				Mat3x2 P = m_film_model->Piola(F);
+				Mat3x2 P = m_film_model->Piola(F, p->aniso_sigma[0], p->aniso_sigma[1]);
 
 				/* calculate forces contributed from this tetra */
 				Mat3x2 H = - p->W * P * transpose(p->Bm);

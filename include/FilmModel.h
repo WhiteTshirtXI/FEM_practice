@@ -34,10 +34,10 @@ namespace BalloonFEM
             void setLambda(double lambda){ m_lambda = lambda; };
 
             /* Piola P = \frac{ \partial{Energy} }{ \partial{F} }*/
-			virtual Mat3x2 Piola(Mat3x2 F){ return Mat3x2(0); };
+			virtual Mat3x2 Piola(Mat3x2 F, double s1, double s2){ return Mat3x2(0); };
 
             /* Stress difference describe how Piola differs on F+dF */
-			virtual Mat3x2 StressDiff(Mat3x2 F, Mat3x2 dF){ return Mat3x2(0);};
+			virtual Mat3x2 StressDiff(Mat3x2, Mat3x2 dF, double s1, double s2){ return Mat3x2(0); };
 
         protected:
             /* elastic parameters called Lame coefficients
@@ -71,9 +71,9 @@ namespace BalloonFEM
             Film_neohookean(const Film_neohookean& other):
                 FilmModel(other){};
 
-            Mat3x2 Piola(Mat3x2 F);
+			Mat3x2 Piola(Mat3x2 F, double s1 = 1, double s2 = 1);
 
-            Mat3x2 StressDiff(Mat3x2 F, Mat3x2 dF);
+			Mat3x2 StressDiff(Mat3x2 F, Mat3x2 dF, double s1 = 1, double s2 = 1);
      };
 
    
@@ -93,38 +93,11 @@ namespace BalloonFEM
             Film_neohookean_3d(const Film_neohookean_3d& other):
                 FilmModel(other){};
 
-            Mat3x2 Piola(Mat3x2 F);
+			Mat3x2 Piola(Mat3x2 F, double s1 = 1, double s2 = 1);
 
-            Mat3x2 StressDiff(Mat3x2 F, Mat3x2 dF);
+			Mat3x2 StressDiff(Mat3x2 F, Mat3x2 dF, double s1 = 1, double s2 = 1);
     };
 
-	/* anisotropic neohookean model */
-	class FilmAnisoModel : public FilmModel
-	{
-		public:
-
-			FilmAnisoModel(){}
-			FilmAnisoModel(double mu, double lambda, Vec2 sigma):
-				FilmModel(mu, lambda)
-			{
-				m_sigma = glm::diagonal2x2(sigma);
-				m_sigma *= m_sigma;
-			};
-
-			FilmAnisoModel(const FilmAnisoModel& other) :
-				FilmModel(other), m_sigma(other.m_sigma){};
-
-			virtual Mat3x2 Piola(Mat3x2 F){ return Mat3x2(0); };
-
-			virtual Mat3x2 StressDiff(Mat3x2, Mat3x2 dF){ return Mat3x2(0); };
-
-			void SetSigma(Vec2 sigma){ m_sigma = glm::diagonal2x2(sigma); };
-
-		protected:
-
-			Mat2 m_sigma;  /* anisotropic coefficient for two priciple direction */
-
-	};
 
     /* anisotropic neohookean model, make two principle stretch direction energy
      * different by sigma_1, sigma_2, sigma = diag{sigma_1, sigma_2}
@@ -132,19 +105,19 @@ namespace BalloonFEM
      * I_1(dF) = 2 * (F * sigma^2) : dF
      * \Phi = mu/2 * (I1 - log(I3) - 3) + lambda/8 * log(I3)^2 
      * */
-    class Film_aniso_neohookean : public FilmAnisoModel
+    class Film_aniso_neohookean : public FilmModel
     {
         public:
             Film_aniso_neohookean(){}
-			Film_aniso_neohookean(double mu, double lambda, Vec2 sigma):
-				FilmAnisoModel(mu, lambda, sigma){};
+			Film_aniso_neohookean(double mu, double lambda):
+				FilmModel(mu, lambda){};
 
             Film_aniso_neohookean(const Film_aniso_neohookean& other):
-				FilmAnisoModel(other){};
+				FilmModel(other){};
 
-            Mat3x2 Piola(Mat3x2 F);
+            Mat3x2 Piola(Mat3x2 F, double s1, double s2);
 
-            Mat3x2 StressDiff(Mat3x2, Mat3x2 dF);
+            Mat3x2 StressDiff(Mat3x2, Mat3x2 dF, double s1, double s2);
     };
 
 	
@@ -152,19 +125,19 @@ namespace BalloonFEM
      * thickness to it, fix the volume when deform
      * \Phi = mu/2 * (I1 - 3) = mu/2 ((F*sigma):(F*sigma) + det(trans(F) * F) - 3)
      * */
-	class Film_aniso_neohookean_3d : public FilmAnisoModel
+	class Film_aniso_neohookean_3d : public FilmModel
     {
         public:
             Film_aniso_neohookean_3d(){}
-            Film_aniso_neohookean_3d(double mu, double lambda, Vec2 sigma):
-				FilmAnisoModel(mu, lambda, sigma){};
+            Film_aniso_neohookean_3d(double mu, double lambda):
+				FilmModel(mu, lambda){};
 
             Film_aniso_neohookean_3d(const Film_aniso_neohookean& other):
-				FilmAnisoModel(other){};
+				FilmModel(other){};
 
-            Mat3x2 Piola(Mat3x2 F);
+            Mat3x2 Piola(Mat3x2 F, double s1, double s2);
 
-            Mat3x2 StressDiff(Mat3x2, Mat3x2 dF);
+            Mat3x2 StressDiff(Mat3x2, Mat3x2 dF, double s1, double s2);
     };
 
 }

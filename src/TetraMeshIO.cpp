@@ -102,21 +102,24 @@ void TetraMeshIO::readFilm( stringstream& ss, TetraMeshData& data)
 {
     size_t id, indexBias = 1;
     int x, y, z;
-    float h;
-    ss >> id >> x >> y >> z >> h;
+    PieceData tmp;
+
+    ss >> id >> x >> y >> z >> tmp.h >> tmp.aniso_angle;
+    ss >> tmp.aniso_sigma_1 >> tmp.aniso_sigma_2;
+
     while (data.films.size() < id)
     {
         std::vector<iVec3> film;
         film.clear();
         data.films.push_back(film);
 
-        std::vector<double> film_thick;
-        film_thick.clear();
-        data.films_thickness.push_back(film_thick);
+        std::vector<PieceData> film_data;
+        film_data.clear();
+        data.films_data.push_back(film_data);
     }
 
 	data.films[id - indexBias].push_back(iVec3(x, y, z));
-    data.films_thickness[id - indexBias].push_back(h);
+    data.films_data[id - indexBias].push_back(tmp);
 }
 
 void TetraMeshIO::readRigid( stringstream& ss, TetraMeshData& data)
@@ -228,7 +231,7 @@ int TetraMeshIO::buildTetra( TetraMeshData& data, TetraMesh& tetra)
     {
         std::vector<iVec3> &f = data.films[i];
         std::vector<iVec3> tmp(f.begin(), f.end());
-        std::vector<double> &tmp_h = data.films_thickness[i];
+        std::vector<PieceData> &tmp_h = data.films_data[i];
 
         for(size_t j = 0; j < tmp.size(); j++)
             tmp[j] -= indexBias;
@@ -320,7 +323,10 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
 			out << p->v[0]->id + indexBias << " ";
 			out << p->v[1]->id + indexBias << " ";
 			out << p->v[2]->id + indexBias << " ";
-			out << p->h << endl;
+			out << p->h << " ";
+            out << p->aniso_angle << " ";
+            out << p->aniso_sigma[0] << " ";
+            out << p->aniso_sigma[1] << endl;
 		}
 		count++;
 	}

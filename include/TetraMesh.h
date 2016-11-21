@@ -74,6 +74,8 @@ namespace BalloonFEM{
             
 			/* angle between material's first principle direction and v1-v3 vector */
             double aniso_angle = 0;	
+            double aniso_sigma[2];
+
 			/* angle between first principle stretch direction and v1-v3 vector */
 			double stretch_angle = 0; 
 
@@ -181,7 +183,7 @@ namespace BalloonFEM{
 			void labelFixedId();
 
             /* add hole information, by input iVec3 vector */
-            int addFilm( const std::vector<iVec3>& piece_ids, const std::vector<double>& piece_h );
+            int addFilm( const std::vector<iVec3>& piece_ids, const std::vector<PieceData>& piece_data );
 
             /* add rigid body constrains, by input v_ids contained in vector */
             int addRigidBody( const std::vector<size_t>& vertex_ids );

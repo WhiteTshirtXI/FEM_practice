@@ -15,6 +15,7 @@ namespace BalloonFEM
     class Vertex;
     class Face;
     class Piece;
+    struct PieceData;
     class Hindge;
     class Tetra;
 

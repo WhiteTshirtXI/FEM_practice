@@ -147,7 +147,13 @@ namespace BalloonFEM
 
 	void ControlOpt::SimulateAniso()
 	{
-		m_engine->setFilmModel(new Film_aniso_neohookean_3d(0.4, 0.4, Vec2(0.9, 1.1)));
+		m_engine->setFilmModel(new Film_aniso_neohookean_3d(0.4, 0.4));
+		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
+		for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+		{
+			p->aniso_sigma[0] = 0.9;
+			p->aniso_sigma[1] = 1.1;
+		}
 		this->Simulate();
 		m_engine->setFilmModel(new Film_neohookean_3d(0.4, 0.4));
 	}

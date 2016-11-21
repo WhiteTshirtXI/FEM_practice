@@ -327,7 +327,7 @@ void TetraMesh::labelFixedId()
     }
 }
 
-int TetraMesh::addFilm( const std::vector<iVec3>& piece_ids, const std::vector<double>& piece_h)
+int TetraMesh::addFilm( const std::vector<iVec3>& piece_ids, const std::vector<PieceData>& piece_data)
 {
     Film f;
     f.pieces.clear();
@@ -344,7 +344,11 @@ int TetraMesh::addFilm( const std::vector<iVec3>& piece_ids, const std::vector<d
         {
             p.v[j] = &this->vertices[ p.v_id[j] ];
         }
-        p.h = piece_h[i];
+        PieceData tmp = piece_data[i];
+        p.h = tmp.h;
+        p.aniso_angle = tmp.aniso_angle;
+        p.aniso_sigma[0] = tmp.aniso_sigma_1;
+        p.aniso_sigma[1] = tmp.aniso_sigma_2;
 
         f.pieces.push_back(p);
     }

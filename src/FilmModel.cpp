@@ -11,7 +11,7 @@ namespace BalloonFEM
 		return F[0][0] + F[1][1];
 	}
 
-    Mat3x2 Film_neohookean::Piola(Mat3x2 F)
+	Mat3x2 Film_neohookean::Piola(Mat3x2 F, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
         /*  F * inv(trans(F)F) */
@@ -20,7 +20,7 @@ namespace BalloonFEM
         return m_mu*( F - T ) + T * m_lambda * log(I3) / 2.0; 
     }
 
-    Mat3x2 Film_neohookean::StressDiff(Mat3x2 F, Mat3x2 dF)
+	Mat3x2 Film_neohookean::StressDiff(Mat3x2 F, Mat3x2 dF, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
         double I3 = determinant(FTF);
@@ -35,7 +35,7 @@ namespace BalloonFEM
         return m_mu*(dF - dT) + dT * m_lambda * log(I3) / 2.0 + T * m_lambda * dlogI3 / 2.0;
     }
 
-    Mat3x2 Film_neohookean_3d::Piola(Mat3x2 F)
+	Mat3x2 Film_neohookean_3d::Piola(Mat3x2 F, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
         /*  F * inv(trans(F)F) */
@@ -44,7 +44,7 @@ namespace BalloonFEM
         return m_mu * ( F - T / I3 );
     }
 
-    Mat3x2 Film_neohookean_3d::StressDiff(Mat3x2 F, Mat3x2 dF)
+	Mat3x2 Film_neohookean_3d::StressDiff(Mat3x2 F, Mat3x2 dF, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
 		Mat2 invFTF = inverse(FTF);
@@ -60,16 +60,17 @@ namespace BalloonFEM
 		return dP;
     }
 
-    Mat3x2 Film_aniso_neohookean::Piola(Mat3x2 F)
+    Mat3x2 Film_aniso_neohookean::Piola(Mat3x2 F, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
         /*  F * inv(trans(F)F) */
         Mat3x2 T = F * inverse( FTF );
         double I3 = determinant( FTF );
+        Mat2 m_sigma = Mat2(Vec2(s1, 0), Vec2(0, s2));
         return m_mu*( F * m_sigma - T ) + T * m_lambda * log(I3) / 2.0; 
     }
 
-    Mat3x2 Film_aniso_neohookean::StressDiff(Mat3x2 F, Mat3x2 dF)
+    Mat3x2 Film_aniso_neohookean::StressDiff(Mat3x2 F, Mat3x2 dF, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
         double I3 = determinant(FTF);
@@ -80,21 +81,23 @@ namespace BalloonFEM
         Mat3x2 dT = dF * invFTF - 2.0 * F * invFTF * transpose(F) * dF * invFTF;
         /* d ( log(I3) )*/
         double dlogI3 = 2 * trace(invFTF * transpose(F) * dF);
+        Mat2 m_sigma = Mat2(Vec2(s1, 0), Vec2(0, s2));
 
         return m_mu*(dF * m_sigma - dT) + dT * m_lambda * log(I3) / 2.0 + T * m_lambda * dlogI3 / 2.0;
     }
 
     
-    Mat3x2 Film_aniso_neohookean_3d::Piola(Mat3x2 F)
+    Mat3x2 Film_aniso_neohookean_3d::Piola(Mat3x2 F, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
         /*  F * inv(trans(F)F) */
         Mat3x2 T = F * inverse( FTF );
         double I3 = determinant( FTF );
+        Mat2 m_sigma = Mat2(Vec2(s1, 0), Vec2(0, s2));
         return m_mu * ( F * m_sigma - T / I3 );
     }
 
-    Mat3x2 Film_aniso_neohookean_3d::StressDiff(Mat3x2 F, Mat3x2 dF)
+    Mat3x2 Film_aniso_neohookean_3d::StressDiff(Mat3x2 F, Mat3x2 dF, double s1, double s2)
     {
         Mat2 FTF = transpose(F) * F;
 		Mat2 invFTF = inverse(FTF);
@@ -105,6 +108,7 @@ namespace BalloonFEM
         Mat3x2 dT = dF * invFTF - 2.0 * F * invFTF * transpose(F) * dF * invFTF;
         /* d ( 1 / I3 ) */
         double dinvI3 = - trace( transpose( 2.0 * T / I3) * dF ); 
+        Mat2 m_sigma = Mat2(Vec2(s1, 0), Vec2(0, s2));
 
 		Mat3x2 dP = m_mu * (dF * m_sigma - dT / I3 - T * dinvI3);
 		return dP;

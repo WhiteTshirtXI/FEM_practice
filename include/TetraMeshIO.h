@@ -16,6 +16,14 @@
 
 namespace BalloonFEM{
 
+    struct PieceData
+    {
+        double h;
+        double aniso_angle;
+        double aniso_sigma_1;
+        double aniso_sigma_2;
+    };
+
     class TetraMeshData{
         public:
             TetraMeshData(){};
@@ -24,7 +32,7 @@ namespace BalloonFEM{
             std::vector<iVec3> surface;
             std::vector<size_t> fixed;
             std::vector<std::vector<iVec3>> films;
-            std::vector<std::vector<double>> films_thickness;
+            std::vector<std::vector<PieceData>> films_data;
             std::vector<std::vector<size_t>> rigid;
             std::vector<std::vector<iVec3>> holes;
 

@@ -41,6 +41,8 @@ namespace BalloonFEM
 			void setCoeff(Vec3 coeff){ m_alpha = coeff.x; m_beta = coeff.y; m_gamma = coeff.z; };
         protected:
 
+            /* compute thickness lap m_L, which compute the difference between
+             * thickness of current face and mean thickness of neighbors */
 			void computeThicknessLap();
 			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri);
             void computeForceAndGradient(ObjState &state, ObjState &target, SpVec &f, SpMat &A);
