@@ -1,4 +1,8 @@
 #include <iostream>
+
+#include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
 #include "Types.h"
 #include "Viewer.h"
 #include "Optimizer.h"
@@ -183,12 +187,13 @@ namespace BalloonFEM
         f_sum.assign( m_size, Vec3(0.0));
 
         SpMat Tri( 3 * m_tetra->num_vertex, m_tetra->num_pieces );
+        SpMat Sigma( 3 * m_tetra->num_vertex, 2 * m_tetra->num_pieces );
 
         /* compute elastic forces by tetrahedrons */
         computeElasticForces(state, f_sum); 
 
 		/* compute film forces by pieces */
-		computeFilmForces(state, f_sum, Tri);
+		computeFilmForces(state, f_sum, Tri, Sigma);
         
         /* compute forces by air pressure */
 		computeAirForces(state, f_sum);
@@ -259,13 +264,16 @@ namespace BalloonFEM
 
     }
 
-	void Optimizer::computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri)
+	void Optimizer::computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Thk, SpMat& Sigma)
     {
         Vvec3 &pos = state.world_space_pos;
 
-        Tri.setZero(); /* size should be (3*m_size, m_tetra->num_pieces) */
+        Thk.setZero(); /* size should be (3*m_size, m_tetra->num_pieces) */
         std::vector<T> triangle_coeff;
         triangle_coeff.reserve( 9 * m_tetra->num_pieces );
+        Sigma.setZero();
+        std::vector<T> sigma_coeff;
+        sigma_coeff.reserve( 9 * 2 * m_tetra->num_pieces);
 
 		/* compute film elastic force */
         int piece_id = 0;
@@ -281,14 +289,19 @@ namespace BalloonFEM
 				/* calculate deformation in world space */
 				Mat3x2 Ds = Mat3x2(v0 - v2, v1 - v2);
 
+                /* coordinate transform */
+                Mat2 R = p->Bm * glm::orientate2(p->aniso_angle);
+
 				/* calculate deformation gradient */
-				Mat3x2 F = Ds * p->Bm;
+				Mat3x2 F = Ds * R;
+
+                Vec2 sigma(state.aniso_sigma(2 * piece_id), state.aniso_sigma(2 * piece_id + 1));
 
 				/* calculate Piola for this tetra */
-				Mat3x2 P = m_film_model->Piola(F, p->aniso_sigma[0], p->aniso_sigma[1]);
+				Mat3x2 P = m_film_model->Piola(F, sigma[0], sigma[1]);
 
 				/* calculate forces contributed from this tetra */
-				Mat3x2 H = - p->W * P * transpose(p->Bm);
+				Mat3x2 H = - p->W * P * transpose(R);
 
                 pushMat3x2(triangle_coeff, id, piece_id, H);
 
@@ -298,11 +311,18 @@ namespace BalloonFEM
 				f_sum[id[1]] += H[1];
 				f_sum[id[2]] -= H[0] + H[1];
 
+                Mat3x2 S = - p->volume() * m_film_model->getMu() * F;
+                Mat3x2 S0 = Mat3x2(S[0], Vec3(0)) * transpose(R) * 2.0 * sigma[0];
+                Mat3x2 S1 = Mat3x2(Vec3(0), S[1]) * transpose(R) * 2.0 * sigma[1];
+                pushMat3x2(sigma_coeff, id, 2 * piece_id    , S0);
+                pushMat3x2(sigma_coeff, id, 2 * piece_id + 1, S1);
+
                 piece_id ++;
 			}
 		}
 
-        Tri.setFromTriplets(triangle_coeff.begin(), triangle_coeff.end());
+        Thk.setFromTriplets(triangle_coeff.begin(), triangle_coeff.end());
+        Sigma.setFromTriplets(sigma_coeff.begin(), sigma_coeff.end());
     }
 
 	void Optimizer::computeThicknessLap()

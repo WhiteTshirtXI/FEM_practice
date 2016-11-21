@@ -32,6 +32,7 @@ namespace BalloonFEM
             void setMu(double mu){ m_mu = mu; };
 
             void setLambda(double lambda){ m_lambda = lambda; };
+            double getMu(){ return m_mu;};
 
             /* Piola P = \frac{ \partial{Energy} }{ \partial{F} }*/
 			virtual Mat3x2 Piola(Mat3x2 F, double s1, double s2){ return Mat3x2(0); };

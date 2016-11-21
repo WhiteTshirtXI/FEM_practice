@@ -21,15 +21,15 @@ namespace BalloonFEM
 		virtual void output();
 
 		Vvec3 world_space_pos;
+        SpVec thickness;	/* thickness of pieces */
+        SpVec aniso_sigma;  /* aniso_sigma of pieces */
+		SpVec pressure;		/* pressure of each hole */
 
         /* recorded volumes of holes */
         std::vector<double> hole_volume;
 
         /* volume gradient of vertices belongs to hole */
         Vvec3 volume_gradient;
-
-        SpVec thickness;	/* thickness of pieces */
-		SpVec pressure;		/* pressure of each hole */
 
 		/* project to real world space and record in world_space_pos
          * then calcualte volume of holes and volume gradients

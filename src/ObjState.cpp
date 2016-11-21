@@ -33,6 +33,7 @@ namespace BalloonFEM
         hole_volume.assign(other.hole_volume.begin(), other.hole_volume.end());
         thickness = other.thickness;
 		pressure = other.pressure;
+        aniso_sigma = other.aniso_sigma;
 
 		m_pos.assign(other.m_pos.begin(), other.m_pos.end());
 		m_r_pos.assign(other.m_r_pos.begin(), other.m_r_pos.end());
@@ -71,11 +72,14 @@ namespace BalloonFEM
         /* initialize piece thickness */
         int piece_id = 0;
 		this->thickness = SpVec::Zero(m_tetra->num_pieces);
+		this->aniso_sigma = SpVec::Zero(2 * m_tetra->num_pieces);
         for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
         {
             for(PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
             {
                 this->thickness(piece_id) = p->h;
+                this->aniso_sigma(2 * piece_id) = p->aniso_sigma[0];
+                this->aniso_sigma(2 * piece_id + 1) = p->aniso_sigma[1];
                 piece_id ++;
             }
         }
@@ -111,12 +115,14 @@ namespace BalloonFEM
         }
 
 		/* output piece thickness */
-		size_t piece_count = 0;
+		size_t piece_id = 0;
 		for (MIter f = m_tetra->films.begin(); f != m_tetra->films.end(); f++)
 		for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
 		{
-			p->h = thickness(piece_count);
-			piece_count++;
+			p->h = thickness(piece_id);
+            p->aniso_sigma[0] = aniso_sigma(2 * piece_id);
+            p->aniso_sigma[1] = aniso_sigma(2 * piece_id + 1);
+			piece_id++;
 		}
 
 		/* output pressure */

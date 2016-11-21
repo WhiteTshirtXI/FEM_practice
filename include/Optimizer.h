@@ -44,7 +44,9 @@ namespace BalloonFEM
             /* compute thickness lap m_L, which compute the difference between
              * thickness of current face and mean thickness of neighbors */
 			void computeThicknessLap();
-			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Tri);
+
+            /* compute film force and the gradient of thickness and aniso_sigma on f_real */
+			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Thk, SpMat& Sigma);
             void computeForceAndGradient(ObjState &state, ObjState &target, SpVec &f, SpMat &A);
 
 			TetraMesh* m_target;
