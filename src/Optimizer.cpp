@@ -145,7 +145,7 @@ namespace BalloonFEM
 		double err_begin = err_f;
 		int count_iter = 0;		/* K dx = f iter count */
 		/* while not converge f == 0, iterate */
-		while ((err_f > CONVERGE_ERROR_RATE * err_begin) && (err_f > 1e-10) && (count_iter < 10))
+		while ((err_f > CONVERGE_ERROR_RATE * err_begin) && (err_f > 1e-10) && (count_iter < 5))
 		{
 			/* debug use */
 			count_iter++;
@@ -250,9 +250,13 @@ namespace BalloonFEM
 
 		mat_d.leftCols(kineticDegree) = state.restrictedMat();
 
-		f = m_alpha * mat_a.transpose() * x
-			+ m_beta * mat_b.transpose() * sig_delt
-			+ m_gamma * mat_c.transpose() * f_freedeg;
+		/* used to balance influence of scale */
+		double norm_coeff = m_tetra->num_vertex;
+		norm_coeff *= norm_coeff;
+
+		f = m_alpha/norm_coeff * mat_a.transpose() * x
+			+ m_beta/norm_coeff * mat_b.transpose() * sig_delt
+			+ m_gamma * norm_coeff * mat_c.transpose() * f_freedeg;
 
 		///* penaty when h lower than h0 */
 		//SpVec penalty = h;
@@ -265,9 +269,9 @@ namespace BalloonFEM
 
 		f = -f;
 
-		A = m_alpha * mat_a.transpose() * mat_a
-			+ m_beta * mat_b.transpose() * mat_b
-			+ m_gamma * mat_c.transpose() * mat_c
+		A = m_alpha/norm_coeff * mat_a.transpose() * mat_a
+			+ m_beta/norm_coeff * mat_b.transpose() * mat_b
+			+ m_gamma*norm_coeff * mat_c.transpose() * mat_c
 			+ mat_d.transpose() * mat_d;
 
     }

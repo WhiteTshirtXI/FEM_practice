@@ -114,7 +114,7 @@ namespace BalloonFEM
 	/* Do something to tetra mesh */
 	void ControlOpt::Process()
 	{
-		m_optimizer->setCoeff(Vec3(1e4, 1e2, 1e6));
+		m_optimizer->setCoeff(Vec3(1, 1, 1e2));
 		m_optimizer->inputData();
 		SpVec p(m_tetra->holes.size());
 		p << 0.1;
