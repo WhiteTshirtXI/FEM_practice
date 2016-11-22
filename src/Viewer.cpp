@@ -306,7 +306,7 @@ namespace View{
                 pos /= 3.0;
                 pos += 1e-2 * p->m_normal;
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 1; i++)
 				{
 					double l = glm::length(p->stretch[i]);
 					l = (l - 1) / l;

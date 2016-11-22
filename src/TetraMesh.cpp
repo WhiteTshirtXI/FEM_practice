@@ -15,8 +15,9 @@
 using namespace std;
 
 namespace{
+	/* return 1 when val >= 0, -1 when val < 0 */
 	int sgn(double val){
-		return ((double(0) < val) - (val < double(0)));
+		return ((double(0) <= val) - (val < double(0)));
 	}
 
 	double clap(double val){
@@ -64,13 +65,13 @@ void Piece::precomputation()
 
 Vec3 Piece::color()
 {
-	const double min_value = 0;
-	const double max_value = 1;
+	const double min_value = 1;
+	const double max_value = 2;
 	const double resolution = 1e-4;
 
 	Vec3 rgb(0, 0, 0);
 
-	double value = h;
+	double value = aniso_sigma[1]/aniso_sigma[0];
 	if (value < min_value)
 		return Vec3(1,0,0);
 	else if (value > max_value)
@@ -104,13 +105,17 @@ void Piece::computeStretch()
     double tr = E[0][0] + E[1][1];
     double det = glm::determinant(E);
     double e = sqrt(tr*tr - 4 * det);
-    if (e == 0)
+    if (e == 0)		/* if stretch is isotropic */
     {
 		this->stretch_angle = 0;
         stretch = F;
     }
-    else
+	else
     {
+		/* take care if E[0][1] == 0, sgn should return 1, 
+		 * this makes theta == pi case corrcet,
+		 * or sigma_1 < sigma_2 
+		 */
 		this->stretch_angle = sgn(E[0][1]) * std::acos( clap((E[0][0] - E[1][1]) / e) ) / 2.0;
         Mat2 V = glm::orientate2(stretch_angle);
         stretch = F * V;
