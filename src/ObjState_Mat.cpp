@@ -152,7 +152,7 @@ namespace BalloonFEM
     void ObjState::computeProjectMat()
     {
         /* present only consider fixed points */
-        m_W = SpMat(3 * m_size, this->freedomDegree());
+        m_W = SpMat(3 * m_size, this->kineticDegree());
 
         std::vector<T> coefficients;
         coefficients.clear();

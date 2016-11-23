@@ -66,16 +66,16 @@ void Piece::precomputation()
 Vec3 Piece::color()
 {
 	const double min_value = 1;
-	const double max_value = 2;
+	const double max_value = 4;
 	const double resolution = 1e-4;
 
 	Vec3 rgb(0, 0, 0);
 
 	double value = aniso_sigma[1]/aniso_sigma[0];
 	if (value < min_value)
-		return Vec3(1,0,0);
+		return Vec3(0,0,0);
 	else if (value > max_value)
-		value = max_value;
+		return Vec3(1, 1, 1);
 
 	float lamda = (value - min_value) / (max_value - min_value);
 	if (resolution > 0.001)

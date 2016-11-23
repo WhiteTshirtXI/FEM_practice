@@ -114,12 +114,17 @@ namespace BalloonFEM
 	/* Do something to tetra mesh */
 	void ControlOpt::Process()
 	{
-		m_optimizer->setCoeff(Vec3(1, 1, 1e2));
+		m_optimizer->setCoeff(Vec3(1e1, 1, 1e2));
 		m_optimizer->inputData();
 		SpVec p(m_tetra->holes.size());
 		p << 0.1;
 		m_optimizer->setAirPressure(p);
-		m_optimizer->solveOptimal();
+
+		std::clock_t start;
+		start = std::clock();
+		m_optimizer->solveOptimalGN();
+		printf("Take %.4f solving for optimal\n", (std::clock() - start) / (double)CLOCKS_PER_SEC);
+
 		m_optimizer->stepToNext();
 		m_optimizer->outputData();
 		shadFlag = 1;

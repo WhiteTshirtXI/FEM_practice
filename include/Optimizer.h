@@ -33,7 +33,11 @@ namespace BalloonFEM
 				FilmModel* film_model = new Film_neohookean_3d(0.4, 0.4),
                 BendingModel* bend_model = new Bending_MeanCurvature(0.01));
 
+			/* solve optimal problem with newton method */
             void solveOptimal();
+
+			/* solve optimal problem with Gaussian Newton method */
+			void solveOptimalGN();
 
 			void testFunc();
 			TetraMesh* Target(){ return m_target;; }
@@ -47,7 +51,12 @@ namespace BalloonFEM
 
             /* compute film force and the gradient of thickness and aniso_sigma on f_real */
 			void computeFilmForces(ObjState &state, Vvec3 &f_sum, SpMat& Thk, SpMat& Sigma);
-            void computeForceAndGradient(ObjState &state, ObjState &target, SpVec &f, SpMat &A);
+
+			/* compute gradient and heissen matrix, return energy value */
+            double computeGradientAndHessian(ObjState &state, ObjState &target, SpVec &f, SpMat &A);
+
+			/* compute residual and jacobian matrix, return energy value */
+			double computeResidualAndJacobian(ObjState &state, ObjState &target, SpVec &f, SpMat &A);
 
 			TetraMesh* m_target;
 			ObjState* target_state;

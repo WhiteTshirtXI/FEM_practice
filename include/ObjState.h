@@ -40,6 +40,8 @@ namespace BalloonFEM
 		virtual void update(SpVec& dpos);
 
 		/* the freedom of state, including those fixed vertices */
+		virtual size_t kineticDegree(){ return 3 * m_size + 6 * m_r_size; };
+
 		virtual size_t freedomDegree(){ return 3 * m_size + 6 * m_r_size; };
 
         /* calculate volume gradient difference based on dr */
