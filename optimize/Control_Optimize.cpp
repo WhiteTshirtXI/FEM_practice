@@ -122,7 +122,7 @@ namespace BalloonFEM
 
 		std::clock_t start;
 		start = std::clock();
-		m_optimizer->solveOptimal_NR();
+		m_optimizer->solveOptimal_GN();
 		printf("Take %.4f solving for optimal\n", (std::clock() - start) / (double)CLOCKS_PER_SEC);
 
 		m_optimizer->stepToNext();
@@ -133,6 +133,9 @@ namespace BalloonFEM
 	void ControlOpt::Simulate()
 	{
 		m_engine->inputData();
+		SpVec p(m_tetra->holes.size());
+		p << 0.1;
+		m_engine->setAirPressure(p);
 		m_engine->solveStaticPos();
 		m_engine->stepToNext();
 		m_engine->outputData();
@@ -183,6 +186,9 @@ namespace BalloonFEM
 
 		for (VIter v = m_tetra->vertices.begin(); v != m_tetra->vertices.end(); v++)
 			v->m_pos = v->m_cord;
+		m_tetra->recomputeSurfaceNorm();
+		shadFlag = 1;
+
 	    m_tetra->write(name, info.str());
 		outputcount++;
 	}

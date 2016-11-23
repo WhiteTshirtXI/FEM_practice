@@ -127,53 +127,58 @@ namespace BalloonFEM{
 		//K -= bendingForceAndGradient(state, f_sum); /* compute bending force and gradient */
         
         /* convert force to SpVec */
-		SpVec f_freedeg = state.projectMat().transpose() * vvec3TospVec(f_sum);
-        SpVec x = vvec3TospVec( state.world_space_pos ) - vvec3TospVec(target.world_space_pos);
+		SpVec f_kinetic = state.projectMat().transpose() * vvec3TospVec(f_sum);
+        SpVec dx = vvec3TospVec( state.world_space_pos ) - vvec3TospVec(target.world_space_pos);
 		SpVec h = state.thickness;
-		SpVec sig_delt = state.aniso_sigma.array() - 1.0;
-		SpVec h_delt = m_L * h;
+		SpVec dsig = state.aniso_sigma.array() - 1.0;
+		SpVec dh = m_L * h;
 
-		/* used to balance influence of scale */
+        size_t opt_para_deg = state.freedomDegree();
+        size_t kinetic_deg = state.kineticDegree(); 
+		
+        /* used to balance influence of scale */
 		double norm_coeff = m_tetra->num_vertex;
 		norm_coeff *= norm_coeff;
+		double a = m_alpha / norm_coeff;
+		double b = m_beta / norm_coeff;
+		double c = m_gamma * norm_coeff;
 
-		double energy = m_alpha / norm_coeff * x.squaredNorm()
-			+ m_beta / norm_coeff * sig_delt.squaredNorm()
-			+ m_gamma * norm_coeff * f_freedeg.squaredNorm();
+		double energy = a * dx.squaredNorm()
+			+ b * dsig.squaredNorm()
+			+ c * f_kinetic.squaredNorm();
 
 		/* output errors */
 		printf("pos_error = %.4e, sig_error = %.4e, f_error = %.4e, energy = %.4e \n", 
-			x.squaredNorm(), sig_delt.squaredNorm(), f_freedeg.squaredNorm(), energy);
+			dx.squaredNorm(), dsig.squaredNorm(), f_kinetic.squaredNorm(), energy);
 
         /* tmp mat */
-        size_t freedegree = state.freedomDegree();
-        size_t kineticDegree = 3 * m_tetra->num_vertex + 6 * m_tetra->rigids.size();
-        SpMat mat_a( 3 * m_tetra->num_vertex, freedegree);		/* target position displacement mat */
-        SpMat mat_b( 2 * m_tetra->num_pieces, freedegree );			/* target thickness displacement mat */
-        SpMat mat_c( 3 * m_tetra->num_vertex, freedegree);		/* total force intensity mat */
-		SpMat mat_d(3 * m_tetra->num_vertex, freedegree);		/* restrict mat */
+      
+        SpMat mat_a( dx.size(), opt_para_deg);		/* target position displacement mat */
+        SpMat mat_b( dsig.size(), opt_para_deg );	/* target thickness displacement mat */
+        SpMat mat_c( 3 * m_tetra->num_vertex, opt_para_deg);/* total force intensity mat */
+		SpMat mat_d(kinetic_deg, opt_para_deg);		/* restrict mat */
 
-        SpMat I(2 * m_tetra->num_pieces, 2 * m_tetra->num_pieces);
-        I.setIdentity();
+    	SpMat I(dsig.size(), dsig.size());
+		I.setIdentity();
 
-        mat_a.leftCols(kineticDegree) = state.projectMat();
-        mat_b.middleCols(kineticDegree, 2 * m_tetra->num_pieces) = I;
+        mat_a.leftCols(kinetic_deg) = state.projectMat();
+        mat_b.middleCols(kinetic_deg, dsig.size()) = I;
         
-        mat_c.leftCols(kineticDegree) = K * state.projectMat();
-        mat_c.rightCols(2 * m_tetra->num_pieces) = Sigma;
+        mat_c.leftCols(kinetic_deg) = K * state.projectMat();
+        mat_c.rightCols(dsig.size()) = Sigma;
 		mat_c = state.projectMat().transpose() * mat_c;
 
-		mat_d.leftCols(kineticDegree) = state.restrictedMat();
+		mat_d.leftCols(kinetic_deg) = state.restrictedMat().transpose() * state.restrictedMat();
 
-		f = m_alpha/norm_coeff * mat_a.transpose() * x
-			+ m_beta/norm_coeff * mat_b.transpose() * sig_delt
-			+ m_gamma * norm_coeff * mat_c.transpose() * f_freedeg;
+		f = a * mat_a.transpose() * dx
+			+ b * mat_b.transpose() * dsig
+			+ c * mat_c.transpose() * f_kinetic;
 
 		f = -f;
 
-		A = m_alpha/norm_coeff * mat_a.transpose() * mat_a
-			+ m_beta/norm_coeff * mat_b.transpose() * mat_b
-			+ m_gamma*norm_coeff * mat_c.transpose() * mat_c
+		A = a * mat_a.transpose() * mat_a
+			+ b * mat_b.transpose() * mat_b
+			+ c * mat_c.transpose() * mat_c
 			+ mat_d.transpose() * mat_d;
 
 		return energy;

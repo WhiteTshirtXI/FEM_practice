@@ -129,11 +129,11 @@ namespace BalloonFEM{
 		SpVec h = state.thickness;
 		SpVec dsig = state.aniso_sigma.array() - 1.0;
 		SpVec dh = m_L * h;
-
-		/* used to balance influence of scale */
-	    size_t opt_para_deg = state.freedomDegree();
+        
+        size_t opt_para_deg = state.freedomDegree();
 		size_t kinetic_deg = state.kineticDegree();
 
+		/* used to balance influence of scale */
 		double norm_coeff = m_tetra->num_vertex;
 		double a = sqrt(m_alpha) / norm_coeff;
 		double b = sqrt(m_beta) / norm_coeff;
@@ -154,7 +154,7 @@ namespace BalloonFEM{
 		SpMat mat_a(dx.size(), opt_para_deg);		/* target position displacement mat */
 		SpMat mat_b(dsig.size(), opt_para_deg);	    /* sigma regulazer mat */
 		SpMat mat_c(3 * m_tetra->num_vertex, opt_para_deg);		/* total force intensity mat */
-		SpMat mat_d(3 * m_tetra->num_vertex, opt_para_deg);		/* restriction mat */
+		SpMat mat_d(kinetic_deg, opt_para_deg);		/* restriction mat */
 
 		SpMat I(dsig.size(), dsig.size());
 		I.setIdentity();
@@ -167,7 +167,7 @@ namespace BalloonFEM{
 		mat_c = state.projectMat().transpose() * mat_c;
 
         /* add restriction to force */
-		mat_d.leftCols(kinetic_deg) = state.restrictedMat();
+		mat_d.leftCols(kinetic_deg) = state.restrictedMat().transpose() * state.restrictedMat();
 		mat_c += mat_d;
 
 		size_t res_size = dx.size() + dsig.size() + f_kinetic.size();
