@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 
 #include "Types.h"
 #include "TetraMesh.h"
@@ -269,7 +270,8 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
     for(VCIter v = tetra.vertices.begin(); v != tetra.vertices.end(); v++)
     {
 		Vec3 pos = v->m_pos;
-		out << "v " << pos[0] << " " << pos[1] << " " << pos[2] << endl; 
+		out << "v ";
+		out << std::fixed << std::setprecision(6) << pos[0] << " " << pos[1] << " " << pos[2] << endl;
     }
 
     for(TCIter t = tetra.tetrahedrons.begin(); t !=tetra.tetrahedrons.end(); t++)
@@ -324,6 +326,7 @@ void TetraMeshIO::write( ostream& out, const TetraMesh& tetra)
 			out << p->v[1]->id + indexBias << " ";
 			out << p->v[2]->id + indexBias << " ";
 			out << p->h << " ";
+			out << std::fixed << std::setprecision(6);
             out << p->aniso_angle << " ";
             out << p->aniso_sigma[0] << " ";
             out << p->aniso_sigma[1] << endl;

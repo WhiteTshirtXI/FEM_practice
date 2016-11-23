@@ -104,7 +104,8 @@ void Piece::computeStretch()
 
     double tr = E[0][0] + E[1][1];
     double det = glm::determinant(E);
-    double e = sqrt(tr*tr - 4 * det);
+    double e = tr*tr - 4 * det;  
+	e = e > 0 ? sqrt(e): 0;
     if (e == 0)		/* if stretch is isotropic */
     {
 		this->stretch_angle = 0;
