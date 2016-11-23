@@ -57,32 +57,22 @@ namespace BalloonFEM
     
     void Engine::computeForceAndGradient(ObjState &state, SpVec &f, SpMat &A)
     {
-        Vvec3 f_sum;
-        f_sum.assign( m_size, Vec3(0.0));
+		Vvec3 f_sum;
+		f_sum.assign(m_size, Vec3(0.0));
 
-        /* compute elastic forces by tetrahedrons */
-        computeElasticForces(state, f_sum); 
+		SpMat Tri(3 * m_tetra->num_vertex, m_tetra->num_pieces);
+		SpMat Sigma(3 * m_tetra->num_vertex, 2 * m_tetra->num_pieces);
 
-		/* compute film forces by pieces */
-		computeFilmForces(state, f_sum);
-        
-        /* compute forces by air pressure */
-		computeAirForces(state, f_sum);
+		computeElasticForces(state, f_sum);      /* compute elastic forces by tetrahedrons */
+		computeFilmForces(state, f_sum);	     /* compute film forces by pieces */
+		computeAirForces(state, f_sum);          /* compute forces by air pressure */
 
-        for(size_t i = 0; i < m_size; i++)
-            f_sum[i] += f_ext[i];
+		for (size_t i = 0; i < m_size; i++) f_sum[i] += f_ext[i];   /* add external force */
 
-		/* compute forces diff by air pressure */
-        SpMat K = computeAirDiffMat(state);
-
-		/* compute film forces by pieces */
-		K += computeFilmDiffMat(state);
-
-		/* compute elastic forces diff by tetrahedrons */
-		K += computeElasticDiffMat(state);
-
-        /* compute bending force and gradient */
-        //K -= bendingForceAndGradient(state, f_sum);
+		SpMat K = computeAirDiffMat(state);     /* compute forces diff by air pressure */
+		K += computeFilmDiffMat(state);         /* compute film forces by pieces */
+		K += computeElasticDiffMat(state);      /* compute elastic forces diff by tetrahedrons */
+		//K -= bendingForceAndGradient(state, f_sum); /* compute bending force and gradient */
         
         /* convert force to SpVec */
         SpVec f_real = SpVec::Zero(3 * m_size);
@@ -113,8 +103,6 @@ namespace BalloonFEM
         /* K = - df/dr, here Force Diff Mat compute df/dr */
         SpMat K;
         computeForceAndGradient(*next_state, f_sum, K);
-
-        SpVec dstate = SpVec::Zero(next_state->freedomDegree());
         
         /* solver */
         Eigen::SimplicialLDLT<SpMat> solver;
@@ -130,9 +118,6 @@ namespace BalloonFEM
 			count_iter++;
             printf("%d iter of K dv = f , err_felas = %.4e \n", count_iter, err_f);
 
-            /* r0 = b - Ax0 */
-            SpVec r = b - K * dstate;
-
             printf("building solver\n");
             solver.compute(K);
             if (solver.info() != Eigen::Success)
@@ -142,11 +127,10 @@ namespace BalloonFEM
                 return;
             }
 			printf("solve delta_x \n");
-            SpVec dstate = solver.solve(r);
+            SpVec dstate = solver.solve(b);
 
             /* update v_pos_next and f_sum */
             next_state->update(dstate);
-            dstate.setZero();
 
 			/* debug watch use*/
 			next_state->output();
@@ -156,7 +140,20 @@ namespace BalloonFEM
             /* update K and f*/
             computeForceAndGradient(*next_state, f_sum, K);
 
-			err_f = f_sum.dot(f_sum);
+			/* control step length */
+			dstate = - dstate;
+			int cut_count = 0;
+			double err_next = f_sum.dot(f_sum);
+			while (err_f < err_next && cut_count < 5)
+			{
+				printf("cutting down dstate by half.\n");
+				dstate /= 2.0;
+				next_state->update( dstate);
+				computeForceAndGradient(*next_state, f_sum, K);
+				err_next = f_sum.dot(f_sum);
+				cut_count++;
+			}
+			err_f = err_next;
         }
 
 		printf("f_sum error %f \n", err_f);
