@@ -122,7 +122,7 @@ namespace BalloonFEM
 
 		std::clock_t start;
 		start = std::clock();
-		m_optimizer->solveOptimalGN();
+		m_optimizer->solveOptimal_NR();
 		printf("Take %.4f solving for optimal\n", (std::clock() - start) / (double)CLOCKS_PER_SEC);
 
 		m_optimizer->stepToNext();

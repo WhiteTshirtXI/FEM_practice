@@ -34,10 +34,10 @@ namespace BalloonFEM
                 BendingModel* bend_model = new Bending_MeanCurvature(0.01));
 
 			/* solve optimal problem with newton method */
-            void solveOptimal();
+            void solveOptimal_NR();
 
 			/* solve optimal problem with Gaussian Newton method */
-			void solveOptimalGN();
+			void solveOptimal_GN();
 
 			void testFunc();
 			TetraMesh* Target(){ return m_target;; }
@@ -65,7 +65,6 @@ namespace BalloonFEM
             double m_alpha = 10.0;
             double m_beta = 1.0;
             double m_gamma = 100.0;
-			double m_penalty = 10;
     };
 
 
