@@ -52,6 +52,9 @@ class Viewer
         /* draw stretches */
         void draw_stretch();
 
+        /* draw anisotropic dir */
+        void draw_aniso();
+
         Mesh* m_mesh;
 
 		Controler* m_controler;

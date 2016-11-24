@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #include "Viewer.h"
 #include "Controls.h"
@@ -71,6 +72,7 @@ namespace View{
 		draw_axis();
 		draw_force();
         if (m_controler->stretchFlag) draw_stretch();
+        if (m_controler->anisoFlag) draw_aniso();
 
 		/* Swap front and back buffers*/
 		glfwSwapBuffers(mainWindow);
@@ -296,7 +298,7 @@ namespace View{
     void Viewer::draw_stretch()
     {
         glLineWidth(1.0);
-        glColor3f(0.0, 1.0, 0.0); //blue
+        glColor3f(0.0, 1.0, 0.0); //green
 
 		double stretch_scale = 0.2;
         for (MIter f = m_mesh->films.begin(); f != m_mesh->films.end(); f++)
@@ -320,5 +322,34 @@ namespace View{
             }
         
     }
+    
+    void Viewer::draw_aniso()
+    {
+        glLineWidth(1.0);
+        glColor3f(0.0, 0.0, 1.0); //blue
 
+		double stretch_scale = 0.1;
+        for (MIter f = m_mesh->films.begin(); f != m_mesh->films.end(); f++)
+            for (PIter p = f->pieces.begin(); p != f->pieces.end(); p++)
+            {
+                Vec3 pos = p->v[0]->m_pos + p->v[1]->m_pos + p->v[2]->m_pos;
+                pos /= 3.0;
+                pos += 1e-2 * p->m_normal;
+
+                Mat3x2 aniso = p->stretch * glm::orientate2(p->aniso_angle - p->stretch_angle);
+
+				for (int i = 0; i < 2; i++)
+				{
+					double l = glm::length(aniso[i]);
+					l = p->aniso_sigma[i] / l;
+					Vec3 start = pos - aniso[i] * l * stretch_scale;
+					Vec3 targ = pos + aniso[i] * l * stretch_scale;
+					glBegin(GL_LINES);
+					glVertex3dv(&start[0]);
+					glVertex3dv(&targ[0]);
+					glEnd();
+				}
+            }
+        
+    }
 }

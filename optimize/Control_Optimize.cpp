@@ -54,7 +54,7 @@ namespace BalloonFEM
 		        Process();
 		        break;
 			case GLFW_KEY_A:
-				AddParameter();
+				anisoFlag = !anisoFlag;
 				break;
 			case GLFW_KEY_S:
 				Simulate();
